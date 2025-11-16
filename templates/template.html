@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{TITLE}}</title>
+    <meta name="description" content="{{META_DESCRIPTION}}">
+    <meta name="keywords" content="{{META_KEYWORDS}}">
+    <meta name="robots" content="index, follow">
+    <meta property="og:title" content="{{TITLE}}">
+    <meta property="og:description" content="{{META_DESCRIPTION}}">
+    <meta property="og:type" content="website">
+    <link rel="stylesheet" href="global.css">
+    
+    <!-- JSON-LD Structured Data -->
+    <script type="application/ld+json">
+    {{STRUCTURED_DATA}}
+    </script>
+    
+    <!-- Breadcrumb Schema -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        {
+          "@type": "ListItem",
+          "position": 1,
+          "name": "Home",
+          "item": "{{BASE_URL}}"
+        },
+        {
+          "@type": "ListItem",
+          "position": 2,
+          "name": "{{NICHE}}",
+          "item": "{{PAGE_URL}}"
+        }
+      ]
+    }
+    </script>
+</head>
+<body>
+    <header class="site-header">
+        <div class="container">
+            <nav class="main-nav">
+                <div class="logo">
+                    <h1>Top10Reviews</h1>
+                </div>
+                <ul class="nav-links">
+                    <li><a href="/">Home</a></li>
+                    <li><a href="#products">Products</a></li>
+                    <li><a href="#guide">Buyer's Guide</a></li>
+                    <li><a href="#faq">FAQ</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <main>
+        <!-- Hero Section -->
+        <section class="hero">
+            <div class="container">
+                <h1 class="hero-title">{{HERO_TITLE}}</h1>
+                <p class="hero-subtitle">Expert-curated list updated daily with real Amazon data</p>
+                <div class="last-updated">Last Updated: {{LAST_UPDATED}}</div>
+            </div>
+        </section>
+
+        <!-- Introduction Section -->
+        <section class="intro-section">
+            <div class="container">
+                <h2>{{INTRO_TITLE}}</h2>
+                <div class="intro-content">
+                    {{INTRO_PARAGRAPH}}
+                </div>
+            </div>
+        </section>
+
+        <!-- Products Section -->
+        <section id="products" class="products-section">
+            <div class="container">
+                <h2>{{PRODUCTS_SECTION_TITLE}}</h2>
+                <div class="products-grid">
+                    {{PRODUCTS_LIST}}
+                </div>
+            </div>
+        </section>
+
+        <!-- Buyer's Guide Section -->
+        <section id="guide" class="buyers-guide-section">
+            <div class="container">
+                <h2>{{BUYERS_GUIDE_TITLE}}</h2>
+                <div class="guide-content">
+                    {{BUYERS_GUIDE_CONTENT}}
+                </div>
+            </div>
+        </section>
+
+        <!-- FAQ Section -->
+        <section id="faq" class="faq-section">
+            <div class="container">
+                <h2>{{FAQ_TITLE}}</h2>
+                <div class="faq-content">
+                    {{FAQ_CONTENT}}
+                </div>
+            </div>
+        </section>
+
+        <!-- CTA Section -->
+        <section class="cta-section">
+            <div class="container">
+                <div class="cta-content">
+                    {{CTA_CONTENT}}
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="site-footer">
+        <div class="container">
+            <p>&copy; 2025 Top10Reviews. Product data sourced from Amazon. Last updated: {{LAST_UPDATED}}</p>
+            <p class="disclaimer">As an Amazon Associate, we earn from qualifying purchases.</p>
+        </div>
+    </footer>
+</body>
+</html>

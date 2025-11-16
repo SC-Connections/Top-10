@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{BLOG_TITLE}} - Detailed Review</title>
+    <meta name="description" content="{{BLOG_META_DESCRIPTION}}">
+    <link rel="stylesheet" href="../global.css">
+    
+    <!-- Product Schema -->
+    <script type="application/ld+json">
+    {{PRODUCT_SCHEMA}}
+    </script>
+</head>
+<body>
+    <header class="site-header">
+        <div class="container">
+            <nav class="main-nav">
+                <div class="logo">
+                    <h1>Top10Reviews</h1>
+                </div>
+                <ul class="nav-links">
+                    <li><a href="../index.html">← Back to List</a></li>
+                    <li><a href="../index.html#guide">Buyer's Guide</a></li>
+                    <li><a href="../index.html#faq">FAQ</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <main>
+        <article class="blog-article">
+            <div class="container">
+                <header class="article-header">
+                    <h1>{{BLOG_TITLE}}</h1>
+                    <div class="article-meta">
+                        <span class="publish-date">Published: {{PUBLISH_DATE}}</span>
+                        <span class="reading-time">{{READING_TIME}} min read</span>
+                    </div>
+                </header>
+
+                <div class="product-hero">
+                    <img src="{{IMAGE_URL}}" alt="{{PRODUCT_TITLE}}">
+                    <div class="product-summary">
+                        <div class="rating">
+                            <div class="stars">{{RATING_STARS}}</div>
+                            <span>{{RATING}} / 5 ({{REVIEW_COUNT}} reviews)</span>
+                        </div>
+                        <div class="price">{{PRICE}}</div>
+                        <a href="{{AFFILIATE_LINK}}" class="btn-primary" target="_blank" rel="nofollow noopener">
+                            View on Amazon
+                        </a>
+                    </div>
+                </div>
+
+                <div class="article-content">
+                    {{BLOG_CONTENT}}
+                </div>
+
+                <div class="article-cta">
+                    <h3>Ready to Purchase?</h3>
+                    <p>Check the latest price and availability on Amazon:</p>
+                    <a href="{{AFFILIATE_LINK}}" class="btn-primary btn-large" target="_blank" rel="nofollow noopener">
+                        View {{PRODUCT_TITLE}} on Amazon
+                    </a>
+                </div>
+
+                <nav class="article-navigation">
+                    <a href="../index.html" class="btn-secondary">← Back to Top 10 List</a>
+                </nav>
+            </div>
+        </article>
+    </main>
+
+    <footer class="site-footer">
+        <div class="container">
+            <p>&copy; 2025 Top10Reviews. Product data sourced from Amazon.</p>
+            <p class="disclaimer">As an Amazon Associate, we earn from qualifying purchases.</p>
+        </div>
+    </footer>
+</body>
+</html>
