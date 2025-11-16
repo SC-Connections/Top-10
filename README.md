@@ -1,259 +1,255 @@
-# Top-10 Niche Site Generator
+# Top-10 Automated Niche Site Generator
 
-Automated generator for creating "Top 10" review sites for multiple niches using GitHub Actions, RapidAPI, and static HTML.
+🚀 A complete automated niche-site generator that creates SEO-optimized "Top 10" review sites for any product category using real Amazon data.
 
 ## 🎯 Overview
 
-This repository automatically generates complete Top 10 review sites for any niche listed in `niches.csv`. Each site features:
+This system automatically generates professional, SEO-optimized review websites featuring top 10 products in various niches. Each site includes:
 
-- 📊 Comparison tables with product rankings
-- 🎨 Responsive dark theme design
-- 📝 Detailed product reviews with pros/cons
-- 📖 Buyer's guide sections
-- ❓ FAQ with schema markup for SEO
-- 🔗 Amazon affiliate links
+- ✅ SEO-optimized HTML with proper meta tags and structured data
+- ✅ Responsive, modern design
+- ✅ Individual product review pages
+- ✅ Automated blog articles for each product
+- ✅ Buyer's guide sections
+- ✅ FAQ sections with schema markup
+- ✅ Daily updates via GitHub Actions
+- ✅ Automatic deployment to GitHub Pages
 
-## 🚀 Features
-
-- **Automated Generation**: GitHub Actions workflow generates sites for each niche
-- **Amazon Integration**: Fetches real products via RapidAPI (with fallback mock data)
-- **Responsive Design**: Mobile-first dark theme matching reference template
-- **SEO Optimized**: Structured data, meta tags, and semantic HTML
-- **Zero Dependencies**: Pure HTML/CSS output, no build step needed
-- **GitHub Pages Ready**: Automatically deploys to GitHub Pages
-
-## 📁 Project Structure
+## 📁 Repository Structure
 
 ```
-Top-10/
-├── .github/
-│   ├── workflows/
-│   │   └── generate-sites.yml       # GitHub Actions workflow
-│   └── scripts/
-│       └── generate-sites.js        # Main generation script
-├── _layouts/
-│   └── top10.html                   # HTML template with placeholders
-├── assets/
-│   └── css/
-│       └── review.css               # Stylesheet (dark theme)
-├── sites/                           # Generated sites (created by workflow)
-│   ├── bluetooth-earbuds/
-│   ├── digital-cameras/
-│   └── ...
-├── niches.csv                       # List of niches to generate
-├── package.json                     # Node.js dependencies
-├── index.html                       # Main index (auto-generated)
-└── README.md                        # This file
+/
+├── .github/workflows/
+│   └── build-sites.yml          # GitHub Actions workflow
+├── templates/
+│   ├── template.html            # Main page HTML template
+│   ├── template.json            # JSON template configuration
+│   ├── product-template.html    # Product card template
+│   ├── blog-template.html       # Blog article template
+│   └── global.css               # Complete stylesheet
+├── niches.csv                   # List of niches to generate
+├── site-generator.js            # Main generator script
+├── generate-seo.js              # SEO content generator
+├── generate-blog.js             # Blog content generator
+├── package.json                 # Node.js dependencies
+└── sites/                       # Generated sites (auto-created)
 ```
 
-## 🔧 Setup
+## 🚀 Quick Start
 
-### Required Secrets
+### Prerequisites
 
-Add these secrets to your GitHub repository (Settings → Secrets and variables → Actions):
+- Node.js 18 or higher
+- npm
 
-1. **RAPIDAPI_KEY**: Your RapidAPI API key (optional - uses mock data if not provided)
-2. **RAPIDAPI_HOST**: Your RapidAPI host endpoint (optional)
-3. **AMAZON_AFFILIATE_ID**: Your Amazon Associate tag (optional)
+### Installation
 
-### Enable GitHub Pages
-
-1. Go to repository Settings → Pages
-2. Source: Deploy from a branch
-3. Branch: `main` (or your default branch)
-4. Folder: `/ (root)`
-5. Save
-
-## 📝 Configuration
-
-### Adding Niches
-
-Edit `niches.csv` to add or modify niches:
-
-```csv
-keyword,nodeId,year,numProducts
-Bluetooth Earbuds,172282,2025,10
-Digital Cameras,502394,2025,10
-Gaming Microphones,11091801,2025,10
-Student Laptops,565108,2025,10
-Sleep Earbuds,172282,2025,10
+1. Clone the repository:
+```bash
+git clone https://github.com/SC-Connections/Top-10.git
+cd Top-10
 ```
 
-- **keyword**: Search term for products (e.g., "Bluetooth Earbuds")
-- **nodeId**: Amazon category node ID (optional, for API filtering)
-- **year**: Year for the review (e.g., 2025)
-- **numProducts**: Number of products to include (default: 10)
-
-## 🏃 Usage
-
-### Automatic Trigger
-
-The workflow runs automatically when:
-- You push changes to `niches.csv`
-- You push changes to workflow or script files
-- You manually trigger via Actions tab
-
-### Manual Trigger
-
-1. Go to the **Actions** tab
-2. Select **Generate Niche Sites**
-3. Click **Run workflow**
-4. Select branch and click **Run workflow**
-
-## 📦 Output
-
-For each niche, the script generates:
-
-```
-sites/{slug}/
-├── index.html           # Complete review site
-├── assets/
-│   └── css/
-│       └── review.css   # Stylesheet
-└── README.md            # Site-specific readme
-```
-
-The main `index.html` is also updated with links to all generated sites.
-
-## 🎨 Design Features
-
-Based on the SC-Connections bluetooth-earbuds template:
-
-- **Dark Theme**: `#0d0f12` background with `#5aa9ff` accent
-- **Sticky Header**: With navigation links
-- **Hero Section**: Title, description, last updated date
-- **Comparison Table**: Rank, product name, tagline, image, buy link
-- **Review Cards**: 2-column grid with image, description, pros/cons
-- **Buyer's Guide**: Step-by-step purchasing advice
-- **FAQ Section**: Common questions with schema markup
-- **Footer**: Affiliate disclosure and trust information
-
-## 🔍 API Integration
-
-### With RapidAPI (Recommended)
-
-The script fetches real product data from RapidAPI's Amazon API:
-
-```javascript
-// Set these environment variables/secrets
-RAPIDAPI_KEY=your_api_key
-RAPIDAPI_HOST=amazon-real-time-api.p.rapidapi.com
-AMAZON_AFFILIATE_ID=your_tag
-```
-
-### Without API (Mock Data)
-
-If API credentials aren't provided, the script generates:
-- Realistic product titles
-- Placeholder images
-- Randomized prices and ratings
-- Generic descriptions and pros/cons
-
-Perfect for testing and development!
-
-## 🧪 Local Development
-
-### Install Dependencies
-
+2. Install dependencies:
 ```bash
 npm install
 ```
 
-### Generate Sites Locally
-
+3. Set up environment variables (optional for local testing):
 ```bash
-# With API credentials (optional)
-export RAPIDAPI_KEY="your_key"
-export RAPIDAPI_HOST="your_host"
-export AMAZON_AFFILIATE_ID="your_tag"
-
-# Run generator
-node .github/scripts/generate-sites.js
-
-# View output
-ls -la sites/
+export RAPIDAPI_KEY="your-rapidapi-key"
+export RAPIDAPI_HOST="real-time-amazon-data.p.rapidapi.com"
+export AMAZON_AFFILIATE_ID="youraffid-20"
 ```
 
-### Test Generated Sites
-
+4. Run the generator:
 ```bash
-# Open in browser
-open sites/bluetooth-earbuds/index.html
-
-# Or use a local server
-npx http-server sites/bluetooth-earbuds
+node site-generator.js
 ```
 
-## 📋 Example Niches
+The generator will create sites in the `sites/` directory.
 
-The default `niches.csv` includes:
+## 📝 Adding New Niches
 
-1. **Bluetooth Earbuds** - Wireless audio devices
-2. **Digital Cameras** - Photography equipment
-3. **Gaming Microphones** - Streaming/gaming audio
-4. **Student Laptops** - Portable computers for students
-5. **Sleep Earbuds** - Comfortable earbuds for sleeping
+Simply add new product categories to `niches.csv`:
 
-Feel free to add any niche that has products on Amazon!
+```csv
+Bluetooth Earbuds
+Sleep Earbuds
+Digital Cameras
+Gaming Microphones
+Student Laptops
+Your New Niche Here
+```
 
-## 🔐 Security
+Each line should be a product category that people search for on Amazon.
 
-- **No Secrets in Code**: All API keys are stored as GitHub Secrets
-- **No API Keys Logged**: Keys are never printed to console
-- **Affiliate Disclosure**: Every page includes proper disclosure
-- **NoFollow Links**: All Amazon links use `rel="nofollow sponsored"`
+## 🔧 Configuration
 
-## 🚨 Troubleshooting
+### GitHub Secrets
 
-### Sites Not Generating
+For the GitHub Actions workflow to fetch real Amazon data, configure these secrets:
 
-- Check that `niches.csv` is properly formatted
-- Verify workflow is enabled in Actions tab
-- Check Actions logs for errors
+1. Go to Settings → Secrets and variables → Actions
+2. Add the following secrets:
+   - `RAPIDAPI_KEY`: Your RapidAPI key for Amazon Real-Time API
+   - `RAPIDAPI_HOST`: `real-time-amazon-data.p.rapidapi.com`
+   - `AMAZON_AFFILIATE_ID`: Your Amazon Associates affiliate ID
 
-### API Errors
+### Workflow Configuration
 
-- Verify RAPIDAPI_KEY and RAPIDAPI_HOST are correct
-- Check RapidAPI dashboard for rate limits
-- Script will fall back to mock data automatically
+The workflow runs:
+- On push to `main` branch
+- On manual trigger (workflow_dispatch)
+- Daily at 6 AM UTC (scheduled)
 
-### GitHub Pages Not Deploying
+## 🎨 Customization
 
-- Wait 1-2 minutes after push for build
-- Check Settings → Pages for build status
-- Ensure `main` branch has content in root
+### Templates
 
-### Empty Product Data
+All templates are in the `templates/` directory:
 
-- API might have returned no results for that keyword
-- Try different keywords or node IDs
-- Mock data will be used as fallback
+- **template.html**: Main page structure
+- **template.json**: Template configuration and placeholders
+- **product-template.html**: Individual product card layout
+- **blog-template.html**: Blog article page structure
+- **global.css**: All styles (fully customizable)
+
+### SEO Content
+
+The `generate-seo.js` module handles:
+- Introduction paragraphs
+- Buyer's guides
+- FAQ sections
+- Call-to-action text
+- Structured data
+
+Customize these functions to match your brand voice.
+
+### Blog Content
+
+The `generate-blog.js` module creates detailed product reviews. Modify the content generation functions to adjust:
+- Article length
+- Writing style
+- Section structure
+- Use case recommendations
+
+## 📊 Features
+
+### SEO Optimization
+
+- ✅ Proper HTML5 semantic markup
+- ✅ Meta descriptions and keywords
+- ✅ Open Graph tags for social sharing
+- ✅ JSON-LD structured data (Product, ItemList, FAQ schemas)
+- ✅ Breadcrumb navigation
+- ✅ Mobile-responsive design
+
+### Content Generation
+
+- ✅ Automated intro paragraphs
+- ✅ Product comparisons
+- ✅ Pros and cons lists
+- ✅ Key features extraction
+- ✅ Buyer's guide (300-500 words)
+- ✅ FAQ section (5 questions)
+- ✅ Individual blog articles (300-600 words each)
+
+### Design
+
+- ✅ Modern, clean layout
+- ✅ Responsive grid system
+- ✅ Professional color scheme
+- ✅ Hover effects and animations
+- ✅ Mobile-first approach
+
+## 🔄 How It Works
+
+1. **Read Niches**: Reads product categories from `niches.csv`
+2. **Fetch Products**: Calls Amazon API to get top 10 products for each niche
+3. **Generate SEO Content**: Creates optimized content using `generate-seo.js`
+4. **Generate Blog Articles**: Creates detailed reviews using `generate-blog.js`
+5. **Build Pages**: Compiles templates with product data
+6. **Deploy**: GitHub Actions publishes to GitHub Pages
+
+## 🌐 Generated Site Structure
+
+Each niche site includes:
+
+```
+/sites/bluetooth-earbuds/
+├── index.html           # Main top 10 list page
+├── global.css          # Styles
+└── blog/
+    ├── ASIN1.html      # Product 1 detailed review
+    ├── ASIN2.html      # Product 2 detailed review
+    └── ...             # Reviews for all 10 products
+```
+
+## 📈 GitHub Pages Deployment
+
+The workflow automatically:
+1. Generates all niche sites
+2. Creates a main index page listing all sites
+3. Deploys to GitHub Pages
+4. Updates daily with fresh Amazon data
+
+Access your sites at: `https://[username].github.io/Top-10/`
+
+## 🛠️ Development
+
+### Running Locally
+
+```bash
+# Install dependencies
+npm install
+
+# Generate sites
+node site-generator.js
+
+# Sites will be in the sites/ directory
+# Open sites/[niche-slug]/index.html in a browser
+```
+
+### Mock Data
+
+When API keys are not configured, the generator uses mock data for testing. This allows you to:
+- Test the system without API access
+- Preview the site structure
+- Develop templates and styles
 
 ## 🤝 Contributing
 
-1. Fork the repository
-2. Add your niches to `niches.csv`
-3. Customize templates in `_layouts/` and `assets/css/`
-4. Test locally with `node .github/scripts/generate-sites.js`
-5. Submit a pull request
+Contributions are welcome! Areas for improvement:
+- Additional template designs
+- More niche-specific content generators
+- Enhanced SEO features
+- Better product data extraction
+- Internationalization
 
 ## 📄 License
 
-MIT License - Feel free to use and modify for your projects.
+MIT License - feel free to use this for your own projects!
 
-## 🙏 Credits
+## 🔗 Resources
 
-- Design based on SC-Connections/bluetooth-earbuds template
-- Built for automated niche site generation
-- Powered by GitHub Actions and RapidAPI
+- [Amazon Real-Time API](https://rapidapi.com/letscrape-6bRBa3QguO5/api/real-time-amazon-data)
+- [Amazon Associates Program](https://affiliate-program.amazon.com/)
+- [GitHub Pages Documentation](https://docs.github.com/en/pages)
+- [Schema.org Product Documentation](https://schema.org/Product)
+
+## 💡 Tips
+
+1. **Choose Good Niches**: Select product categories with high search volume
+2. **Update Regularly**: The daily cron job keeps data fresh
+3. **Monitor Performance**: Check which niches perform best
+4. **Customize Content**: Tailor the SEO content to your target audience
+5. **Test Locally**: Always test changes locally before deploying
 
 ## 📞 Support
 
-For issues or questions:
-1. Check the troubleshooting section above
-2. Review GitHub Actions logs
-3. Open an issue in this repository
+For issues or questions, please open a GitHub issue.
 
 ---
 
-**Happy site generating! 🎉**
+Built with ❤️ for affiliate marketers and content creators

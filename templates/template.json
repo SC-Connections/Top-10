@@ -1,0 +1,23 @@
+{
+  "title": "Top 10 {{NICHE}} (2025) – Updated Daily",
+  "meta_description": "Compare the top 10 {{NICHE}} for 2025. Updated daily using real Amazon data. Reviews, ratings, pros & cons, and buying guide.",
+  "meta_keywords": "{{NICHE}}, best {{NICHE}}, top {{NICHE}}, {{NICHE}} reviews, {{NICHE}} 2025",
+  "sections": {
+    "hero_title": "Best {{NICHE}} (Top 10 in 2025)",
+    "intro_title": "Top-Rated {{NICHE}} for 2025",
+    "intro_paragraph": "{{INTRO_CONTENT}}",
+    "products_section_title": "Top 10 {{NICHE}} Comparison",
+    "buyers_guide_title": "Buyer's Guide: How to Choose the Best {{NICHE}}",
+    "buyers_guide_content": "{{BUYERS_GUIDE_CONTENT}}",
+    "faq_title": "Frequently Asked Questions About {{NICHE}}",
+    "faq_content": "{{FAQ_CONTENT}}",
+    "cta_text": "{{CTA_CONTENT}}"
+  },
+  "product_template_file": "product-template.html",
+  "blog_template_file": "blog-template.html",
+  "structured_data": {
+    "type": "ItemList",
+    "name": "Top 10 {{NICHE}} (2025)",
+    "description": "The best {{NICHE}} available in 2025, ranked and reviewed"
+  }
+}

@@ -1,21 +1,22 @@
 {
   "name": "top-10-niche-generator",
   "version": "1.0.0",
-  "description": "Automated niche-site generator for Top 10 review sites",
-  "main": ".github/scripts/generate-sites.js",
+  "description": "Automated niche-site generator for top 10 product review sites",
+  "main": "site-generator.js",
   "scripts": {
-    "test": "echo \"No tests specified\" && exit 0"
+    "generate": "node site-generator.js",
+    "test": "echo \"No tests yet\" && exit 0"
   },
   "keywords": [
-    "review",
+    "seo",
     "generator",
     "amazon",
-    "affiliate"
+    "affiliate",
+    "niche-site"
   ],
-  "author": "SC-Connections",
+  "author": "",
   "license": "MIT",
   "dependencies": {
-    "axios": "^1.6.0",
-    "csv-parse": "^5.5.0"
+    "axios": "^1.12.0"
   }
 }
