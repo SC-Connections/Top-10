@@ -302,8 +302,22 @@ function generateConclusionSection(product, rank) {
  */
 function estimateReadingTime(content) {
     const wordsPerMinute = 200;
-    const text = content.replace(/<[^>]*>/g, ''); // Remove HTML tags
-    const wordCount = text.split(/\s+/).length;
+    // Remove HTML tags for word counting - content is programmatically generated, not user input
+    // Using multiple passes to handle nested and complex HTML structures
+    let text = content;
+    // Remove script and style tags and their content
+    text = text.replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '');
+    text = text.replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '');
+    // Remove all remaining HTML tags
+    text = text.replace(/<[^>]+>/g, '');
+    // Decode common HTML entities
+    text = text.replace(/&nbsp;/g, ' ');
+    text = text.replace(/&amp;/g, '&');
+    text = text.replace(/&lt;/g, '<');
+    text = text.replace(/&gt;/g, '>');
+    text = text.replace(/&quot;/g, '"');
+    // Count words
+    const wordCount = text.split(/\s+/).filter(word => word.length > 0).length;
     const minutes = Math.ceil(wordCount / wordsPerMinute);
     return Math.max(1, minutes);
 }
