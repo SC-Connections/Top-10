@@ -58,7 +58,7 @@ npm install
 3. Set up environment variables (optional for local testing):
 ```bash
 export RAPIDAPI_KEY="your-rapidapi-key"
-export RAPIDAPI_HOST="real-time-amazon-data.p.rapidapi.com"
+export RAPIDAPI_HOST="amazon-real-time-api.p.rapidapi.com"
 export AMAZON_AFFILIATE_ID="youraffid-20"
 ```
 
@@ -93,7 +93,7 @@ For the GitHub Actions workflow to fetch real Amazon data, configure these secre
 1. Go to Settings → Secrets and variables → Actions
 2. Add the following secrets:
    - `RAPIDAPI_KEY`: Your RapidAPI key for Amazon Real-Time API
-   - `RAPIDAPI_HOST`: `real-time-amazon-data.p.rapidapi.com`
+   - `RAPIDAPI_HOST`: `amazon-real-time-api.p.rapidapi.com`
    - `AMAZON_AFFILIATE_ID`: Your Amazon Associates affiliate ID
 
 ### Workflow Configuration

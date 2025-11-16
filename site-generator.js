@@ -12,7 +12,7 @@ const { generateBlogArticle } = require('./generate-blog');
 // Configuration
 const CONFIG = {
     RAPIDAPI_KEY: process.env.RAPIDAPI_KEY || '',
-    RAPIDAPI_HOST: process.env.RAPIDAPI_HOST || 'real-time-amazon-data.p.rapidapi.com',
+    RAPIDAPI_HOST: (process.env.RAPIDAPI_HOST || 'amazon-real-time-api.p.rapidapi.com').trim(),
     AMAZON_AFFILIATE_ID: process.env.AMAZON_AFFILIATE_ID || 'youraffid-20',
     BASE_URL: 'https://sc-connections.github.io/Top-10',
     NICHES_FILE: path.join(__dirname, 'niches.csv'),
