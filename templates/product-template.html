@@ -1,0 +1,60 @@
+<div class="product-card" data-rank="{{RANK}}">
+    <div class="product-badge">
+        <span class="rank-badge">#{{RANK}}</span>
+        {{BADGE}}
+    </div>
+    
+    <div class="product-image">
+        <img src="{{IMAGE_URL}}" alt="{{PRODUCT_TITLE}}" loading="lazy">
+    </div>
+    
+    <div class="product-info">
+        <h3 class="product-title">{{PRODUCT_TITLE}}</h3>
+        
+        <div class="product-rating">
+            <div class="stars">{{RATING_STARS}}</div>
+            <span class="rating-score">{{RATING}} / 5</span>
+            <span class="review-count">({{REVIEW_COUNT}} reviews)</span>
+        </div>
+        
+        <div class="product-price">
+            <span class="price-label">Price:</span>
+            <span class="price-value">{{PRICE}}</span>
+        </div>
+        
+        <div class="product-description">
+            {{SHORT_DESCRIPTION}}
+        </div>
+        
+        <div class="product-features">
+            <h4>Key Features:</h4>
+            <ul>
+                {{FEATURES_LIST}}
+            </ul>
+        </div>
+        
+        <div class="product-pros-cons">
+            <div class="pros">
+                <h4>✓ Pros:</h4>
+                <ul>
+                    {{PROS_LIST}}
+                </ul>
+            </div>
+            <div class="cons">
+                <h4>✗ Cons:</h4>
+                <ul>
+                    {{CONS_LIST}}
+                </ul>
+            </div>
+        </div>
+        
+        <div class="product-actions">
+            <a href="{{AFFILIATE_LINK}}" class="btn-primary" target="_blank" rel="nofollow noopener">
+                View on Amazon
+            </a>
+            <a href="blog/{{ASIN}}.html" class="btn-secondary">
+                Read Full Review
+            </a>
+        </div>
+    </div>
+</div>
