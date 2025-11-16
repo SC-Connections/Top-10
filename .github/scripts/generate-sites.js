@@ -231,43 +231,67 @@ function renderTemplate(template, data) {
     return data[key] !== undefined ? data[key] : match;
   });
   
-  // Handle each loops {{#each array}}...{{/each}}
-  result = result.replace(/\{\{#each (\w+)\}\}([\s\S]*?)\{\{\/each\}\}/g, (match, arrayName, content) => {
-    const array = data[arrayName];
-    if (!Array.isArray(array)) return '';
+  // Function to process each loops recursively
+  function processEachLoops(content, contextData, isNestedContext = false) {
+    let processed = content;
     
-    return array.map((item, index) => {
-      let itemContent = content;
-      
-      // Replace {{this}} and {{this.property}}
-      itemContent = itemContent.replace(/\{\{this\.(\w+)\}\}/g, (m, prop) => {
-        return item[prop] !== undefined ? item[prop] : '';
+    // Handle each loops - support both {{#each array}} and {{#each this.array}}
+    const eachPattern = isNestedContext 
+      ? /\{\{#each (?:this\.)?(\w+)\}\}([\s\S]*?)\{\{\/each\}\}/
+      : /\{\{#each (\w+)\}\}([\s\S]*?)\{\{\/each\}\}/;
+    
+    // Keep processing until no more each loops found
+    let hasMatch = true;
+    while (hasMatch) {
+      hasMatch = false;
+      processed = processed.replace(eachPattern, (match, arrayName, loopContent) => {
+        hasMatch = true;
+        const array = contextData[arrayName];
+        if (!Array.isArray(array)) return '';
+        
+        return array.map((item, index) => {
+          let itemContent = loopContent;
+          
+          // Replace {{@index}}
+          itemContent = itemContent.replace(/\{\{@index\}\}/g, index);
+          
+          // Handle {{#unless @last}}...{{/unless}}
+          const isLast = index === array.length - 1;
+          itemContent = itemContent.replace(/\{\{#unless @last\}\}([\s\S]*?)\{\{\/unless\}\}/g, (m, unlessContent) => {
+            return isLast ? '' : unlessContent;
+          });
+          
+          // Handle {{increment @index}}
+          itemContent = itemContent.replace(/\{\{increment @index\}\}/g, index + 1);
+          
+          // Replace {{this.property}} before processing nested loops
+          itemContent = itemContent.replace(/\{\{this\.(\w+)\}\}/g, (m, prop) => {
+            if (typeof item === 'object' && item !== null && item[prop] !== undefined) {
+              const value = item[prop];
+              // Don't replace if it's an array that will be processed by nested each
+              if (Array.isArray(value)) return m;
+              return value;
+            }
+            return '';
+          });
+          
+          // Process nested loops if item is an object
+          if (typeof item === 'object' && item !== null) {
+            itemContent = processEachLoops(itemContent, item, true);
+          }
+          
+          // Replace remaining {{this}} (after nested loops)
+          itemContent = itemContent.replace(/\{\{this\}\}/g, typeof item === 'object' ? JSON.stringify(item) : item);
+          
+          return itemContent;
+        }).join('');
       });
-      
-      itemContent = itemContent.replace(/\{\{this\}\}/g, item);
-      
-      // Replace {{@index}}
-      itemContent = itemContent.replace(/\{\{@index\}\}/g, index);
-      
-      // Handle {{#unless @last}}...{{/unless}}
-      const isLast = index === array.length - 1;
-      itemContent = itemContent.replace(/\{\{#unless @last\}\}([\s\S]*?)\{\{\/unless\}\}/g, (m, unlessContent) => {
-        return isLast ? '' : unlessContent;
-      });
-      
-      // Handle nested each for arrays
-      itemContent = itemContent.replace(/\{\{#each this\.(\w+)\}\}([\s\S]*?)\{\{\/each\}\}/g, (m2, subArrayName, subContent) => {
-        const subArray = item[subArrayName];
-        if (!Array.isArray(subArray)) return '';
-        return subArray.map(subItem => subContent.replace(/\{\{this\}\}/g, subItem)).join('');
-      });
-      
-      // Replace {{increment @index}}
-      itemContent = itemContent.replace(/\{\{increment @index\}\}/g, index + 1);
-      
-      return itemContent;
-    }).join('');
-  });
+    }
+    
+    return processed;
+  }
+  
+  result = processEachLoops(result, data);
   
   return result;
 }
@@ -303,6 +327,13 @@ async function generateAllSites() {
     const products = await fetchProducts(niche.keyword, niche.nodeId, parseInt(niche.numProducts));
     console.log(`✓ Fetched ${products.length} products`);
     
+    // Pre-render pros/cons as HTML to avoid nested template issues
+    const productsWithRenderedLists = products.map(product => ({
+      ...product,
+      prosHtml: product.pros.map(p => `<li>${p}</li>`).join('\n                  '),
+      consHtml: product.cons.map(c => `<li>${c}</li>`).join('\n                  ')
+    }));
+    
     // Generate content data
     const currentDate = new Date();
     const templateData = {
@@ -316,7 +347,7 @@ async function generateAllSites() {
       }),
       siteUrl: `https://sc-connections.github.io/Top-10/sites/${slug}/`,
       basePath: '.',
-      products: products,
+      products: productsWithRenderedLists,
       guide: generateBuyersGuide(niche.keyword),
       faqs: generateFAQs(niche.keyword)
     };
