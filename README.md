@@ -4,8 +4,9 @@
 
 ## 🎯 Overview
 
-This system automatically generates professional, SEO-optimized review websites featuring top 10 products in various niches. Each site includes:
+This system automatically generates professional, SEO-optimized review websites featuring top 10 products in various niches. Each site is deployed to its own GitHub repository with automatic GitHub Pages hosting.
 
+**Key Features:**
 - ✅ SEO-optimized HTML with proper meta tags and structured data
 - ✅ Responsive, modern design
 - ✅ Individual product review pages
@@ -13,8 +14,8 @@ This system automatically generates professional, SEO-optimized review websites 
 - ✅ Buyer's guide sections
 - ✅ FAQ sections with schema markup
 - ✅ Daily updates via GitHub Actions
-- ✅ Automatic deployment to GitHub Pages
-- ✅ **NEW**: Auto-publishing to separate GitHub repositories (optional)
+- ✅ **Each niche gets its own GitHub repository and Pages URL**
+- ✅ Automatic deployment pipeline for each site
 
 ## 📁 Repository Structure
 
@@ -96,7 +97,7 @@ For the GitHub Actions workflow to fetch real Amazon data and publish sites to s
    - `RAPIDAPI_KEY`: Your RapidAPI key for Amazon Real-Time API
    - `RAPIDAPI_HOST`: `amazon-real-time-api.p.rapidapi.com`
    - `AMAZON_AFFILIATE_ID`: Your Amazon Associates affiliate ID
-   - `GH_PAT`: Fine-grained Personal Access Token with repo:write access for SC-Connections account (optional, for auto-publishing to separate repos)
+   - `PAT_TOKEN`: Fine-grained Personal Access Token with repo:write access for SC-Connections account (required for auto-publishing to separate repos)
 
 ### Workflow Configuration
 
@@ -104,6 +105,23 @@ The workflow runs:
 - On push to `main` branch
 - On manual trigger (workflow_dispatch)
 - Daily at 6 AM UTC (scheduled)
+
+### Multi-Repository Architecture
+
+Each niche site is deployed to its own dedicated GitHub repository:
+
+- **Repository naming**: `top10-<niche-slug>` (e.g., `top10-bluetooth-earbuds`)
+- **GitHub Pages URL**: `https://sc-connections.github.io/top10-<niche-slug>/`
+- **Automatic workflow**: Each repo includes a `.github/workflows/deploy.yml` file for GitHub Pages deployment
+- **Main repo role**: This Top-10 repository serves as the generator and orchestrator, creating and updating all niche site repositories
+
+When the workflow runs:
+1. Generates all niche sites locally in the `/sites/` directory
+2. For each niche:
+   - Creates or updates the repository `top10-<niche-slug>`
+   - Pushes the site content (index.html, blog/, global.css)
+   - Includes a GitHub Actions workflow for Pages deployment
+   - Enables GitHub Pages for the repository
 
 ## 🎨 Customization
 

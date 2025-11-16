@@ -11,15 +11,9 @@ on:
 
 permissions:
   contents: write
-  pages: write
-  id-token: write
-
-concurrency:
-  group: "pages"
-  cancel-in-progress: false
 
 jobs:
-  build-sites:
+  build-and-publish-sites:
     runs-on: ubuntu-latest
     
     steps:
@@ -34,149 +28,31 @@ jobs:
       - name: Install dependencies
         run: npm install
       
-      - name: Generate sites
+      - name: Generate and publish sites to individual repositories
         env:
           RAPIDAPI_KEY: ${{ secrets.RAPIDAPI_KEY }}
           RAPIDAPI_HOST: ${{ secrets.RAPIDAPI_HOST }}
           AMAZON_AFFILIATE_ID: ${{ secrets.AMAZON_AFFILIATE_ID }}
-          GH_PAT: ${{ secrets.GH_PAT }}
-        run: node site-generator.js
-      
-      - name: Create index page for all sites
+          PAT_TOKEN: ${{ secrets.PAT_TOKEN }}
         run: |
-          cat > sites/index.html << 'EOF'
-          <!DOCTYPE html>
-          <html lang="en">
-          <head>
-              <meta charset="UTF-8">
-              <meta name="viewport" content="width=device-width, initial-scale=1.0">
-              <title>Top 10 Review Sites</title>
-              <style>
-                  body {
-                      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-                      max-width: 1200px;
-                      margin: 0 auto;
-                      padding: 2rem;
-                      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-                      min-height: 100vh;
-                  }
-                  h1 {
-                      color: white;
-                      text-align: center;
-                      font-size: 2.5rem;
-                      margin-bottom: 3rem;
-                  }
-                  .sites-grid {
-                      display: grid;
-                      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-                      gap: 2rem;
-                  }
-                  .site-card {
-                      background: white;
-                      border-radius: 12px;
-                      padding: 2rem;
-                      box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-                      transition: transform 0.3s;
-                  }
-                  .site-card:hover {
-                      transform: translateY(-5px);
-                  }
-                  .site-card h2 {
-                      color: #2563eb;
-                      margin-bottom: 1rem;
-                  }
-                  .site-card a {
-                      display: inline-block;
-                      margin-top: 1rem;
-                      padding: 0.75rem 1.5rem;
-                      background: #2563eb;
-                      color: white;
-                      text-decoration: none;
-                      border-radius: 6px;
-                      font-weight: 600;
-                  }
-                  .site-card a:hover {
-                      background: #1e40af;
-                  }
-                  .badge {
-                      display: inline-block;
-                      padding: 0.25rem 0.5rem;
-                      background: #10b981;
-                      color: white;
-                      border-radius: 4px;
-                      font-size: 0.75rem;
-                      margin-left: 0.5rem;
-                  }
-              </style>
-          </head>
-          <body>
-              <h1>🏆 Top 10 Review Sites</h1>
-              <div class="sites-grid">
-          EOF
+          echo "🚀 Generating niche sites and publishing to individual repositories..."
+          node site-generator.js
+          echo "✅ All sites generated and published successfully!"
+      
+      - name: Summary
+        run: |
+          echo "## Deployment Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Each niche site has been deployed to its own repository:" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
           
-          # Check if niche data JSON exists
           if [ -f "sites/_niches_data.json" ]; then
-            # Use the JSON data with URLs
             node -e "
               const fs = require('fs');
               const data = JSON.parse(fs.readFileSync('sites/_niches_data.json', 'utf-8'));
               data.forEach(({ niche, slug, url }) => {
-                const isPagesUrl = url.includes('sc-connections.github.io') && !url.includes('Top-10');
-                const badge = isPagesUrl ? '<span class=\"badge\">Live</span>' : '';
-                console.log(\`
-                  <div class=\"site-card\">
-                      <h2>\${niche}\${badge}</h2>
-                      <p>Explore our top 10 picks for \${niche}</p>
-                      <a href=\"\${url}\" target=\"_blank\">View Top 10 →</a>
-                  </div>\`);
+                console.log(\`- **\${niche}**: [\${url}](\${url})\`);
               });
-            " >> sites/index.html
-          else
-            # Fallback to old method if JSON doesn't exist
-            for dir in sites/*/; do
-              if [ -d "$dir" ] && [ -f "${dir}index.html" ]; then
-                dirname=$(basename "$dir")
-                if [ "$dirname" != "_niches_data.json" ]; then
-                  nicename=$(echo "$dirname" | sed 's/-/ /g' | sed 's/\b\(.\)/\u\1/g')
-                  cat >> sites/index.html << CARD
-                  <div class="site-card">
-                      <h2>$nicename</h2>
-                      <p>Explore our top 10 picks for $nicename</p>
-                      <a href="$dirname/">View Top 10 →</a>
-                  </div>
-          CARD
-                fi
-              fi
-            done
+            " >> $GITHUB_STEP_SUMMARY
           fi
-          
-          cat >> sites/index.html << 'EOF'
-              </div>
-          </body>
-          </html>
-          EOF
-      
-      - name: Setup Pages
-        uses: actions/configure-pages@v4
-      
-      - name: Upload artifact
-        uses: actions/upload-pages-artifact@v2
-        with:
-          path: './sites'
-  
-  deploy:
-    needs: build-sites
-    runs-on: ubuntu-latest
-    
-    permissions:
-      pages: write
-      id-token: write
-    
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    
-    steps:
-      - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4
+
