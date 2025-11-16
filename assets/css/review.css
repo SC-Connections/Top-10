@@ -1,0 +1,280 @@
+:root {
+  --bg: #0d0f12;
+  --card: #15181d;
+  --muted: #8a94a6;
+  --text: #eaeef5;
+  --accent: #5aa9ff;
+  --accent-2: #77dd77;
+  --border: #222831;
+  --danger: #ff6b6b;
+  --radius: 14px;
+  --shadow: 0 10px 30px rgba(0,0,0,.35);
+  --maxw: 1100px;
+}
+
+* { 
+  box-sizing: border-box;
+}
+
+html, body { 
+  margin: 0; 
+  padding: 0; 
+  background: var(--bg); 
+  color: var(--text); 
+  font-family: system-ui, -apple-system, Segoe UI, Roboto, Inter, Helvetica, Arial, sans-serif; 
+  line-height: 1.6;
+}
+
+a { 
+  color: var(--accent); 
+  text-decoration: none;
+}
+
+a:hover { 
+  text-decoration: underline;
+}
+
+header {
+  position: sticky; 
+  top: 0; 
+  z-index: 50;
+  backdrop-filter: saturate(140%) blur(8px);
+  background: rgba(13,15,18,.8);
+  border-bottom: 1px solid var(--border);
+}
+
+.nav {
+  display: flex; 
+  align-items: center; 
+  justify-content: space-between;
+  max-width: var(--maxw); 
+  margin: 0 auto; 
+  padding: .9rem 1.1rem;
+}
+
+.logo { 
+  font-size: 1.1rem; 
+  font-weight: 700; 
+  letter-spacing: .2px;
+}
+
+.nav-links a { 
+  margin-left: 1rem; 
+  font-weight: 600;
+}
+
+main { 
+  max-width: var(--maxw); 
+  margin: 0 auto; 
+  padding: 1.2rem;
+}
+
+.hero {
+  margin: 1rem 0 1.25rem; 
+  padding: 1rem 1.1rem;
+  background: linear-gradient(180deg, #0f1319, #0d0f12);
+  border: 1px solid var(--border); 
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+
+.hero-title { 
+  font-size: 1.5rem; 
+  margin: .2rem 0 .4rem;
+}
+
+.muted { 
+  color: var(--muted);
+}
+
+.small { 
+  font-size: .85rem;
+}
+
+/* scroll-offset */
+html { 
+  scroll-padding-top: 64px;
+}
+
+.table-wrap { 
+  overflow-x: auto; 
+  margin-top: 1.3rem;
+}
+
+table { 
+  width: 100%; 
+  border-collapse: collapse; 
+  font-size: .95rem; 
+  min-width: 700px;
+}
+
+td { 
+  border-bottom: 1px solid var(--border); 
+  padding: .75rem .55rem; 
+  text-align: left; 
+  vertical-align: middle;
+}
+
+tr:hover td { 
+  background: rgba(255,255,255,.02);
+}
+
+.rank { 
+  font-weight: 700; 
+  width: 56px;
+}
+
+.cta-link { 
+  font-weight: 700;
+}
+
+.grid {
+  display: grid; 
+  gap: 1rem;
+  grid-template-columns: repeat(12, 1fr);
+  margin-top: 1.25rem;
+}
+
+.card {
+  grid-column: span 12;
+  background: var(--card); 
+  border: 1px solid var(--border);
+  border-radius: var(--radius); 
+  box-shadow: var(--shadow);
+  padding: .9rem;
+  display: grid; 
+  grid-template-columns: 120px 1fr; 
+  gap: 1rem;
+}
+
+.card img {
+  width: 100%; 
+  height: auto; 
+  border-radius: 10px; 
+  border: 1px solid var(--border);
+  background: #0f1216;
+}
+
+.badge { 
+  display: inline-block; 
+  font-size: .75rem; 
+  padding: .22rem .5rem; 
+  border-radius: 999px; 
+  background: #0f2a18; 
+  color: var(--accent-2); 
+  border: 1px solid #173b24; 
+  margin-right: .4rem;
+}
+
+.btn {
+  display: inline-block; 
+  margin-top: .65rem; 
+  padding: .7rem 1rem; 
+  font-weight: 800; 
+  letter-spacing: .3px;
+  background: var(--accent); 
+  color: #031225; 
+  border-radius: 10px; 
+  border: none;
+}
+
+.btn:hover { 
+  filter: brightness(1.05); 
+  text-decoration: none;
+}
+
+.pros-cons { 
+  display: grid; 
+  grid-template-columns: 1fr 1fr; 
+  gap: .5rem; 
+  margin-top: .3rem;
+}
+
+.pc-box { 
+  background: #10141a; 
+  border: 1px solid var(--border); 
+  border-radius: 10px; 
+  padding: .5rem .6rem; 
+  font-size: .92rem;
+}
+
+.pc-box h4 { 
+  margin: .2rem 0 .35rem; 
+  font-size: .88rem; 
+  letter-spacing: .25px;
+}
+
+.pc-box ul { 
+  margin: 0; 
+  padding-left: 1.1rem;
+}
+
+.pc-box li { 
+  margin: .15rem 0;
+}
+
+section { 
+  margin-top: 2rem;
+}
+
+h2 { 
+  font-size: 1.35rem; 
+  margin-bottom: .6rem;
+}
+
+h3 { 
+  font-size: 1.1rem; 
+  margin: .8rem 0 .3rem;
+}
+
+.tip { 
+  border-left: 3px solid var(--accent); 
+  padding: .6rem .8rem; 
+  background: #0f1318; 
+  border-radius: 8px; 
+  color: var(--muted);
+}
+
+footer {
+  margin-top: 2.2rem; 
+  padding: 1.2rem; 
+  color: var(--muted);
+  border-top: 1px solid var(--border); 
+  background: #0c0e12;
+}
+
+.foot-inner { 
+  max-width: var(--maxw); 
+  margin: 0 auto;
+}
+
+.disclosure { 
+  font-size: .9rem;
+}
+
+@media (max-width: 820px) {
+  .card { 
+    grid-template-columns: 92px 1fr;
+  }
+  td { 
+    font-size: .92rem;
+  }
+  .pros-cons { 
+    grid-template-columns: 1fr;
+  }
+  .logo { 
+    font-size: 1rem;
+  }
+}
+
+@media (max-width: 540px) {
+  .nav-links { 
+    display: none;
+  }
+  table { 
+    min-width: 600px;
+  }
+  html { 
+    scroll-padding-top: 56px;
+  }
+}
