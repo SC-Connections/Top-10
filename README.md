@@ -14,6 +14,7 @@ This system automatically generates professional, SEO-optimized review websites 
 - ✅ FAQ sections with schema markup
 - ✅ Daily updates via GitHub Actions
 - ✅ Automatic deployment to GitHub Pages
+- ✅ **NEW**: Auto-publishing to separate GitHub repositories (optional)
 
 ## 📁 Repository Structure
 
@@ -88,13 +89,14 @@ Each line should be a product category that people search for on Amazon.
 
 ### GitHub Secrets
 
-For the GitHub Actions workflow to fetch real Amazon data, configure these secrets:
+For the GitHub Actions workflow to fetch real Amazon data and publish sites to separate repositories, configure these secrets:
 
 1. Go to Settings → Secrets and variables → Actions
 2. Add the following secrets:
    - `RAPIDAPI_KEY`: Your RapidAPI key for Amazon Real-Time API
    - `RAPIDAPI_HOST`: `amazon-real-time-api.p.rapidapi.com`
    - `AMAZON_AFFILIATE_ID`: Your Amazon Associates affiliate ID
+   - `GH_PAT`: Fine-grained Personal Access Token with repo:write access for SC-Connections account (optional, for auto-publishing to separate repos)
 
 ### Workflow Configuration
 
@@ -170,7 +172,27 @@ The `generate-blog.js` module creates detailed product reviews. Modify the conte
 3. **Generate SEO Content**: Creates optimized content using `generate-seo.js`
 4. **Generate Blog Articles**: Creates detailed reviews using `generate-blog.js`
 5. **Build Pages**: Compiles templates with product data
-6. **Deploy**: GitHub Actions publishes to GitHub Pages
+6. **Auto-Publish** (Optional): If GH_PAT is configured, publishes each site to its own GitHub repository
+7. **Deploy**: GitHub Actions publishes to GitHub Pages
+
+## 🚀 Auto-Publishing Feature
+
+When configured with a GitHub Personal Access Token (`GH_PAT`), the generator automatically:
+
+1. **Creates a separate GitHub repository** for each niche site at `https://github.com/SC-Connections/<niche-slug>`
+2. **Pushes all site content** to the new repository
+3. **Enables GitHub Pages** automatically on the `main` branch
+4. **Outputs the public URL** at `https://sc-connections.github.io/<niche-slug>/`
+
+### Benefits:
+- ✅ Each niche site has its own dedicated repository
+- ✅ Independent version control for each site
+- ✅ Separate GitHub Pages URLs for better SEO
+- ✅ Easier to manage individual sites
+- ✅ Falls back gracefully if token is not configured
+
+### Setup:
+Add a fine-grained Personal Access Token with `repo:write` permissions to the `GH_PAT` secret in GitHub Actions settings.
 
 ## 🌐 Generated Site Structure
 
@@ -190,11 +212,20 @@ Each niche site includes:
 
 The workflow automatically:
 1. Generates all niche sites
-2. Creates a main index page listing all sites
-3. Deploys to GitHub Pages
-4. Updates daily with fresh Amazon data
+2. (Optional) Publishes each site to its own repository if `GH_PAT` is configured
+3. Creates a main index page listing all sites with their respective URLs
+4. Deploys the index to the main repository's GitHub Pages
+5. Updates daily with fresh Amazon data
 
-Access your sites at: `https://[username].github.io/Top-10/`
+### Deployment Options:
+
+**With GH_PAT configured:**
+- Each niche site is published to: `https://sc-connections.github.io/<niche-slug>/`
+- Main index page at: `https://sc-connections.github.io/Top-10/`
+
+**Without GH_PAT:**
+- All sites are deployed under the main repository
+- Access sites at: `https://sc-connections.github.io/Top-10/sites/<niche-slug>/`
 
 ## 🛠️ Development
 
