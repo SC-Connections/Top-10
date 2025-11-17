@@ -37,7 +37,7 @@ const scenarios = [
         expectedError: 'Invalid API response structure'
     },
     {
-        name: 'API returns products with missing ASIN',
+        name: 'API returns products with missing ASIN (should skip and continue)',
         apiResponse: {
             success: true,
             data: {
@@ -50,15 +50,26 @@ const scenarios = [
                         rating: 4.5,
                         review_count: 100,
                         description: 'Test description'
+                    },
+                    {
+                        asin: 'B0TEST456',
+                        title: 'Valid Product',
+                        image_url: 'https://example.com/image2.jpg',
+                        price: 79.99,
+                        rating: 4.7,
+                        review_count: 200,
+                        description: 'Valid description',
+                        features: ['Feature 1', 'Feature 2']
                     }
                 ]
             }
         },
-        shouldFail: true,
-        expectedError: 'missing required fields'
+        shouldFail: false,  // Changed: should skip invalid and use valid
+        expectedError: null,
+        expectedValidCount: 1
     },
     {
-        name: 'API returns products with missing images',
+        name: 'API returns products with missing images (should skip and continue)',
         apiResponse: {
             success: true,
             data: {
@@ -71,12 +82,72 @@ const scenarios = [
                         rating: 4.5,
                         review_count: 100,
                         description: 'Test description'
+                    },
+                    {
+                        asin: 'B0TEST789',
+                        title: 'Valid Product with Image',
+                        image_url: 'https://example.com/image3.jpg',
+                        price: 89.99,
+                        rating: 4.6,
+                        review_count: 150,
+                        description: 'Valid description',
+                        features: ['Feature A', 'Feature B']
                     }
                 ]
             }
         },
-        shouldFail: true,
-        expectedError: 'missing required fields'
+        shouldFail: false,  // Changed: should skip invalid and use valid
+        expectedError: null,
+        expectedValidCount: 1
+    },
+    {
+        name: 'API returns products with description OR feature_bullets',
+        apiResponse: {
+            success: true,
+            data: {
+                success: true,
+                results: [
+                    {
+                        asin: 'B0TEST111',
+                        title: 'Product with feature bullets only',
+                        image_url: 'https://example.com/image4.jpg',
+                        price: 59.99,
+                        rating: 4.3,
+                        review_count: 80,
+                        feature_bullets: ['Bullet 1', 'Bullet 2', 'Bullet 3']
+                    }
+                ]
+            }
+        },
+        shouldFail: false,
+        expectedError: null,
+        expectedValidCount: 1
+    },
+    {
+        name: 'API returns all invalid products (should return empty array)',
+        apiResponse: {
+            success: true,
+            data: {
+                success: true,
+                results: [
+                    {
+                        title: 'Product without ASIN',
+                        image_url: 'https://example.com/image.jpg'
+                    },
+                    {
+                        asin: 'B0TEST222',
+                        image_url: 'https://example.com/image.jpg'
+                    },
+                    {
+                        asin: 'B0TEST333',
+                        title: 'Product without image'
+                    }
+                ]
+            }
+        },
+        shouldFail: false,  // Changed: should return empty array
+        expectedError: null,
+        expectedValidCount: 0
     },
     {
         name: 'API returns complete products',
@@ -99,11 +170,12 @@ const scenarios = [
             }
         },
         shouldFail: false,
-        expectedError: null
+        expectedError: null,
+        expectedValidCount: 1
     }
 ];
 
-// Simulate API response parsing (extracted from site-generator.js logic)
+// Simulate API response parsing (updated to match new skip behavior)
 function parseAPIResponse(response) {
     let productList = [];
     
@@ -125,23 +197,49 @@ function parseAPIResponse(response) {
         throw new Error('No products found in API response');
     }
     
-    // Validate each product
+    // Validate each product - SKIP invalid ones instead of failing
+    const validProducts = [];
     for (let i = 0; i < productList.length; i++) {
         const product = productList[i];
         const asin = product.asin || product.ASIN || null;
         const title = product.title || product.product_title || null;
-        const image = product.image_url || product.product_photo || null;
+        let image = product.image_url || product.image || product.product_photo || null;
+        
+        // Try images array
+        if (!image && product.images && Array.isArray(product.images) && product.images.length > 0) {
+            image = product.images[0];
+        }
+        
+        if (image && !image.startsWith('http')) {
+            image = null;
+        }
+        
         const price = product.price || product.product_price || null;
         const rating = product.rating || product.product_star_rating || null;
         const reviewCount = product.review_count || product.product_num_ratings || null;
-        const description = product.description || product.product_description || null;
         
-        if (!asin || !title || !image || !price || !rating || !reviewCount || !description) {
-            throw new Error(`Product ${i + 1} missing required fields (ASIN, title, image, price, rating, reviews, or description)`);
+        // Check for description OR feature_bullets
+        let description = product.description || product.product_description || null;
+        const featureBullets = product.feature_bullets || product.features || null;
+        
+        // Use feature bullets as description if description missing
+        if (!description && featureBullets) {
+            if (Array.isArray(featureBullets)) {
+                description = featureBullets.join(' ');
+            } else if (typeof featureBullets === 'string') {
+                description = featureBullets;
+            }
         }
+        
+        // Skip if missing required fields
+        if (!asin || !title || !image || !price || !rating || !reviewCount || !description) {
+            continue;
+        }
+        
+        validProducts.push(product);
     }
     
-    return productList;
+    return validProducts;
 }
 
 // Run tests
@@ -159,8 +257,19 @@ scenarios.forEach((scenario, index) => {
             console.log(`   Expected error: ${scenario.expectedError}\n`);
             failed++;
         } else {
-            console.log(`   ✅ Successfully parsed ${products.length} products\n`);
-            passed++;
+            // Check if we got expected number of valid products
+            if (scenario.expectedValidCount !== undefined) {
+                if (products.length === scenario.expectedValidCount) {
+                    console.log(`   ✅ Correctly returned ${products.length} valid products\n`);
+                    passed++;
+                } else {
+                    console.log(`   ❌ Expected ${scenario.expectedValidCount} valid products, got ${products.length}\n`);
+                    failed++;
+                }
+            } else {
+                console.log(`   ✅ Successfully parsed ${products.length} products\n`);
+                passed++;
+            }
         }
     } catch (error) {
         if (scenario.shouldFail) {
@@ -195,6 +304,8 @@ if (failed > 0) {
     process.exit(1);
 } else {
     console.log('\n✅ All integration tests passed!');
-    console.log('✅ Generator correctly fails when API data is incomplete');
+    console.log('✅ Generator correctly skips invalid products and continues');
+    console.log('✅ Generator accepts description OR feature_bullets');
+    console.log('✅ Generator returns empty array when all products are invalid');
     process.exit(0);
 }
