@@ -61,7 +61,7 @@ npm install
 ```bash
 export RAPIDAPI_KEY="your-rapidapi-key"
 export RAPIDAPI_HOST="amazon-real-time-api.p.rapidapi.com"
-export AMAZON_AFFILIATE_ID="youraffid-20"
+export AMAZON_AFFILIATE_ID="scconnec0d-20"
 ```
 
 4. Run the generator:

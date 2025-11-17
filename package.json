@@ -5,7 +5,8 @@
   "main": "site-generator.js",
   "scripts": {
     "generate": "node site-generator.js",
-    "test": "echo \"No tests yet\" && exit 0"
+    "validate": "node validate-sites.js",
+    "test": "npm run generate && npm run validate"
   },
   "keywords": [
     "seo",

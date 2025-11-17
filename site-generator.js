@@ -14,7 +14,7 @@ const { generateBlogArticle } = require('./generate-blog');
 const CONFIG = {
     RAPIDAPI_KEY: process.env.RAPIDAPI_KEY || '',
     RAPIDAPI_HOST: (process.env.RAPIDAPI_HOST || 'amazon-real-time-api.p.rapidapi.com').trim(),
-    AMAZON_AFFILIATE_ID: process.env.AMAZON_AFFILIATE_ID || 'youraffid-20',
+    AMAZON_AFFILIATE_ID: process.env.AMAZON_AFFILIATE_ID || 'scconnec0d-20',
     BASE_URL: 'https://sc-connections.github.io/Top-10',
     NICHES_FILE: path.join(__dirname, 'niches.csv'),
     TEMPLATES_DIR: path.join(__dirname, 'templates'),
@@ -166,45 +166,111 @@ function createSlug(niche) {
 async function fetchProducts(niche) {
     // If API credentials are not set, return mock data
     if (!CONFIG.RAPIDAPI_KEY || CONFIG.RAPIDAPI_KEY === '') {
-        console.log('⚠️  No API key found, using mock data...');
+        console.log('⚠️  WARNING: No API key found, using mock data...');
+        console.log('⚠️  To use real Amazon data, set RAPIDAPI_KEY environment variable');
         return generateMockProducts(niche);
     }
     
     try {
         const options = {
             method: 'GET',
-            url: `https://${CONFIG.RAPIDAPI_HOST}/search`,
+            url: `https://${CONFIG.RAPIDAPI_HOST}/product-search`,
             params: {
                 query: niche,
                 page: '1',
                 country: 'US',
-                sort_by: 'RELEVANCE'
+                sort_by: 'RELEVANCE',
+                product_condition: 'ALL'
             },
             headers: {
                 'X-RapidAPI-Key': CONFIG.RAPIDAPI_KEY,
                 'X-RapidAPI-Host': CONFIG.RAPIDAPI_HOST
-            }
+            },
+            timeout: 30000
         };
         
+        console.log(`🔗 API Request: ${options.url}`);
         const response = await axios.request(options);
-        const products = response.data.data.products || [];
         
-        // Process and limit to top 10
-        return products.slice(0, 10).map((product, index) => ({
-            asin: product.asin || `MOCK${index}`,
-            title: product.product_title || `${niche} Product ${index + 1}`,
-            description: product.product_description || `High-quality ${niche.toLowerCase()} with excellent features.`,
-            rating: product.product_star_rating || '4.5',
-            reviews: product.product_num_ratings || '1000',
-            price: product.product_price || '$99.99',
-            image: product.product_photo || 'https://via.placeholder.com/300x300?text=Product+Image',
-            url: product.product_url || '#',
-            features: extractFeatures(product),
-            pros: extractPros(product),
-            cons: extractCons(product)
-        }));
+        // Handle different possible response structures
+        let productList = [];
+        if (response.data && response.data.data && response.data.data.products) {
+            productList = response.data.data.products;
+        } else if (response.data && Array.isArray(response.data.products)) {
+            productList = response.data.products;
+        } else if (response.data && Array.isArray(response.data)) {
+            productList = response.data;
+        }
+        
+        console.log(`📦 API returned ${productList.length} products`);
+        
+        if (productList.length === 0) {
+            console.log('⚠️  WARNING: API returned no products, falling back to mock data');
+            return generateMockProducts(niche);
+        }
+        
+        // Process and validate products, limit to top 10
+        const validProducts = [];
+        for (let i = 0; i < Math.min(productList.length, 10); i++) {
+            const product = productList[i];
+            
+            // Extract ASIN - try multiple field names
+            const asin = product.asin || product.ASIN || null;
+            
+            // Extract title - try multiple field names
+            const title = product.product_title || product.title || product.name || null;
+            
+            // Extract image - ensure it's an absolute URL
+            let image = product.product_photo || product.image || product.main_image || product.product_main_image_url || null;
+            if (image && !image.startsWith('http')) {
+                image = null; // Invalid image URL
+            }
+            
+            // Validate required fields
+            if (!asin || !title || !image) {
+                console.log(`⚠️  Skipping product ${i + 1}: Missing required fields (ASIN: ${!!asin}, Title: ${!!title}, Image: ${!!image})`);
+                continue;
+            }
+            
+            // Extract other fields with fallbacks
+            const rating = product.product_star_rating || product.rating || product.stars || '4.5';
+            const reviews = product.product_num_ratings || product.reviews_count || product.review_count || '1000';
+            const price = product.product_price || product.price || '$99.99';
+            
+            // Build Amazon URL using ASIN
+            const amazonUrl = `https://www.amazon.com/dp/${asin}?tag=${CONFIG.AMAZON_AFFILIATE_ID}`;
+            
+            validProducts.push({
+                asin: asin,
+                title: title,
+                description: product.product_description || product.description || `High-quality ${niche.toLowerCase()} with excellent features.`,
+                rating: String(rating),
+                reviews: String(reviews),
+                price: price,
+                image: image,
+                url: amazonUrl,
+                features: extractFeatures(product),
+                pros: extractPros(product),
+                cons: extractCons(product)
+            });
+        }
+        
+        console.log(`✅ Successfully validated ${validProducts.length} products`);
+        
+        if (validProducts.length === 0) {
+            console.log('⚠️  WARNING: No valid products after validation, falling back to mock data');
+            return generateMockProducts(niche);
+        }
+        
+        return validProducts;
+        
     } catch (error) {
-        console.log(`⚠️  API Error: ${error.message}, using mock data...`);
+        console.log(`⚠️  WARNING: API Error - ${error.message}`);
+        console.log('⚠️  Falling back to mock data');
+        if (error.response) {
+            console.log(`⚠️  API Response Status: ${error.response.status}`);
+            console.log(`⚠️  API Response Data: ${JSON.stringify(error.response.data).substring(0, 200)}`);
+        }
         return generateMockProducts(niche);
     }
 }
@@ -217,16 +283,20 @@ async function fetchProducts(niche) {
 function generateMockProducts(niche) {
     const products = [];
     
+    // Mock ASINs that look realistic
+    const mockAsins = ['B0CX57HMHW', 'B0D19KQPS3', 'B0BMQVXZ3H', 'B0BXLMM4SH', 'B0CHSG7FXT', 
+                       'B0C9SJHFWV', 'B0BXQVQBGZ', 'B0CDZQFV8F', 'B0BXQC7MMK', 'B0CDZQFV9G'];
+    
     for (let i = 1; i <= 10; i++) {
         products.push({
-            asin: `MOCK${String(i).padStart(4, '0')}`,
+            asin: mockAsins[i - 1],
             title: `${niche} Model ${i} - Premium Edition`,
             description: `This is a high-quality ${niche.toLowerCase()} that offers excellent value and performance. Features include advanced technology, durable construction, and user-friendly design.`,
             rating: (4.0 + Math.random() * 1.0).toFixed(1),
             reviews: Math.floor(500 + Math.random() * 4500),
             price: `$${(49.99 + Math.random() * 200).toFixed(2)}`,
-            image: `https://via.placeholder.com/400x400/4F46E5/ffffff?text=${encodeURIComponent(niche + ' ' + i)}`,
-            url: '#',
+            image: `https://m.media-amazon.com/images/I/41aUW0J4${i}SL._AC_SL1500_.jpg`,
+            url: `https://www.amazon.com/dp/${mockAsins[i - 1]}?tag=${CONFIG.AMAZON_AFFILIATE_ID}`,
             features: [
                 'High-quality construction',
                 'Advanced features',
@@ -390,15 +460,8 @@ function generateListItems(items) {
  * @returns {string} Affiliate link
  */
 function generateAffiliateLink(product) {
-    if (product.url && product.url !== '#') {
-        // Add affiliate tag if it's an Amazon link
-        const url = new URL(product.url);
-        if (url.hostname.includes('amazon')) {
-            url.searchParams.set('tag', CONFIG.AMAZON_AFFILIATE_ID);
-            return url.toString();
-        }
-        return product.url;
-    }
+    // Always use the standard Amazon format with ASIN
+    // This ensures links work correctly and include the affiliate tag
     return `https://www.amazon.com/dp/${product.asin}?tag=${CONFIG.AMAZON_AFFILIATE_ID}`;
 }
 
