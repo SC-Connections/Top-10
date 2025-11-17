@@ -3,8 +3,12 @@ node_modules/
 package-lock.json
 
 # Build outputs
-sites/
 data/
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
 
 # Temporary files
 *.tmp

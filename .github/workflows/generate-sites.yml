@@ -1,50 +1,79 @@
-name: Generate Niche Sites
+name: Generate and Deploy Sites
 
 on:
   push:
     branches:
       - main
-    paths:
-      - 'niches.csv'
-      - '.github/workflows/generate-sites.yml'
-      - '.github/scripts/generate-sites.js'
   workflow_dispatch:
 
 permissions:
   contents: write
+  pages: write
+  id-token: write
 
 jobs:
-  generate-sites:
+  generate-and-deploy:
     runs-on: ubuntu-latest
     
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
       
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - name: Setup Python
+        uses: actions/setup-python@v4
         with:
-          node-version: '20'
+          python-version: '3.11'
       
-      - name: Install dependencies
+      - name: Install Python dependencies
         run: |
-          npm install axios csv-parse
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
       
       - name: Generate sites
         env:
           RAPIDAPI_KEY: ${{ secrets.RAPIDAPI_KEY }}
-          AMAZON_AFFILIATE_ID: ${{ secrets.AMAZON_AFFILIATE_ID }}
-          PAT_TOKEN: ${{ secrets.PAT_TOKEN }}
         run: |
-          node .github/scripts/generate-sites.js
+          echo "🚀 Generating niche sites..."
+          python generator.py
+          echo "✅ Sites generated successfully!"
       
-      - name: Commit and push changes
+      - name: Commit generated sites
         run: |
-          git config user.name "GitHub Actions Bot"
-          git config user.email "actions@github.com"
-          git add sites/ index.html
-          git diff-index --quiet HEAD || git commit -m "Generate sites from niches.csv [skip ci]"
-          git push
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          git add sites/
+          git diff --staged --quiet || git commit -m "Generated sites: $(date +'%Y-%m-%d %H:%M:%S')"
+      
+      - name: Push changes
+        uses: ad-m/github-push-action@master
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          branch: ${{ github.ref }}
+      
+      - name: Setup Pages
+        uses: actions/configure-pages@v4
+      
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: 'sites'
+      
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
+      
+      - name: Summary
+        run: |
+          echo "## Deployment Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "✅ Sites generated and deployed successfully!" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Generated Sites:" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          for dir in sites/*/; do
+            if [ -d "$dir" ]; then
+              niche=$(basename "$dir")
+              echo "- **${niche}**: https://sc-connections.github.io/Top-10/${niche}/" >> $GITHUB_STEP_SUMMARY
+            fi
+          done
