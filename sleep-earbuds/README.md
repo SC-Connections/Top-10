@@ -1,8 +1,8 @@
-# Top 10 Bluetooth Earbuds (2025)
+# Top 10 Sleep Earbuds (2025)
 
 ## Overview
 
-This site provides comprehensive reviews and rankings of the best bluetooth earbuds available in 2025.
+This site provides comprehensive reviews and rankings of the best sleep earbuds available in 2025.
 
 ## Features
 
@@ -15,7 +15,7 @@ This site provides comprehensive reviews and rankings of the best bluetooth earb
 
 ## Live Site
 
-View the live site at: https://sc-connections.github.io/Top-10/bluetooth-earbuds/
+View the live site at: https://sc-connections.github.io/Top-10/sleep-earbuds/
 
 ## Structure
 
