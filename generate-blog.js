@@ -53,7 +53,7 @@ function generateMetaDescription(product, niche) {
     const productName = product.title || 'this product';
     const rating = product.rating || '4.5';
     
-    return `Detailed review of ${productName}. Rated ${rating}/5 stars. See features, pros, cons, and why it's one of the best ${niche.toLowerCase()} in ${new Date().getFullYear()}.`;
+    return `Detailed review of ${productName}. Rated ${rating}/5 stars. See features, specifications, and why it's one of the best ${niche.toLowerCase()} in ${new Date().getFullYear()}.`;
 }
 
 /**
@@ -69,7 +69,6 @@ function generateBlogContent(product, niche, rank) {
         generateOverviewSection(product),
         generateKeyFeaturesSection(product),
         generatePerformanceSection(product, niche),
-        generateProsConsSection(product),
         generateUseCasesSection(product, niche),
         generateComparisonSection(product, niche, rank),
         generateConclusionSection(product, rank)
