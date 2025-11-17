@@ -34,7 +34,6 @@ jobs:
         env:
           RAPIDAPI_KEY: ${{ secrets.RAPIDAPI_KEY }}
           AMAZON_AFFILIATE_ID: ${{ secrets.AMAZON_AFFILIATE_ID }}
-          PAT_TOKEN: ${{ secrets.PAT_TOKEN }}
         run: |
           node .github/scripts/generate-sites.js
       
