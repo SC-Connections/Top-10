@@ -22,7 +22,8 @@ const CONFIG = {
     OUTPUT_DIR: path.join(__dirname, 'sites'),
     DATA_DIR: path.join(__dirname, 'data'),
     PAT_TOKEN: process.env.PAT_TOKEN || '',
-    GITHUB_ORG: 'SC-Connections'
+    GITHUB_ORG: 'SC-Connections',
+    MAX_FEATURE_LENGTH: 150  // Maximum length for generated feature from description
 };
 
 /**
@@ -437,12 +438,8 @@ async function fetchProducts(niche) {
                     featureBullets = [featureBullets];
                 } else {
                     // Generate feature bullets from description as fallback
+                    // This always returns at least one item
                     featureBullets = generateFeaturesFromDescription(description);
-                    if (featureBullets.length === 0) {
-                        console.warn(`⚠️  Skipping product ${i + 1} "${title}": missing feature bullets`);
-                        skippedCount++;
-                        continue;
-                    }
                     console.log(`   ℹ️  Generated feature bullets from description for "${title}"`);
                 }
             }
@@ -594,7 +591,7 @@ function generateFeaturesFromDescription(description) {
     }
     
     // If description doesn't split well, create a single feature
-    return [description.substring(0, 150)];
+    return [description.substring(0, CONFIG.MAX_FEATURE_LENGTH)];
 }
 
 /**
