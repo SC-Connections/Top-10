@@ -1083,8 +1083,9 @@ async function createGitHubRepo(repoName, description) {
  * Initialize git and push site contents to GitHub
  * @param {string} siteDir - Site directory path
  * @param {string} repoName - Repository name
+ * @param {string} slug - Niche slug for commit message
  */
-function pushToGitHub(siteDir, repoName) {
+function pushToGitHub(siteDir, repoName, slug) {
     const repoUrl = `https://${CONFIG.PAT_TOKEN}@github.com/${CONFIG.GITHUB_ORG}/${repoName}.git`;
     
     try {
@@ -1100,8 +1101,8 @@ function pushToGitHub(siteDir, repoName) {
         execSync('git add .', { cwd: siteDir, stdio: 'pipe' });
         console.log('✓ Added all files');
         
-        // Commit
-        execSync('git commit -m "Auto-generated niche site"', { cwd: siteDir, stdio: 'pipe' });
+        // Commit with slug in message
+        execSync(`git commit -m "Initial site publish: ${slug}"`, { cwd: siteDir, stdio: 'pipe' });
         console.log('✓ Created commit');
         
         // Set branch to main
@@ -1254,13 +1255,13 @@ async function publishToGitHub(slug, niche) {
     
     // Step 3: Push site contents
     console.log('3️⃣  Pushing site contents...');
-    pushToGitHub(siteDir, repoName);
+    pushToGitHub(siteDir, repoName, slug);
     
     // Step 4: Enable GitHub Pages
     console.log('4️⃣  Enabling GitHub Pages...');
     const pagesUrl = await enableGitHubPages(repoName);
     
-    console.log(`\n🌐 Public URL: ${pagesUrl}`);
+    console.log(`\n📢 Published site to: ${pagesUrl}`);
     return pagesUrl;
 }
 
