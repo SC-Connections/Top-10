@@ -215,8 +215,10 @@ function parseAPIResponse(response) {
         }
         
         const price = product.price || product.product_price || null;
-        const rating = product.rating || product.product_star_rating || null;
-        const reviewCount = product.review_count || product.product_num_ratings || null;
+        
+        // Rating and review_count are now OPTIONAL - they default to 0
+        const rating = product.rating || product.product_star_rating || '0';
+        const reviewCount = product.review_count || product.product_num_ratings || '0';
         
         // Check for description OR feature_bullets
         let description = product.description || product.product_description || null;
@@ -231,8 +233,8 @@ function parseAPIResponse(response) {
             }
         }
         
-        // Skip if missing required fields
-        if (!asin || !title || !image || !price || !rating || !reviewCount || !description) {
+        // Skip if missing REQUIRED fields (rating and reviewCount are now optional with defaults)
+        if (!asin || !title || !image || !price || !description) {
             continue;
         }
         

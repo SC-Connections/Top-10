@@ -71,7 +71,7 @@ const scenarios = [
         shouldPass: false
     },
     {
-        name: 'Missing rating (should fail)',
+        name: 'Missing rating (should pass with default)',
         product: {
             asin: 'B0TEST123',
             title: 'Test Product',
@@ -80,10 +80,10 @@ const scenarios = [
             review_count: 1234,
             description: 'A great test product'
         },
-        shouldPass: false
+        shouldPass: true  // Changed: rating defaults to 0
     },
     {
-        name: 'Missing review_count (should fail)',
+        name: 'Missing review_count (should pass with default)',
         product: {
             asin: 'B0TEST123',
             title: 'Test Product',
@@ -92,7 +92,7 @@ const scenarios = [
             rating: 4.5,
             description: 'A great test product'
         },
-        shouldPass: false
+        shouldPass: true  // Changed: review_count defaults to 0
     },
     {
         name: 'Missing description (should fail)',
@@ -108,17 +108,17 @@ const scenarios = [
     }
 ];
 
-// Simple validation function matching the logic in our generators
+// Simple validation function matching the new logic in our generators
+// Rating and review_count are now optional (default to 0)
 function validateProduct(product) {
     const asin = product.asin || product.ASIN || null;
     const title = product.title || product.product_title || null;
     const image = product.image_url || product.product_photo || null;
     const price = product.price || product.product_price || null;
-    const rating = product.rating || product.product_star_rating || null;
-    const reviewCount = product.review_count || product.product_num_ratings || null;
     const description = product.description || product.product_description || null;
     
-    return !!(asin && title && image && price && rating && reviewCount && description);
+    // Rating and review_count are optional - they default to 0 if missing
+    return !!(asin && title && image && price && description);
 }
 
 // Run tests
