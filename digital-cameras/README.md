@@ -1,8 +1,8 @@
-# Top 10 Student Laptops (2025)
+# Top 10 Digital Cameras (2025)
 
 ## Overview
 
-This site provides comprehensive reviews and rankings of the best student laptops available in 2025.
+This site provides comprehensive reviews and rankings of the best digital cameras available in 2025.
 
 ## Features
 
@@ -15,7 +15,7 @@ This site provides comprehensive reviews and rankings of the best student laptop
 
 ## Live Site
 
-View the live site at: https://sc-connections.github.io/Top-10/student-laptops/
+View the live site at: https://sc-connections.github.io/Top-10/digital-cameras/
 
 ## Structure
 
