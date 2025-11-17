@@ -4,7 +4,7 @@
 
 ## 🎯 Overview
 
-This system automatically generates professional, SEO-optimized review websites featuring top 10 products in various niches. Each site is deployed to its own GitHub repository with automatic GitHub Pages hosting.
+This system automatically generates professional, SEO-optimized review websites featuring top 10 products in various niches. All sites are hosted within this repository and served via GitHub Pages.
 
 **Key Features:**
 - ✅ SEO-optimized HTML with proper meta tags and structured data
@@ -14,8 +14,8 @@ This system automatically generates professional, SEO-optimized review websites 
 - ✅ Buyer's guide sections
 - ✅ FAQ sections with schema markup
 - ✅ Daily updates via GitHub Actions
-- ✅ **Each niche gets its own GitHub repository and Pages URL**
-- ✅ Automatic deployment pipeline for each site
+- ✅ **All niche sites hosted in this repository at `/{slug}/` paths**
+- ✅ Automatic deployment pipeline via GitHub Pages
 
 ## 📁 Repository Structure
 
@@ -25,8 +25,12 @@ This system automatically generates professional, SEO-optimized review websites 
 │   ├── scripts/
 │   │   └── generate-sites.js     # Alternative generator script
 │   └── workflows/
-│       ├── build-sites.yml       # Main workflow (publishes to separate repos)
-│       └── generate-sites.yml    # Alternative workflow
+│       ├── build-sites.yml       # Main workflow (generates sites in repo)
+│       ├── generate-sites.yml    # Alternative workflow
+│       └── deploy-pages.yml      # GitHub Pages deployment
+├── bluetooth-earbuds/            # Generated niche site folders
+├── sleep-earbuds/                # (committed to repo)
+├── digital-cameras/              # Each at /{slug}/ path
 ├── templates/
 │   ├── template.html            # Main page HTML template
 │   ├── template.json            # JSON template configuration
@@ -38,8 +42,7 @@ This system automatically generates professional, SEO-optimized review websites 
 ├── site-generator.js            # Main generator script
 ├── generate-seo.js              # SEO content generator
 ├── generate-blog.js             # Blog content generator
-├── package.json                 # Node.js dependencies
-└── sites/                       # Generated sites (gitignored)
+└── package.json                 # Node.js dependencies
 ```
 
 ## 🚀 Quick Start
@@ -75,7 +78,7 @@ export AMAZON_AFFILIATE_ID="scconnec0d-20"
 node site-generator.js
 ```
 
-The generator will create sites in the `sites/` directory.
+The generator will create sites in individual folders (e.g., `bluetooth-earbuds/`, `sleep-earbuds/`) in the repository root.
 
 ## 📝 Adding New Niches
 
@@ -96,13 +99,12 @@ Each line should be a product category that people search for on Amazon.
 
 ### GitHub Secrets
 
-For the GitHub Actions workflow to fetch real Amazon data and publish sites to separate repositories, configure these secrets:
+For the GitHub Actions workflow to fetch real Amazon data and generate sites, configure these secrets:
 
 1. Go to Settings → Secrets and variables → Actions
 2. Add the following secrets:
    - `RAPIDAPI_KEY`: Your RapidAPI key for Amazon Real-Time API (https://rapidapi.com/letscrape-6bRBa3QguO5/api/amazon-real-time-api)
    - `AMAZON_AFFILIATE_ID`: Your Amazon Associates affiliate ID
-   - `PAT_TOKEN`: Fine-grained Personal Access Token with repo:write access for SC-Connections account (required for auto-publishing to separate repos)
 
 **Note**: The API host is hardcoded to `amazon-real-time-api.p.rapidapi.com` and Amazon domain is set to `US`. These values are not configurable via secrets.
 
@@ -113,22 +115,22 @@ The workflow runs:
 - On manual trigger (workflow_dispatch)
 - Daily at 6 AM UTC (scheduled)
 
-### Multi-Repository Architecture
+### Repository Architecture
 
-Each niche site is deployed to its own dedicated GitHub repository:
+All niche sites are hosted within this single repository:
 
-- **Repository naming**: `top10-<niche-slug>` (e.g., `top10-bluetooth-earbuds`)
-- **GitHub Pages URL**: `https://sc-connections.github.io/top10-<niche-slug>/`
-- **Automatic workflow**: Each repo includes a `.github/workflows/deploy.yml` file for GitHub Pages deployment
-- **Main repo role**: This Top-10 repository serves as the generator and orchestrator, creating and updating all niche site repositories
+- **Site paths**: `/{niche-slug}/` (e.g., `/bluetooth-earbuds/`, `/sleep-earbuds/`)
+- **GitHub Pages URL**: `https://sc-connections.github.io/Top-10/{niche-slug}/`
+- **Automatic deployment**: The `deploy-pages.yml` workflow deploys the entire repository to GitHub Pages
+- **Site generation**: The `build-sites.yml` workflow generates sites and commits them back to the main branch
 
 When the workflow runs:
-1. Generates all niche sites locally in the `/sites/` directory
+1. Generates all niche sites locally in individual folders (e.g., `/bluetooth-earbuds/`)
 2. For each niche:
-   - Creates or updates the repository `top10-<niche-slug>`
-   - Pushes the site content (index.html, blog/, global.css)
-   - Includes a GitHub Actions workflow for Pages deployment
-   - Enables GitHub Pages for the repository
+   - Creates the site content (index.html, blog/, global.css, README.md)
+   - Saves it in a folder named after the niche slug
+3. Commits and pushes all generated folders back to the main branch
+4. GitHub Pages automatically serves them at `https://sc-connections.github.io/Top-10/{slug}/`
 
 ## 🎨 Customization
 
