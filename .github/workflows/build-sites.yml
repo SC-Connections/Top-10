@@ -28,21 +28,28 @@ jobs:
       - name: Install dependencies
         run: npm install
       
-      - name: Generate and publish sites to individual repositories
+      - name: Generate niche sites
         env:
           RAPIDAPI_KEY: ${{ secrets.RAPIDAPI_KEY }}
           AMAZON_AFFILIATE_ID: ${{ secrets.AMAZON_AFFILIATE_ID }}
-          PAT_TOKEN: ${{ secrets.PAT_TOKEN }}
         run: |
-          echo "🚀 Generating niche sites and publishing to individual repositories..."
+          echo "🚀 Generating niche sites..."
           node site-generator.js
-          echo "✅ All sites generated and published successfully!"
+          echo "✅ All sites generated successfully!"
+      
+      - name: Commit and push generated sites
+        run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+          git add .
+          git commit -m "Auto-generate niche sites" || echo "No changes to commit"
+          git push
       
       - name: Summary
         run: |
           echo "## Deployment Summary" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "Each niche site has been deployed to its own repository:" >> $GITHUB_STEP_SUMMARY
+          echo "Niche sites have been generated and committed to the main branch:" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           
           if [ -f "_niches_data.json" ]; then
