@@ -45,10 +45,10 @@ jobs:
           echo "Each niche site has been deployed to its own repository:" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           
-          if [ -f "sites/_niches_data.json" ]; then
+          if [ -f "_niches_data.json" ]; then
             node -e "
               const fs = require('fs');
-              const data = JSON.parse(fs.readFileSync('sites/_niches_data.json', 'utf-8'));
+              const data = JSON.parse(fs.readFileSync('_niches_data.json', 'utf-8'));
               data.forEach(({ niche, slug, url }) => {
                 console.log(\`- **\${niche}**: [\${url}](\${url})\`);
               });
