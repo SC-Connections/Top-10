@@ -247,13 +247,22 @@ async function fetchProducts(niche) {
         fs.writeFileSync(dataFile, JSON.stringify(response.data, null, 2));
         console.log(`💾 Saved raw API response to: ${dataFile}`);
         
-        // Parse response
+        // Parse response - Amazon Real Time API returns products in data.results
         let productList = [];
-        if (response.data && response.data.data && Array.isArray(response.data.data.products)) {
+        if (response.data && response.data.success && response.data.data && Array.isArray(response.data.data.results)) {
+            // New API structure: response.data.data.results
+            productList = response.data.data.results;
+        } else if (response.data && Array.isArray(response.data.results)) {
+            // Alternative structure: response.data.results
+            productList = response.data.results;
+        } else if (response.data && response.data.data && Array.isArray(response.data.data.products)) {
+            // Legacy structure: response.data.data.products
             productList = response.data.data.products;
         } else if (response.data && Array.isArray(response.data.products)) {
+            // Legacy structure: response.data.products
             productList = response.data.products;
         } else if (Array.isArray(response.data)) {
+            // Direct array
             productList = response.data;
         } else {
             console.error('❌ ERROR: Unexpected API response structure');
@@ -276,11 +285,12 @@ async function fetchProducts(niche) {
             // Extract ASIN - try multiple field names
             const asin = product.asin || product.ASIN || null;
             
-            // Extract title - try multiple field names
-            const title = product.product_title || product.title || product.name || null;
+            // Extract title - new API uses 'title', legacy uses 'product_title'
+            const title = product.title || product.product_title || product.name || null;
             
-            // Extract image - ensure it's an absolute URL
-            let image = product.product_photo || product.image || product.main_image || product.product_main_image_url || null;
+            // Extract image - new API uses 'image_url', legacy uses 'product_photo'
+            // Ensure it's an absolute URL
+            let image = product.image_url || product.product_photo || product.image || product.main_image || product.product_main_image_url || null;
             if (image && !image.startsWith('http')) {
                 image = null; // Invalid image URL
             }
@@ -292,12 +302,33 @@ async function fetchProducts(niche) {
             }
             
             // Extract other fields with fallbacks
-            const rating = product.product_star_rating || product.rating || product.stars || '4.5';
-            const reviews = product.product_num_ratings || product.reviews_count || product.review_count || '1000';
-            const price = product.product_price || product.price || '$99.99';
+            // New API uses 'rating' (number), legacy uses 'product_star_rating'
+            const rating = product.rating || product.product_star_rating || product.stars || '4.5';
             
-            // Build Amazon URL using ASIN
-            const amazonUrl = `https://www.amazon.com/dp/${asin}?tag=${CONFIG.AMAZON_AFFILIATE_ID}`;
+            // New API uses 'review_count' (number), legacy uses 'product_num_ratings'
+            const reviews = product.review_count || product.product_num_ratings || product.reviews_count || '1000';
+            
+            // New API uses 'price' (number), legacy uses 'product_price' (string)
+            let price = '$99.99';
+            if (typeof product.price === 'number') {
+                price = `$${product.price}`;
+            } else if (product.price) {
+                price = product.price;
+            } else if (product.product_price) {
+                price = product.product_price;
+            }
+            
+            // Build Amazon URL using ASIN - new API may provide 'product_url'
+            let amazonUrl = `https://www.amazon.com/dp/${asin}`;
+            if (product.product_url) {
+                // Use the product_url from API if available
+                amazonUrl = product.product_url;
+            }
+            // Ensure affiliate tag is added
+            if (!amazonUrl.includes('tag=')) {
+                const separator = amazonUrl.includes('?') ? '&' : '?';
+                amazonUrl = `${amazonUrl}${separator}tag=${CONFIG.AMAZON_AFFILIATE_ID}`;
+            }
             
             validProducts.push({
                 asin: asin,
