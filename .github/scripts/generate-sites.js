@@ -5,8 +5,21 @@ const { parse } = require('csv-parse/sync');
 
 // Environment variables
 const RAPIDAPI_KEY = process.env.RAPIDAPI_KEY || '';
-const RAPIDAPI_HOST = process.env.RAPIDAPI_HOST || '';
+const RAPIDAPI_HOST = 'amazon-real-time-api.p.rapidapi.com';
 const AMAZON_AFFILIATE_ID = process.env.AMAZON_AFFILIATE_ID || '';
+const AMAZON_DOMAIN = 'US';
+
+// Validate API credentials before starting
+if (!RAPIDAPI_KEY || RAPIDAPI_KEY === '') {
+    console.error('❌ ERROR: RAPIDAPI_KEY is not set');
+    console.error('❌ Cannot proceed without valid API credentials');
+    console.error('❌ Set RAPIDAPI_KEY environment variable or GitHub secret');
+    process.exit(1);
+}
+
+console.log('✅ API credentials validated');
+console.log(`📡 API Host: ${RAPIDAPI_HOST}`);
+console.log(`🌍 Amazon Domain: ${AMAZON_DOMAIN}\n`);
 
 // Read niches from CSV
 function readNiches() {
@@ -41,50 +54,89 @@ function addAffiliateTag(url) {
 
 // Function to fetch products from RapidAPI
 async function fetchProducts(keyword, nodeId, numProducts) {
-  console.log(`Fetching products for: ${keyword} (nodeId: ${nodeId})`);
-  
-  if (!RAPIDAPI_KEY || !RAPIDAPI_HOST) {
-    console.log('API credentials not found, using mock data...');
-    return generateMockProducts(keyword, numProducts);
-  }
-  
-  try {
-    // Fetch products from API
-    const response = await axios.get(`https://${RAPIDAPI_HOST}/search`, {
-      params: {
-        keyword: keyword,
-        page: 1,
-        country: 'US'
-      },
-      headers: {
-        'X-RapidAPI-Key': RAPIDAPI_KEY,
-        'X-RapidAPI-Host': RAPIDAPI_HOST
-      },
-      timeout: 30000
-    });
+    console.log(`Fetching products for: ${keyword} (nodeId: ${nodeId})`);
     
-    if (response.data && response.data.data && response.data.data.products) {
-      const products = response.data.data.products.slice(0, numProducts);
-      return products.map((product, index) => ({
-        title: product.product_title || `${keyword} Model ${index + 1}`,
-        image: product.product_photo || 'https://via.placeholder.com/300x300?text=Product+Image',
-        link: addAffiliateTag(product.product_url || `https://www.amazon.com/s?k=${encodeURIComponent(keyword)}`),
-        price: product.product_price || 'Check Amazon',
-        rating: product.product_star_rating ? `${product.product_star_rating}/5` : 'N/A',
-        tagline: generateTagline(keyword, index),
-        description: generateDescription(keyword, product.product_title || keyword, index),
-        badge: getBadge(index),
-        pros: generatePros(keyword),
-        cons: generateCons(keyword)
-      }));
+    try {
+        // Configure API request with correct endpoint and parameters
+        const response = await axios.get(`https://${RAPIDAPI_HOST}/search`, {
+            params: {
+                q: keyword,
+                domain: AMAZON_DOMAIN
+            },
+            headers: {
+                'X-RapidAPI-Key': RAPIDAPI_KEY,
+                'X-RapidAPI-Host': RAPIDAPI_HOST
+            },
+            timeout: 30000
+        });
+        
+        // Save raw API response
+        const dataDir = path.join(__dirname, '../../data');
+        if (!fs.existsSync(dataDir)) {
+            fs.mkdirSync(dataDir, { recursive: true });
+        }
+        const slug = slugify(keyword);
+        const dataFile = path.join(dataDir, `${slug}.json`);
+        fs.writeFileSync(dataFile, JSON.stringify(response.data, null, 2));
+        console.log(`💾 Saved raw API response to: ${dataFile}`);
+        
+        // Parse response
+        let productList = [];
+        if (response.data && response.data.data && Array.isArray(response.data.data.products)) {
+            productList = response.data.data.products;
+        } else if (response.data && Array.isArray(response.data.products)) {
+            productList = response.data.products;
+        } else if (Array.isArray(response.data)) {
+            productList = response.data;
+        } else {
+            console.error('❌ ERROR: Unexpected API response structure');
+            console.error('❌ Response:', JSON.stringify(response.data).substring(0, 500));
+            throw new Error('Invalid API response structure');
+        }
+        
+        if (productList.length === 0) {
+            console.error(`❌ ERROR: API returned no products for "${keyword}"`);
+            throw new Error('No products found in API response');
+        }
+        
+        const products = productList.slice(0, numProducts);
+        return products.map((product, index) => ({
+            title: product.product_title || product.title || `${keyword} Model ${index + 1}`,
+            image: product.product_photo || product.image || product.main_image || '',
+            link: addAffiliateTag(product.product_url || `https://www.amazon.com/dp/${product.asin}` || `https://www.amazon.com/s?k=${encodeURIComponent(keyword)}`),
+            price: product.product_price || product.price || 'Check Amazon',
+            rating: product.product_star_rating ? `${product.product_star_rating}/5` : 'N/A',
+            tagline: generateTagline(keyword, index),
+            description: generateDescription(keyword, product.product_title || keyword, index),
+            badge: getBadge(index),
+            pros: generatePros(keyword),
+            cons: generateCons(keyword)
+        }));
+        
+    } catch (error) {
+        // Log error details and fail
+        console.error(`\n${'='.repeat(60)}`);
+        console.error('❌ API REQUEST FAILED');
+        console.error('='.repeat(60));
+        console.error(`Error Type: ${error.name}`);
+        console.error(`Error Message: ${error.message}`);
+        
+        if (error.response) {
+            console.error(`\n📡 API Response Details:`);
+            console.error(`Status: ${error.response.status} ${error.response.statusText}`);
+            console.error(`Data:`, JSON.stringify(error.response.data, null, 2));
+        } else if (error.request) {
+            console.error(`\n📡 No response received from API`);
+        }
+        
+        console.error('='.repeat(60));
+        console.error('❌ STOPPING: Cannot proceed without real API data');
+        console.error('❌ DO NOT generate mock or dummy data');
+        console.error('='.repeat(60) + '\n');
+        
+        // Re-throw to stop the workflow
+        throw error;
     }
-    
-    throw new Error('No products found in API response');
-  } catch (error) {
-    console.error(`Error fetching products for ${keyword}:`, error.message);
-    console.log('Using mock data...');
-    return generateMockProducts(keyword, numProducts);
-  }
 }
 
 // Generate badge based on rank
@@ -154,24 +206,6 @@ function generateCons(keyword) {
     'May not suit all preferences',
     'Limited color/style options available'
   ];
-}
-
-// Generate mock products
-function generateMockProducts(keyword, numProducts) {
-  console.log(`Generating ${numProducts} mock products for: ${keyword}`);
-  
-  return Array.from({ length: numProducts }, (_, i) => ({
-    title: `${keyword.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')} - Model ${i + 1}`,
-    image: 'https://via.placeholder.com/300x300?text=Product+Image',
-    link: addAffiliateTag(`https://www.amazon.com/s?k=${encodeURIComponent(keyword)}`),
-    price: `$${(Math.random() * 200 + 50).toFixed(2)}`,
-    rating: `${(Math.random() * 1 + 4).toFixed(1)}/5`,
-    tagline: generateTagline(keyword, i),
-    description: generateDescription(keyword, keyword, i),
-    badge: getBadge(i),
-    pros: generatePros(keyword),
-    cons: generateCons(keyword)
-  }));
 }
 
 // Function to generate buyer's guide content
@@ -309,6 +343,7 @@ async function generateAllSites() {
   console.log(`Processing ${niches.length} niches...`);
   
   const siteLinks = [];
+  const failedNiches = [];
   
   for (const niche of niches) {
     const slug = slugify(niche.keyword);
@@ -316,61 +351,62 @@ async function generateAllSites() {
     
     console.log(`\n=== Processing: ${niche.keyword} ===`);
     
-    // Create site structure
-    if (fs.existsSync(siteDir)) {
-      fs.rmSync(siteDir, { recursive: true });
-    }
-    fs.mkdirSync(siteDir, { recursive: true });
-    fs.mkdirSync(path.join(siteDir, 'assets', 'css'), { recursive: true });
-    
-    // Fetch products
-    const products = await fetchProducts(niche.keyword, niche.nodeId, parseInt(niche.numProducts));
-    console.log(`✓ Fetched ${products.length} products`);
-    
-    // Pre-render pros/cons as HTML to avoid nested template issues
-    const productsWithRenderedLists = products.map(product => ({
-      ...product,
-      prosHtml: product.pros.map(p => `<li>${p}</li>`).join('\n                  '),
-      consHtml: product.cons.map(c => `<li>${c}</li>`).join('\n                  ')
-    }));
-    
-    // Generate content data
-    const currentDate = new Date();
-    const templateData = {
-      keyword: niche.keyword,
-      year: niche.year,
-      updateDate: currentDate.toISOString().split('T')[0],
-      updateDateFormatted: currentDate.toLocaleDateString('en-US', { 
-        year: 'numeric', 
-        month: 'long', 
-        day: 'numeric' 
-      }),
-      siteUrl: `https://sc-connections.github.io/Top-10/sites/${slug}/`,
-      basePath: '.',
-      products: productsWithRenderedLists,
-      guide: generateBuyersGuide(niche.keyword),
-      faqs: generateFAQs(niche.keyword)
-    };
-    
-    // Read template
-    const templatePath = path.join(__dirname, '../../_layouts/top10.html');
-    const template = fs.readFileSync(templatePath, 'utf-8');
-    
-    // Render template
-    const renderedHtml = renderTemplate(template, templateData);
-    
-    // Save HTML file
-    fs.writeFileSync(path.join(siteDir, 'index.html'), renderedHtml);
-    console.log(`✓ Created index.html`);
-    
-    // Copy CSS
-    const cssSource = path.join(__dirname, '../../assets/css/review.css');
-    const cssDest = path.join(siteDir, 'assets/css/review.css');
-    fs.copyFileSync(cssSource, cssDest);
-    console.log(`✓ Copied CSS`);
-    
-    // Create README
-    const readme = `# Top 10 ${niche.keyword} (${niche.year})
+    try {
+      // Create site structure
+      if (fs.existsSync(siteDir)) {
+        fs.rmSync(siteDir, { recursive: true });
+      }
+      fs.mkdirSync(siteDir, { recursive: true });
+      fs.mkdirSync(path.join(siteDir, 'assets', 'css'), { recursive: true });
+      
+      // Fetch products - this will throw on API errors
+      const products = await fetchProducts(niche.keyword, niche.nodeId, parseInt(niche.numProducts));
+      console.log(`✓ Fetched ${products.length} products`);
+      
+      // Pre-render pros/cons as HTML to avoid nested template issues
+      const productsWithRenderedLists = products.map(product => ({
+        ...product,
+        prosHtml: product.pros.map(p => `<li>${p}</li>`).join('\n                  '),
+        consHtml: product.cons.map(c => `<li>${c}</li>`).join('\n                  ')
+      }));
+      
+      // Generate content data
+      const currentDate = new Date();
+      const templateData = {
+        keyword: niche.keyword,
+        year: niche.year,
+        updateDate: currentDate.toISOString().split('T')[0],
+        updateDateFormatted: currentDate.toLocaleDateString('en-US', { 
+          year: 'numeric', 
+          month: 'long', 
+          day: 'numeric' 
+        }),
+        siteUrl: `https://sc-connections.github.io/Top-10/sites/${slug}/`,
+        basePath: '.',
+        products: productsWithRenderedLists,
+        guide: generateBuyersGuide(niche.keyword),
+        faqs: generateFAQs(niche.keyword)
+      };
+      
+      // Read template
+      const templatePath = path.join(__dirname, '../../_layouts/top10.html');
+      const template = fs.readFileSync(templatePath, 'utf-8');
+      
+      // Render template
+      const renderedHtml = renderTemplate(template, templateData);
+      
+      // Save HTML file
+      fs.writeFileSync(path.join(siteDir, 'index.html'), renderedHtml);
+      console.log(`✓ Created index.html`);
+      
+      // Copy CSS
+      const cssSource = path.join(__dirname, '../../assets/css/review.css');
+      const cssDest = path.join(siteDir, 'assets/css/review.css');
+      fs.copyFileSync(cssSource, cssDest);
+      console.log(`✓ Copied CSS`);
+      
+      // Create README
+      const readme = `# Top 10 ${niche.keyword} (${niche.year})
 
 This site was automatically generated by the Top-10 niche-site generator.
 
@@ -386,22 +422,57 @@ ${templateData.updateDateFormatted}
 
 This site contains Amazon affiliate links. We may earn a commission from qualifying purchases at no additional cost to you.
 `;
-    
-    fs.writeFileSync(path.join(siteDir, 'README.md'), readme);
-    console.log(`✓ Created README`);
-    
-    console.log(`✓ Site generated for ${niche.keyword}`);
-    
-    // Save for index
-    siteLinks.push({
-      keyword: niche.keyword,
-      year: niche.year,
-      slug: slug,
-      path: `sites/${slug}/index.html`
+      
+      fs.writeFileSync(path.join(siteDir, 'README.md'), readme);
+      console.log(`✓ Created README`);
+      
+      console.log(`✓ Site generated for ${niche.keyword}`);
+      
+      // Save for index
+      siteLinks.push({
+        keyword: niche.keyword,
+        year: niche.year,
+        slug: slug,
+        path: `sites/${slug}/index.html`
+      });
+    } catch (error) {
+      console.error(`❌ Failed to generate site for ${niche.keyword}: ${error.message}`);
+      failedNiches.push({ keyword: niche.keyword, error: error.message });
+      // Continue with other niches
+    }
+  }
+  
+  // Report summary
+  console.log('\n' + '='.repeat(60));
+  console.log('📊 GENERATION SUMMARY');
+  console.log('='.repeat(60));
+  console.log(`✅ Successfully generated: ${siteLinks.length} sites`);
+  console.log(`❌ Failed: ${failedNiches.length} sites`);
+  
+  if (siteLinks.length > 0) {
+    console.log('\n✅ Generated Sites:');
+    siteLinks.forEach(({ keyword, slug }) => {
+      console.log(`   - ${keyword} (${slug})`);
     });
   }
   
-  // Create main index.html
+  if (failedNiches.length > 0) {
+    console.log('\n❌ Failed Sites:');
+    failedNiches.forEach(({ keyword, error }) => {
+      console.log(`   - ${keyword}: ${error}`);
+    });
+  }
+  
+  console.log('='.repeat(60) + '\n');
+  
+  // Exit with error if all niches failed
+  if (siteLinks.length === 0) {
+    console.error('❌ FATAL: All niches failed to generate');
+    console.error('❌ No sites were built due to API errors');
+    process.exit(1);
+  }
+  
+  // Create main index.html only if we have successful sites
   const indexHtml = `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -485,10 +556,10 @@ ${siteLinks.map(site => `    <li>
 </html>`;
   
   fs.writeFileSync(path.join(__dirname, '../../index.html'), indexHtml);
-  console.log('\n✓ Created main index.html');
+  console.log('✓ Created main index.html');
   
-  console.log('\n=== All sites generated successfully! ===');
-  console.log(`Total sites: ${siteLinks.length}`);
+  console.log('\n=== Site generation completed! ===');
+  console.log(`Total successful sites: ${siteLinks.length}`);
   console.log(`Output directory: ${sitesDir}`);
 }
 

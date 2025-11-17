@@ -4,6 +4,7 @@ package-lock.json
 
 # Build outputs
 sites/
+data/
 
 # Temporary files
 *.tmp

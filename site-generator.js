@@ -13,12 +13,14 @@ const { generateBlogArticle } = require('./generate-blog');
 // Configuration
 const CONFIG = {
     RAPIDAPI_KEY: process.env.RAPIDAPI_KEY || '',
-    RAPIDAPI_HOST: (process.env.RAPIDAPI_HOST || 'amazon-real-time-api.p.rapidapi.com').trim(),
+    RAPIDAPI_HOST: 'amazon-real-time-api.p.rapidapi.com',
     AMAZON_AFFILIATE_ID: process.env.AMAZON_AFFILIATE_ID || 'scconnec0d-20',
+    AMAZON_DOMAIN: 'US',
     BASE_URL: 'https://sc-connections.github.io/Top-10',
     NICHES_FILE: path.join(__dirname, 'niches.csv'),
     TEMPLATES_DIR: path.join(__dirname, 'templates'),
     OUTPUT_DIR: path.join(__dirname, 'sites'),
+    DATA_DIR: path.join(__dirname, 'data'),
     PAT_TOKEN: process.env.PAT_TOKEN || '',
     GITHUB_ORG: 'SC-Connections'
 };
@@ -29,12 +31,31 @@ const CONFIG = {
 async function main() {
     console.log('🚀 Starting niche site generator...\n');
     
+    // Validate API credentials
+    if (!CONFIG.RAPIDAPI_KEY || CONFIG.RAPIDAPI_KEY === '') {
+        console.error('❌ ERROR: RAPIDAPI_KEY is not set');
+        console.error('❌ Cannot proceed without valid API credentials');
+        console.error('❌ Set RAPIDAPI_KEY environment variable or GitHub secret');
+        process.exit(1);
+    }
+    
+    console.log('✅ API credentials validated');
+    console.log(`📡 API Host: ${CONFIG.RAPIDAPI_HOST}`);
+    console.log(`🌍 Amazon Domain: ${CONFIG.AMAZON_DOMAIN}\n`);
+    
+    // Create data directory for API responses
+    if (!fs.existsSync(CONFIG.DATA_DIR)) {
+        fs.mkdirSync(CONFIG.DATA_DIR, { recursive: true });
+        console.log(`📁 Created data directory: ${CONFIG.DATA_DIR}\n`);
+    }
+    
     // Read niches from CSV
     const niches = readNiches();
     console.log(`📋 Found ${niches.length} niches to process\n`);
     
     // Track generated niche URLs for index page
     const generatedNiches = [];
+    const failedNiches = [];
     
     // Process each niche
     for (const niche of niches) {
@@ -65,13 +86,46 @@ async function main() {
             console.log(`✅ Successfully generated site for: ${niche}\n`);
         } catch (error) {
             console.error(`❌ Error generating site for ${niche}:`, error.message);
+            failedNiches.push({ niche, error: error.message });
+            // Continue with other niches instead of stopping completely
         }
     }
     
     // Save generated niches data for index page generation
-    const dataFile = path.join(CONFIG.OUTPUT_DIR, '_niches_data.json');
-    fs.writeFileSync(dataFile, JSON.stringify(generatedNiches, null, 2));
-    console.log(`\n📝 Saved niche data to: ${dataFile}`);
+    if (generatedNiches.length > 0) {
+        const dataFile = path.join(CONFIG.OUTPUT_DIR, '_niches_data.json');
+        fs.writeFileSync(dataFile, JSON.stringify(generatedNiches, null, 2));
+        console.log(`\n📝 Saved niche data to: ${dataFile}`);
+    }
+    
+    // Report summary
+    console.log('\n' + '='.repeat(60));
+    console.log('📊 GENERATION SUMMARY');
+    console.log('='.repeat(60));
+    console.log(`✅ Successfully generated: ${generatedNiches.length} sites`);
+    console.log(`❌ Failed: ${failedNiches.length} sites`);
+    
+    if (generatedNiches.length > 0) {
+        console.log('\n✅ Generated Sites:');
+        generatedNiches.forEach(({ niche, url }) => {
+            console.log(`   - ${niche}: ${url}`);
+        });
+    }
+    
+    if (failedNiches.length > 0) {
+        console.log('\n❌ Failed Sites:');
+        failedNiches.forEach(({ niche, error }) => {
+            console.log(`   - ${niche}: ${error}`);
+        });
+    }
+    
+    console.log('\n' + '='.repeat(60));
+    
+    // Exit with error if all niches failed
+    if (generatedNiches.length === 0) {
+        console.error('\n❌ FATAL: All niches failed to generate');
+        process.exit(1);
+    }
     
     console.log('\n🎉 Site generation complete!');
 }
@@ -164,23 +218,17 @@ function createSlug(niche) {
  * @returns {Promise<Array>} Array of product objects
  */
 async function fetchProducts(niche) {
-    // If API credentials are not set, return mock data
-    if (!CONFIG.RAPIDAPI_KEY || CONFIG.RAPIDAPI_KEY === '') {
-        console.log('⚠️  WARNING: No API key found, using mock data...');
-        console.log('⚠️  To use real Amazon data, set RAPIDAPI_KEY environment variable');
-        return generateMockProducts(niche);
-    }
+    const slug = createSlug(niche);
+    const dataFile = path.join(CONFIG.DATA_DIR, `${slug}.json`);
     
     try {
+        // Configure API request with correct endpoint and parameters
         const options = {
             method: 'GET',
-            url: `https://${CONFIG.RAPIDAPI_HOST}/product-search`,
+            url: `https://${CONFIG.RAPIDAPI_HOST}/search`,
             params: {
-                query: niche,
-                page: '1',
-                country: 'US',
-                sort_by: 'RELEVANCE',
-                product_condition: 'ALL'
+                q: niche,
+                domain: CONFIG.AMAZON_DOMAIN
             },
             headers: {
                 'X-RapidAPI-Key': CONFIG.RAPIDAPI_KEY,
@@ -190,23 +238,34 @@ async function fetchProducts(niche) {
         };
         
         console.log(`🔗 API Request: ${options.url}`);
+        console.log(`📝 Query: ${niche}`);
+        console.log(`🌍 Domain: ${CONFIG.AMAZON_DOMAIN}`);
+        
         const response = await axios.request(options);
         
-        // Handle different possible response structures
+        // Save raw API response to data directory
+        fs.writeFileSync(dataFile, JSON.stringify(response.data, null, 2));
+        console.log(`💾 Saved raw API response to: ${dataFile}`);
+        
+        // Parse response
         let productList = [];
-        if (response.data && response.data.data && response.data.data.products) {
+        if (response.data && response.data.data && Array.isArray(response.data.data.products)) {
             productList = response.data.data.products;
         } else if (response.data && Array.isArray(response.data.products)) {
             productList = response.data.products;
-        } else if (response.data && Array.isArray(response.data)) {
+        } else if (Array.isArray(response.data)) {
             productList = response.data;
+        } else {
+            console.error('❌ ERROR: Unexpected API response structure');
+            console.error('❌ Response data:', JSON.stringify(response.data).substring(0, 500));
+            throw new Error('Invalid API response structure');
         }
         
         console.log(`📦 API returned ${productList.length} products`);
         
         if (productList.length === 0) {
-            console.log('⚠️  WARNING: API returned no products, falling back to mock data');
-            return generateMockProducts(niche);
+            console.error(`❌ ERROR: API returned no products for "${niche}"`);
+            throw new Error('No products found in API response');
         }
         
         // Process and validate products, limit to top 10
@@ -258,68 +317,38 @@ async function fetchProducts(niche) {
         console.log(`✅ Successfully validated ${validProducts.length} products`);
         
         if (validProducts.length === 0) {
-            console.log('⚠️  WARNING: No valid products after validation, falling back to mock data');
-            return generateMockProducts(niche);
+            console.error('❌ ERROR: No valid products after validation');
+            throw new Error('No products with required fields (ASIN, title, image)');
         }
         
         return validProducts;
         
     } catch (error) {
-        console.log(`⚠️  WARNING: API Error - ${error.message}`);
-        console.log('⚠️  Falling back to mock data');
+        // Log error details and fail
+        console.error(`\n${'='.repeat(60)}`);
+        console.error('❌ API REQUEST FAILED');
+        console.error('='.repeat(60));
+        console.error(`Error Type: ${error.name}`);
+        console.error(`Error Message: ${error.message}`);
+        
         if (error.response) {
-            console.log(`⚠️  API Response Status: ${error.response.status}`);
-            console.log(`⚠️  API Response Data: ${JSON.stringify(error.response.data).substring(0, 200)}`);
+            console.error(`\n📡 API Response Details:`);
+            console.error(`Status: ${error.response.status} ${error.response.statusText}`);
+            console.error(`Headers:`, JSON.stringify(error.response.headers, null, 2));
+            console.error(`Data:`, JSON.stringify(error.response.data, null, 2));
+        } else if (error.request) {
+            console.error(`\n📡 No response received from API`);
+            console.error(`Request details:`, error.request);
         }
-        return generateMockProducts(niche);
+        
+        console.error('='.repeat(60));
+        console.error('❌ STOPPING: Cannot proceed without real API data');
+        console.error('❌ DO NOT generate mock or dummy data');
+        console.error('='.repeat(60) + '\n');
+        
+        // Re-throw to stop the workflow
+        throw error;
     }
-}
-
-/**
- * Generate mock products for testing
- * @param {string} niche - Niche name
- * @returns {Array} Array of mock product objects
- */
-function generateMockProducts(niche) {
-    const products = [];
-    
-    // Mock ASINs that look realistic
-    const mockAsins = ['B0CX57HMHW', 'B0D19KQPS3', 'B0BMQVXZ3H', 'B0BXLMM4SH', 'B0CHSG7FXT', 
-                       'B0C9SJHFWV', 'B0BXQVQBGZ', 'B0CDZQFV8F', 'B0BXQC7MMK', 'B0CDZQFV9G'];
-    
-    for (let i = 1; i <= 10; i++) {
-        products.push({
-            asin: mockAsins[i - 1],
-            title: `${niche} Model ${i} - Premium Edition`,
-            description: `This is a high-quality ${niche.toLowerCase()} that offers excellent value and performance. Features include advanced technology, durable construction, and user-friendly design.`,
-            rating: (4.0 + Math.random() * 1.0).toFixed(1),
-            reviews: Math.floor(500 + Math.random() * 4500),
-            price: `$${(49.99 + Math.random() * 200).toFixed(2)}`,
-            image: `https://m.media-amazon.com/images/I/41aUW0J4${i}SL._AC_SL1500_.jpg`,
-            url: `https://www.amazon.com/dp/${mockAsins[i - 1]}?tag=${CONFIG.AMAZON_AFFILIATE_ID}`,
-            features: [
-                'High-quality construction',
-                'Advanced features',
-                'User-friendly design',
-                'Excellent value for money',
-                'Trusted brand'
-            ],
-            pros: [
-                'Excellent build quality',
-                'Great performance',
-                'Good value for money',
-                'Positive customer reviews',
-                'Reliable brand'
-            ],
-            cons: [
-                'May be pricey for some',
-                'Limited color options',
-                'Availability may vary'
-            ]
-        });
-    }
-    
-    return products;
 }
 
 /**
