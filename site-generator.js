@@ -3,6 +3,7 @@
  * Generates complete niche review sites using Amazon product data
  */
 
+require('dotenv').config();
 const fs = require('fs');
 const path = require('path');
 const axios = require('axios');
@@ -59,7 +60,8 @@ async function main() {
     const failedNiches = [];
     
     // Process each niche
-    for (const niche of niches) {
+    for (let i = 0; i < niches.length; i++) {
+        const niche = niches[i];
         try {
             console.log(`\n${'='.repeat(60)}`);
             console.log(`📦 Processing: ${niche}`);
@@ -86,6 +88,13 @@ async function main() {
             
             generatedNiches.push({ niche, slug, url: publicUrl });
             console.log(`✅ Successfully generated site for: ${niche}\n`);
+            
+            // Rate limiting: Add delay between niches to avoid hitting API rate limits
+            if (i < niches.length - 1) {
+                const delaySeconds = 3;
+                console.log(`⏳ Waiting ${delaySeconds} seconds before processing next niche (rate limiting)...`);
+                await new Promise(resolve => setTimeout(resolve, delaySeconds * 1000));
+            }
         } catch (error) {
             console.error(`❌ Error generating site for ${niche}:`, error.message);
             failedNiches.push({ niche, error: error.message });
@@ -165,9 +174,9 @@ async function generateSiteForNiche(niche) {
     console.log('🔍 Fetching products from Amazon...');
     const products = await fetchProducts(niche);
     
-    // Handle empty results
+    // Validate products before generating HTML
     if (products.length === 0) {
-        console.warn('⚠️  No valid products found, generating empty-results page...');
+        console.error(`❌ ERROR: No products found for "${niche}" - Skipping.`);
         generateEmptyResultsPage(siteDir, niche, slug, templates);
         console.log(`✓ Empty-results page generated at: /sites/${slug}/`);
         return;
@@ -288,7 +297,8 @@ async function fetchProducts(niche) {
             url: `https://${CONFIG.RAPIDAPI_HOST}/search`,
             params: {
                 q: niche,
-                domain: CONFIG.AMAZON_DOMAIN
+                country: 'US',
+                sort_by: 'RELEVANCE'
             },
             headers: {
                 'X-RapidAPI-Key': CONFIG.RAPIDAPI_KEY,
@@ -299,7 +309,8 @@ async function fetchProducts(niche) {
         
         console.log(`🔗 API Request: ${options.url}`);
         console.log(`📝 Query: ${niche}`);
-        console.log(`🌍 Domain: ${CONFIG.AMAZON_DOMAIN}`);
+        console.log(`🌍 Country: US`);
+        console.log(`🔀 Sort By: RELEVANCE`);
         
         const response = await axios.request(options);
         
@@ -428,20 +439,14 @@ async function fetchProducts(niche) {
                 continue;
             }
             
-            // Extract feature bullets - required field (array with at least 1 item)
+            // Extract feature bullets - REQUIRED field from API (no fallback generation)
             let featureBullets = product.feature_bullets || product.features || product.about_product || null;
             
-            // Ensure feature_bullets is an array with at least 1 item
+            // Strictly require feature_bullets array from API - NO fallback generation
             if (!featureBullets || !Array.isArray(featureBullets) || featureBullets.length === 0) {
-                // Try to convert string to array if it's a string
-                if (typeof featureBullets === 'string' && featureBullets.length > 0) {
-                    featureBullets = [featureBullets];
-                } else {
-                    // Generate feature bullets from description as fallback
-                    // This always returns at least one item
-                    featureBullets = generateFeaturesFromDescription(description);
-                    console.log(`   ℹ️  Generated feature bullets from description for "${title}"`);
-                }
+                console.warn(`⚠️  Skipping product ${i + 1} "${title}": missing feature_bullets from API`);
+                skippedCount++;
+                continue;
             }
             
             // Build Amazon URL - prefer detail_page_url from API
@@ -466,17 +471,21 @@ async function fetchProducts(niche) {
             // Use validated feature bullets
             const features = featureBullets.slice(0, 5);
             
-            // Try to extract pros (don't fail if missing, we'll generate from data)
-            let pros = [];
-            try {
-                pros = extractPros(product, niche);
-            } catch (error) {
-                console.warn(`   ℹ️  Generating pros from available data for "${title}"`);
-                pros = generateProsFromProduct(product, rating, reviews);
+            // Extract pros - REQUIRED from API (no fallback generation)
+            const pros = extractPros(product, niche);
+            if (!pros || pros.length === 0) {
+                console.warn(`⚠️  Skipping product ${i + 1} "${title}": missing pros from API`);
+                skippedCount++;
+                continue;
             }
             
-            // Extract cons (always succeeds with defaults)
+            // Extract cons - REQUIRED from API (no fallback generation)
             const cons = extractCons(product, niche);
+            if (!cons || cons.length === 0) {
+                console.warn(`⚠️  Skipping product ${i + 1} "${title}": missing cons from API`);
+                skippedCount++;
+                continue;
+            }
             
             validProducts.push({
                 asin: asin,
@@ -540,111 +549,13 @@ async function fetchProducts(niche) {
 }
 
 /**
- * Extract features from product data - with fallback to description
+ * Extract pros from product data - API data only, no fallback generation
  * @param {object} product - Product object
  * @param {string} niche - Niche name for error messages
- * @returns {Array} Features array
- */
-function extractFeatures(product, niche) {
-    // Try to extract features from various API fields
-    if (product.features && Array.isArray(product.features) && product.features.length > 0) {
-        return product.features.slice(0, 5);
-    }
-    
-    if (product.feature_bullets && Array.isArray(product.feature_bullets) && product.feature_bullets.length > 0) {
-        return product.feature_bullets.slice(0, 5);
-    }
-    
-    if (product.attributes && Array.isArray(product.attributes) && product.attributes.length > 0) {
-        return product.attributes.slice(0, 5);
-    }
-    
-    if (product.product_details && typeof product.product_details === 'object') {
-        const details = Object.values(product.product_details).filter(v => v && typeof v === 'string');
-        if (details.length > 0) {
-            return details.slice(0, 5);
-        }
-    }
-    
-    if (product.about_product && Array.isArray(product.about_product) && product.about_product.length > 0) {
-        return product.about_product.slice(0, 5);
-    }
-    
-    // If no features found, throw error to trigger fallback
-    throw new Error(`No structured features found for product "${product.title}"`);
-}
-
-/**
- * Generate features from product description when structured features are not available
- * @param {string} description - Product description
- * @returns {Array} Features array
- */
-function generateFeaturesFromDescription(description) {
-    // Split description into sentences and use as features
-    const sentences = description
-        .split(/[.!?]+/)
-        .map(s => s.trim())
-        .filter(s => s.length > 10 && s.length < 200);
-    
-    if (sentences.length > 0) {
-        return sentences.slice(0, 5);
-    }
-    
-    // If description doesn't split well, create a single feature
-    return [description.substring(0, CONFIG.MAX_FEATURE_LENGTH)];
-}
-
-/**
- * Generate pros from available product data when structured pros are not available
- * @param {object} product - Product object
- * @param {string} rating - Rating value
- * @param {string} reviews - Review count
- * @returns {Array} Pros array
- */
-function generateProsFromProduct(product, rating, reviews) {
-    const pros = [];
-    
-    // Build pros from available real data
-    if (rating && parseFloat(rating) >= 4.0) {
-        pros.push(`Highly rated (${rating} stars)`);
-    }
-    
-    if (reviews) {
-        const reviewCount = parseInt(reviews.toString().replace(/,/g, ''));
-        if (reviewCount > 1000) {
-            pros.push(`Popular choice (${reviews} reviews)`);
-        } else if (reviewCount > 100) {
-            pros.push(`Well-reviewed (${reviews} reviews)`);
-        }
-    }
-    
-    if (product.discount_percentage && product.discount_percentage > 10) {
-        pros.push(`Good value (${product.discount_percentage}% off)`);
-    }
-    
-    if (product.is_prime || product.prime) {
-        pros.push('Amazon Prime eligible');
-    }
-    
-    // Add generic but factual pros
-    if (pros.length < 3) {
-        pros.push('Quality construction');
-        pros.push('Reliable performance');
-    }
-    
-    return pros.slice(0, 5);
-}
-
-/**
- * Extract pros from product data - with fallback generation
- * @param {object} product - Product object
- * @param {string} niche - Niche name for error messages
- * @returns {Array} Pros array
+ * @returns {Array} Pros array (empty if not in API)
  */
 function extractPros(product, niche) {
-    const pros = [];
-    
-    // Try to extract pros from API data
+    // Only extract pros from API data - no generation
     if (product.pros && Array.isArray(product.pros) && product.pros.length > 0) {
         return product.pros.slice(0, 5);
     }
@@ -653,45 +564,18 @@ function extractPros(product, niche) {
         return product.positives.slice(0, 5);
     }
     
-    // Build pros from available real data
-    if (product.rating && parseFloat(product.rating) >= 4.0) {
-        pros.push(`Highly rated (${product.rating} stars)`);
-    }
-    
-    if (product.review_count && parseInt(product.review_count) > 1000) {
-        pros.push(`Popular choice (${product.review_count.toLocaleString()} reviews)`);
-    }
-    
-    if (product.discount_percentage && product.discount_percentage > 10) {
-        pros.push(`Good value (${product.discount_percentage}% off)`);
-    }
-    
-    // Use features as pros if available
-    if (product.features && Array.isArray(product.features)) {
-        pros.push(...product.features.slice(0, 3));
-    } else if (product.feature_bullets && Array.isArray(product.feature_bullets)) {
-        pros.push(...product.feature_bullets.slice(0, 3));
-    } else if (product.about_product && Array.isArray(product.about_product)) {
-        pros.push(...product.about_product.slice(0, 3));
-    }
-    
-    if (pros.length === 0) {
-        throw new Error(`Product "${product.title}" has insufficient data to generate pros`);
-    }
-    
-    return pros.slice(0, 5);
+    // Return empty array if no pros in API response
+    return [];
 }
 
 /**
- * Extract cons from product data - Minimal, factual only
+ * Extract cons from product data - API data only, no fallback generation
  * @param {object} product - Product object
  * @param {string} niche - Niche name for error messages
- * @returns {Array} Cons array
+ * @returns {Array} Cons array (empty if not in API)
  */
 function extractCons(product, niche) {
-    const cons = [];
-    
-    // Try to extract cons from API data
+    // Only extract cons from API data - no generation
     if (product.cons && Array.isArray(product.cons) && product.cons.length > 0) {
         return product.cons.slice(0, 3);
     }
@@ -700,21 +584,8 @@ function extractCons(product, niche) {
         return product.negatives.slice(0, 3);
     }
     
-    // Build minimal cons from factual data
-    if (product.price && typeof product.price === 'number' && product.price > 100) {
-        cons.push('Higher price point');
-    }
-    
-    if (product.rating && parseFloat(product.rating) < 4.5) {
-        cons.push('Some mixed reviews');
-    }
-    
-    // Amazon API doesn't typically provide cons, so we need at least one factual statement
-    if (cons.length === 0) {
-        cons.push('Check compatibility with your specific needs');
-    }
-    
-    return cons;
+    // Return empty array if no cons in API response
+    return [];
 }
 
 /**
