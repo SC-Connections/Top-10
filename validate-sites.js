@@ -66,8 +66,21 @@ function validateSites() {
         const imageUrls = content.match(/src="(https?:\/\/[^"]+)"/g) || [];
         console.log(`✓ Found ${imageUrls.length} absolute image URLs`);
         
-        // Check for valid Amazon image CDN URLs
-        const amazonImages = imageUrls.filter(url => url.includes('amazon.com') || url.includes('media-amazon'));
+        // Check for valid Amazon image CDN URLs (more precise check)
+        const amazonImages = imageUrls.filter(url => {
+            try {
+                // Extract URL from match
+                const urlMatch = url.match(/src="([^"]+)"/);
+                if (!urlMatch) return false;
+                const parsedUrl = new URL(urlMatch[1]);
+                // Check if hostname ends with amazon.com (prevents subdomain attacks)
+                return parsedUrl.hostname.endsWith('.media-amazon.com') || 
+                       parsedUrl.hostname.endsWith('.ssl-images-amazon.com') ||
+                       parsedUrl.hostname === 'images-na.ssl-images-amazon.com';
+            } catch (e) {
+                return false;
+            }
+        });
         console.log(`✓ ${amazonImages.length} images use Amazon CDN`);
         
         // Check blog directory
