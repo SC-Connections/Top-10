@@ -80,13 +80,22 @@ async function fetchProducts(keyword, nodeId, numProducts) {
         fs.writeFileSync(dataFile, JSON.stringify(response.data, null, 2));
         console.log(`💾 Saved raw API response to: ${dataFile}`);
         
-        // Parse response
+        // Parse response - Amazon Real Time API returns products in data.results
         let productList = [];
-        if (response.data && response.data.data && Array.isArray(response.data.data.products)) {
+        if (response.data && response.data.success && response.data.data && Array.isArray(response.data.data.results)) {
+            // New API structure: response.data.data.results
+            productList = response.data.data.results;
+        } else if (response.data && Array.isArray(response.data.results)) {
+            // Alternative structure: response.data.results
+            productList = response.data.results;
+        } else if (response.data && response.data.data && Array.isArray(response.data.data.products)) {
+            // Legacy structure: response.data.data.products
             productList = response.data.data.products;
         } else if (response.data && Array.isArray(response.data.products)) {
+            // Legacy structure: response.data.products
             productList = response.data.products;
         } else if (Array.isArray(response.data)) {
+            // Direct array
             productList = response.data;
         } else {
             console.error('❌ ERROR: Unexpected API response structure');
@@ -100,18 +109,49 @@ async function fetchProducts(keyword, nodeId, numProducts) {
         }
         
         const products = productList.slice(0, numProducts);
-        return products.map((product, index) => ({
-            title: product.product_title || product.title || `${keyword} Model ${index + 1}`,
-            image: product.product_photo || product.image || product.main_image || '',
-            link: addAffiliateTag(product.product_url || `https://www.amazon.com/dp/${product.asin}` || `https://www.amazon.com/s?k=${encodeURIComponent(keyword)}`),
-            price: product.product_price || product.price || 'Check Amazon',
-            rating: product.product_star_rating ? `${product.product_star_rating}/5` : 'N/A',
-            tagline: generateTagline(keyword, index),
-            description: generateDescription(keyword, product.product_title || keyword, index),
-            badge: getBadge(index),
-            pros: generatePros(keyword),
-            cons: generateCons(keyword)
-        }));
+        return products.map((product, index) => {
+            // Extract title - new API uses 'title', legacy uses 'product_title'
+            const title = product.title || product.product_title || `${keyword} Model ${index + 1}`;
+            
+            // Extract image - new API uses 'image_url', legacy uses 'product_photo'
+            const image = product.image_url || product.product_photo || product.image || product.main_image || '';
+            
+            // Extract price - new API uses 'price' (number), legacy uses 'product_price' (string)
+            let price = 'Check Amazon';
+            if (typeof product.price === 'number') {
+                price = `$${product.price}`;
+            } else if (product.price) {
+                price = product.price;
+            } else if (product.product_price) {
+                price = product.product_price;
+            }
+            
+            // Extract rating - new API uses 'rating' (number), legacy uses 'product_star_rating'
+            let rating = 'N/A';
+            if (typeof product.rating === 'number') {
+                rating = `${product.rating}/5`;
+            } else if (product.product_star_rating) {
+                rating = `${product.product_star_rating}/5`;
+            } else if (product.rating) {
+                rating = product.rating;
+            }
+            
+            // Build product URL with affiliate tag
+            const productUrl = product.product_url || (product.asin ? `https://www.amazon.com/dp/${product.asin}` : `https://www.amazon.com/s?k=${encodeURIComponent(keyword)}`);
+            
+            return {
+                title: title,
+                image: image,
+                link: addAffiliateTag(productUrl),
+                price: price,
+                rating: rating,
+                tagline: generateTagline(keyword, index),
+                description: generateDescription(keyword, title, index),
+                badge: getBadge(index),
+                pros: generatePros(keyword),
+                cons: generateCons(keyword)
+            };
+        });
         
     } catch (error) {
         // Log error details and fail
