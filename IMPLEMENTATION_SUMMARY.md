@@ -319,3 +319,154 @@ GitHub Actions Trigger
 ---
 
 **Status**: ✅ UPDATED - System is production-ready with fixed deployment pipeline
+
+---
+
+## November 2024 Update: Multi-Repository Architecture
+
+### Major Restructuring: Separate Repositories for Each Niche Site
+
+**Goal**: Deploy each niche site to its own GitHub repository instead of bundling all sites in the main Top-10 repo.
+
+### Changes Implemented
+
+#### 1. Token Configuration
+**Change**: Renamed `GH_PAT` to `PAT_TOKEN` throughout the codebase
+- Updated all references in `site-generator.js`
+- Updated workflow files (`build-sites.yml`, `generate-sites.yml`)
+- Updated documentation in `README.md`
+- **Rationale**: Use consistent naming with GitHub's PAT_TOKEN convention
+
+#### 2. Repository Naming Convention
+**Implementation**: Added "top10-" prefix to all generated repositories
+- Format: `top10-<niche-slug>`
+- Examples:
+  - `bluetooth-earbuds` → `top10-bluetooth-earbuds`
+  - `sleep-earbuds` → `top10-sleep-earbuds`
+  - `digital-cameras` → `top10-digital-cameras`
+- **Location**: `site-generator.js` line 773
+- **Benefits**: Clear namespace, easy identification, prevents naming conflicts
+
+#### 3. GitHub Actions Workflow Generator
+**New Feature**: Automatically creates `.github/workflows/deploy.yml` in each niche site repository
+- **Function**: `createGitHubPagesWorkflow()` in `site-generator.js`
+- **Workflow includes**:
+  - Triggers: push to main, workflow_dispatch
+  - Permissions: contents:read, pages:write, id-token:write
+  - Actions used:
+    - `actions/checkout@v4`
+    - `actions/configure-pages@v4`
+    - `actions/upload-pages-artifact@v2`
+    - `actions/deploy-pages@v4`
+  - Deploys from root directory (`path: '.'`)
+- **Benefits**: Each site gets automatic GitHub Pages deployment
+
+#### 4. Main Repository Workflow Changes
+**File**: `.github/workflows/build-sites.yml`
+- **Removed**: GitHub Pages deployment from main repo
+- **Simplified**: Focus on generation and publishing only
+- **Added**: Deployment summary showing all published site URLs
+- **Result**: Main repo serves as orchestrator only
+
+**File**: `.github/workflows/generate-sites.yml`
+- **Removed**: GitHub Pages deployment steps
+- **Added**: PAT_TOKEN environment variable
+- **Simplified**: Generate sites without deploying main repo
+
+#### 5. Site Publishing Flow
+**Updated Function**: `publishToGitHub()` in `site-generator.js`
+
+New workflow:
+1. Generate site locally in `/sites/<slug>/`
+2. Create/update repository `top10-<slug>` via GitHub API
+3. Generate `.github/workflows/deploy.yml` in site directory
+4. Initialize git and push to new repository
+5. Enable GitHub Pages via API
+6. Return Pages URL: `https://sc-connections.github.io/top10-<slug>/`
+
+#### 6. Documentation Updates
+**File**: `README.md`
+- Added "Multi-Repository Architecture" section
+- Documented repository naming convention
+- Explained the role of main repo vs niche repos
+- Updated secret name from GH_PAT to PAT_TOKEN
+- Clarified deployment workflow
+
+### Architecture Diagram
+
+```
+Main Top-10 Repository
+  ├─ Generates all sites locally
+  ├─ Creates individual repos via API
+  └─ Pushes each site to its repo
+          ↓
+┌─────────┴─────────┐
+↓                   ↓
+top10-bluetooth-earbuds    top10-sleep-earbuds
+├─ index.html              ├─ index.html
+├─ global.css              ├─ global.css
+├─ blog/                   ├─ blog/
+└─ .github/workflows/      └─ .github/workflows/
+   └─ deploy.yml              └─ deploy.yml
+   ↓                          ↓
+GitHub Pages               GitHub Pages
+sc-connections.github.io/  sc-connections.github.io/
+top10-bluetooth-earbuds    top10-sleep-earbuds
+```
+
+### Site Structure Per Repository
+
+Each generated `top10-<niche>` repository contains:
+```
+top10-<niche>/
+├── index.html              # Main landing page
+├── global.css              # Styles
+├── blog/                   # Product review articles
+│   ├── <asin1>.html
+│   ├── <asin2>.html
+│   └── ... (10 articles)
+└── .github/
+    └── workflows/
+        └── deploy.yml      # GitHub Pages deployment
+```
+
+### Benefits of Multi-Repository Architecture
+
+1. **Isolation**: Each site operates independently
+2. **Scalability**: No single large repo with hundreds of files
+3. **Deployment**: Individual site updates don't affect others
+4. **Management**: Easy to archive, delete, or transfer sites
+5. **GitHub Pages**: Each site gets its own Pages instance
+6. **URLs**: Clean, dedicated URLs per niche
+7. **Workflows**: Independent CI/CD per site
+
+### Testing Results
+
+✅ Generator creates proper repository names with "top10-" prefix
+✅ Workflow file generation function working correctly
+✅ PAT_TOKEN references updated throughout
+✅ Main repo workflows simplified and functional
+✅ Sites directory structure unchanged (backward compatible)
+✅ No security vulnerabilities (CodeQL scan passed)
+✅ Documentation updated and accurate
+
+### User Requirements
+
+To use the multi-repository deployment:
+1. Create a fine-grained Personal Access Token with:
+   - Repository administration (read/write)
+   - Contents (read/write)
+   - Pages (read/write)
+2. Add token as `PAT_TOKEN` secret in main repository
+3. Run workflow - sites will automatically deploy to individual repos
+
+### Backward Compatibility
+
+- Sites still generated locally in `/sites/` directory
+- Works without PAT_TOKEN (local generation only)
+- Existing workflows still function
+- No breaking changes to generation logic
+
+---
+
+**Status**: ✅ COMPLETE - Multi-repository architecture implemented and tested

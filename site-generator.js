@@ -19,7 +19,7 @@ const CONFIG = {
     NICHES_FILE: path.join(__dirname, 'niches.csv'),
     TEMPLATES_DIR: path.join(__dirname, 'templates'),
     OUTPUT_DIR: path.join(__dirname, 'sites'),
-    GH_PAT: process.env.GH_PAT || '',
+    PAT_TOKEN: process.env.PAT_TOKEN || '',
     GITHUB_ORG: 'SC-Connections'
 };
 
@@ -46,9 +46,9 @@ async function main() {
             const slug = createSlug(niche);
             await generateSiteForNiche(niche);
             
-            // Publish to separate GitHub repository if GH_PAT is available
+            // Publish to separate GitHub repository if PAT_TOKEN is available
             let publicUrl = `${CONFIG.BASE_URL}/sites/${slug}/`;
-            if (CONFIG.GH_PAT) {
+            if (CONFIG.PAT_TOKEN) {
                 console.log('\n🚀 Publishing to separate GitHub repository...');
                 try {
                     publicUrl = await publishToGitHub(slug, niche);
@@ -58,7 +58,7 @@ async function main() {
                     console.log('⚠️  Site will still be available in main repo');
                 }
             } else {
-                console.log('\n⚠️  GH_PAT not configured, skipping separate repository publishing');
+                console.log('\n⚠️  PAT_TOKEN not configured, skipping separate repository publishing');
             }
             
             generatedNiches.push({ niche, slug, url: publicUrl });
@@ -585,7 +585,7 @@ async function createGitHubRepo(repoName, description) {
             auto_init: false
         }, {
             headers: {
-                'Authorization': `Bearer ${CONFIG.GH_PAT}`,
+                'Authorization': `Bearer ${CONFIG.PAT_TOKEN}`,
                 'Accept': 'application/vnd.github.v3+json',
                 'User-Agent': 'SC-Connections-Site-Generator'
             }
@@ -599,7 +599,7 @@ async function createGitHubRepo(repoName, description) {
             console.log(`⚠️  Repository ${repoName} already exists, fetching details...`);
             const getResponse = await axios.get(`https://api.github.com/repos/${CONFIG.GITHUB_ORG}/${repoName}`, {
                 headers: {
-                    'Authorization': `Bearer ${CONFIG.GH_PAT}`,
+                    'Authorization': `Bearer ${CONFIG.PAT_TOKEN}`,
                     'Accept': 'application/vnd.github.v3+json',
                     'User-Agent': 'SC-Connections-Site-Generator'
                 }
@@ -616,7 +616,7 @@ async function createGitHubRepo(repoName, description) {
  * @param {string} repoName - Repository name
  */
 function pushToGitHub(siteDir, repoName) {
-    const repoUrl = `https://${CONFIG.GH_PAT}@github.com/${CONFIG.GITHUB_ORG}/${repoName}.git`;
+    const repoUrl = `https://${CONFIG.PAT_TOKEN}@github.com/${CONFIG.GITHUB_ORG}/${repoName}.git`;
     
     try {
         // Configure git
@@ -688,7 +688,7 @@ async function enableGitHubPages(repoName) {
                     }
                 }, {
                     headers: {
-                        'Authorization': `Bearer ${CONFIG.GH_PAT}`,
+                        'Authorization': `Bearer ${CONFIG.PAT_TOKEN}`,
                         'Accept': 'application/vnd.github+json',
                         'User-Agent': 'SC-Connections-Site-Generator'
                     }
@@ -708,6 +708,61 @@ async function enableGitHubPages(repoName) {
 }
 
 /**
+ * Create GitHub Actions workflow file for Pages deployment
+ * @param {string} siteDir - Site directory path
+ */
+function createGitHubPagesWorkflow(siteDir) {
+    const workflowDir = path.join(siteDir, '.github', 'workflows');
+    fs.mkdirSync(workflowDir, { recursive: true });
+    
+    const workflowContent = `name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    
+    environment:
+      name: github-pages
+      url: \${{ steps.deployment.outputs.page_url }}
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      
+      - name: Setup Pages
+        uses: actions/configure-pages@v4
+      
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v2
+        with:
+          path: '.'
+      
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
+`;
+    
+    const workflowPath = path.join(workflowDir, 'deploy.yml');
+    fs.writeFileSync(workflowPath, workflowContent);
+    console.log(`✓ Created workflow file: .github/workflows/deploy.yml`);
+}
+
+/**
  * Publish site to separate GitHub repository
  * @param {string} slug - Niche slug
  * @param {string} niche - Niche name
@@ -715,21 +770,26 @@ async function enableGitHubPages(repoName) {
  */
 async function publishToGitHub(slug, niche) {
     const siteDir = path.join(CONFIG.OUTPUT_DIR, slug);
-    const description = `Auto-generated Top 10 niche site for ${niche}`;
+    const repoName = `top10-${slug}`;  // Add top10- prefix to repo name
+    const description = `Auto-generated Top 10 ${niche} review site`;
     
-    console.log(`\n📤 Publishing ${slug} to GitHub...`);
+    console.log(`\n📤 Publishing ${slug} to GitHub as ${repoName}...`);
     
     // Step 1: Create GitHub repository
     console.log('1️⃣  Creating GitHub repository...');
-    await createGitHubRepo(slug, description);
+    await createGitHubRepo(repoName, description);
     
-    // Step 2: Push site contents
-    console.log('2️⃣  Pushing site contents...');
-    pushToGitHub(siteDir, slug);
+    // Step 2: Create GitHub Actions workflow file for deployment
+    console.log('2️⃣  Creating GitHub Actions workflow...');
+    createGitHubPagesWorkflow(siteDir);
     
-    // Step 3: Enable GitHub Pages
-    console.log('3️⃣  Enabling GitHub Pages...');
-    const pagesUrl = await enableGitHubPages(slug);
+    // Step 3: Push site contents
+    console.log('3️⃣  Pushing site contents...');
+    pushToGitHub(siteDir, repoName);
+    
+    // Step 4: Enable GitHub Pages
+    console.log('4️⃣  Enabling GitHub Pages...');
+    const pagesUrl = await enableGitHubPages(repoName);
     
     console.log(`\n🌐 Public URL: ${pagesUrl}`);
     return pagesUrl;
