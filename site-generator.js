@@ -282,6 +282,49 @@ function createSlug(niche) {
 }
 
 /**
+ * Fetch product details from /product_details/ endpoint
+ * @param {string} asin - Product ASIN
+ * @returns {Promise<object|null>} Product details or null if failed
+ */
+async function fetchProductDetails(asin) {
+    try {
+        const options = {
+            method: 'GET',
+            url: `https://${CONFIG.RAPIDAPI_HOST}/product_details`,
+            params: {
+                asin: asin,
+                domain: 'US'
+            },
+            headers: {
+                'X-RapidAPI-Key': CONFIG.RAPIDAPI_KEY,
+                'X-RapidAPI-Host': CONFIG.RAPIDAPI_HOST
+            },
+            timeout: 30000
+        };
+        
+        console.log(`  🔍 Fetching details for ASIN: ${asin}`);
+        const response = await axios.request(options);
+        
+        // Extract product details from response
+        let details = null;
+        if (response.data && response.data.data) {
+            details = response.data.data;
+        } else if (response.data) {
+            details = response.data;
+        }
+        
+        if (details) {
+            console.log(`  ✅ Got details for ASIN: ${asin}`);
+        }
+        
+        return details;
+    } catch (error) {
+        console.warn(`  ⚠️  Failed to fetch details for ASIN ${asin}: ${error.message}`);
+        return null;
+    }
+}
+
+/**
  * Fetch products from Amazon API
  * @param {string} niche - Niche name
  * @returns {Promise<Array>} Array of product objects
@@ -355,107 +398,204 @@ async function fetchProducts(niche) {
         for (let i = 0; i < Math.min(productList.length, 20); i++) {  // Check more products to get 10 valid ones
             const product = productList[i];
             
-            // Extract ASIN - try multiple field names
+            console.log(`\n📦 Processing product ${i + 1}...`);
+            
+            // Step 1: Extract ASIN from search results (REQUIRED)
             const asin = product.asin || product.ASIN || null;
             
-            // Extract title - new API uses 'title', legacy uses 'product_title'
-            const title = product.title || product.product_title || product.name || null;
-            
-            // Extract image - new API uses 'image_url', legacy uses 'product_photo'
-            // Also try images array if available
-            // Ensure it's an absolute URL
-            let image = product.image_url || product.image || product.product_photo || product.main_image || product.product_main_image_url || null;
-            
-            // Try images array if single image not found
-            if (!image && product.images && Array.isArray(product.images) && product.images.length > 0) {
-                image = product.images[0];
+            if (!asin) {
+                console.warn(`⚠️  Skipping product ${i + 1}: missing ASIN`);
+                skippedCount++;
+                continue;
             }
             
+            // Step 2: Fetch product details from /product_details/ endpoint
+            const details = await fetchProductDetails(asin);
+            
+            if (!details) {
+                console.warn(`⚠️  Skipping product ${i + 1}: failed to fetch product details for ASIN ${asin}`);
+                skippedCount++;
+                continue;
+            }
+            
+            // Step 3: Extract and merge data from details (with fallbacks to search data)
+            
+            // Title - REQUIRED (prefer details, fallback to search)
+            const title = details.title || details.product_title || details.name || 
+                         product.title || product.product_title || product.name || null;
+            
+            if (!title) {
+                console.warn(`⚠️  Skipping product ${i + 1}: missing title for ASIN ${asin}`);
+                skippedCount++;
+                continue;
+            }
+            
+            // Image - REQUIRED (prefer details, fallback to search)
+            let image = details.image_url || details.image || details.product_photo || 
+                       details.main_image || details.product_main_image_url || null;
+            
+            // Try images array from details
+            if (!image && details.images && Array.isArray(details.images) && details.images.length > 0) {
+                image = details.images[0];
+            }
+            
+            // Fallback to search data
+            if (!image) {
+                image = product.image_url || product.image || product.product_photo || 
+                       product.main_image || product.product_main_image_url || null;
+                
+                if (!image && product.images && Array.isArray(product.images) && product.images.length > 0) {
+                    image = product.images[0];
+                }
+            }
+            
+            // Validate image URL
             if (image && !image.startsWith('http')) {
-                image = null; // Invalid image URL
+                image = null;
             }
             
-            // Validate core required fields - SKIP if missing instead of failing
-            if (!asin || !title || !image) {
-                console.warn(`⚠️  Skipping product ${i + 1}: missing core fields (ASIN: ${!!asin}, Title: ${!!title}, Image: ${!!image})`);
+            if (!image) {
+                console.warn(`⚠️  Skipping product ${i + 1} "${title}": missing image for ASIN ${asin}`);
                 skippedCount++;
                 continue;
             }
             
-            // Extract rating - SKIP if missing
-            let rating = null;
-            if (typeof product.rating === 'number') {
-                rating = String(product.rating);
-            } else if (product.product_star_rating) {
-                rating = String(product.product_star_rating);
-            } else if (product.stars) {
-                rating = String(product.stars);
-            }
-            
-            if (!rating) {
-                console.warn(`⚠️  Skipping product ${i + 1} "${title}": missing rating`);
-                skippedCount++;
-                continue;
-            }
-            
-            // Extract review count - SKIP if missing
-            let reviews = null;
-            if (product.review_count) {
-                reviews = String(product.review_count);
-            } else if (product.product_num_ratings) {
-                reviews = String(product.product_num_ratings);
-            } else if (product.reviews_count) {
-                reviews = String(product.reviews_count);
-            }
-            
-            if (!reviews) {
-                console.warn(`⚠️  Skipping product ${i + 1} "${title}": missing review count`);
-                skippedCount++;
-                continue;
-            }
-            
-            // Extract price - SKIP if missing
+            // Price - REQUIRED (prefer details, fallback to search)
             let price = null;
-            if (typeof product.price === 'number') {
-                price = `$${product.price.toFixed(2)}`;
-            } else if (product.price) {
-                price = String(product.price);
-            } else if (product.product_price) {
-                price = String(product.product_price);
+            
+            // Try details first
+            if (typeof details.price === 'number') {
+                price = `$${details.price.toFixed(2)}`;
+            } else if (details.price) {
+                price = String(details.price);
+            } else if (details.product_price) {
+                price = String(details.product_price);
+            }
+            
+            // Fallback to search data
+            if (!price) {
+                if (typeof product.price === 'number') {
+                    price = `$${product.price.toFixed(2)}`;
+                } else if (product.price) {
+                    price = String(product.price);
+                } else if (product.product_price) {
+                    price = String(product.product_price);
+                }
             }
             
             if (!price) {
-                console.warn(`⚠️  Skipping product ${i + 1} "${title}": missing price`);
+                console.warn(`⚠️  Skipping product ${i + 1} "${title}": missing price for ASIN ${asin}`);
                 skippedCount++;
                 continue;
             }
             
-            // Extract description - required field
-            let description = product.product_description || product.description || null;
+            // Description - REQUIRED (prefer details, fallback to short_description or features)
+            let description = details.description || details.product_description || 
+                            details.short_description || null;
+            
+            // Fallback to search data
+            if (!description) {
+                description = product.description || product.product_description || 
+                            product.short_description || null;
+            }
+            
+            // If still no description, try to create from feature bullets
+            if (!description) {
+                const tempFeatures = details.features || details.feature_bullets || 
+                                   details.about_product || product.features || 
+                                   product.feature_bullets || product.about_product || null;
+                
+                if (tempFeatures && Array.isArray(tempFeatures) && tempFeatures.length > 0) {
+                    description = tempFeatures.slice(0, 3).join('. ') + '.';
+                }
+            }
             
             if (!description) {
-                console.warn(`⚠️  Skipping product ${i + 1} "${title}": missing description`);
+                console.warn(`⚠️  Skipping product ${i + 1} "${title}": missing description for ASIN ${asin}`);
                 skippedCount++;
                 continue;
             }
             
-            // Extract feature bullets - REQUIRED field from API (no fallback generation)
-            let featureBullets = product.feature_bullets || product.features || product.about_product || null;
+            // Rating - OPTIONAL (default to null if missing)
+            let rating = null;
             
-            // Strictly require feature_bullets array from API - NO fallback generation
+            // Try details first
+            if (typeof details.rating === 'number') {
+                rating = String(details.rating);
+            } else if (details.product_star_rating) {
+                rating = String(details.product_star_rating);
+            } else if (details.stars) {
+                rating = String(details.stars);
+            }
+            
+            // Fallback to search data
+            if (!rating) {
+                if (typeof product.rating === 'number') {
+                    rating = String(product.rating);
+                } else if (product.product_star_rating) {
+                    rating = String(product.product_star_rating);
+                } else if (product.stars) {
+                    rating = String(product.stars);
+                }
+            }
+            
+            // Default to null if still missing (per requirements)
+            if (!rating) {
+                rating = '0';  // Default rating
+                console.log(`  ℹ️  No rating found, using default: 0`);
+            }
+            
+            // Review Count - OPTIONAL (default to 0 if missing)
+            let reviews = null;
+            
+            // Try details first
+            if (details.review_count) {
+                reviews = String(details.review_count);
+            } else if (details.product_num_ratings) {
+                reviews = String(details.product_num_ratings);
+            } else if (details.reviews_count) {
+                reviews = String(details.reviews_count);
+            } else if (details.num_ratings) {
+                reviews = String(details.num_ratings);
+            }
+            
+            // Fallback to search data
+            if (!reviews) {
+                if (product.review_count) {
+                    reviews = String(product.review_count);
+                } else if (product.product_num_ratings) {
+                    reviews = String(product.product_num_ratings);
+                } else if (product.reviews_count) {
+                    reviews = String(product.reviews_count);
+                } else if (product.num_ratings) {
+                    reviews = String(product.num_ratings);
+                }
+            }
+            
+            // Default to 0 if still missing (per requirements)
+            if (!reviews) {
+                reviews = '0';
+                console.log(`  ℹ️  No review count found, using default: 0`);
+            }
+            
+            // Feature bullets - try to extract, generate from description as fallback
+            let featureBullets = details.features || details.feature_bullets || 
+                               details.about_product || product.features || 
+                               product.feature_bullets || product.about_product || null;
+            
             if (!featureBullets || !Array.isArray(featureBullets) || featureBullets.length === 0) {
-                console.warn(`⚠️  Skipping product ${i + 1} "${title}": missing feature_bullets from API`);
-                skippedCount++;
-                continue;
+                // Generate from description as fallback
+                const sentences = description.split(/[.!?]+/).filter(s => s.trim().length > 0);
+                featureBullets = sentences.slice(0, 5).map(s => s.trim());
+                console.log(`  ℹ️  Generated ${featureBullets.length} features from description`);
             }
             
-            // Build Amazon URL - prefer detail_page_url from API
-            let amazonUrl = product.detail_page_url || product.product_url || product.url || null;
+            const features = featureBullets.slice(0, 5);
             
-            if (!amazonUrl) {
-                // Construct from ASIN if not provided
-                amazonUrl = `https://www.amazon.com/dp/${asin}`;
-            }
+            // Build Amazon URL
+            let amazonUrl = details.detail_page_url || details.product_url || details.url || 
+                          product.detail_page_url || product.product_url || product.url || 
+                          `https://www.amazon.com/dp/${asin}`;
             
             // Validate URL format
             if (!amazonUrl.startsWith('http')) {
@@ -468,24 +608,25 @@ async function fetchProducts(niche) {
                 amazonUrl = `${amazonUrl}${separator}tag=${CONFIG.AMAZON_AFFILIATE_ID}`;
             }
             
-            // Use validated feature bullets
-            const features = featureBullets.slice(0, 5);
+            // Extract pros - try API first, then generate from features as fallback
+            let pros = extractPros(details, niche) || extractPros(product, niche);
             
-            // Extract pros - REQUIRED from API (no fallback generation)
-            const pros = extractPros(product, niche);
             if (!pros || pros.length === 0) {
-                console.warn(`⚠️  Skipping product ${i + 1} "${title}": missing pros from API`);
-                skippedCount++;
-                continue;
+                // Generate from features as fallback
+                pros = features.slice(0, 3);
+                console.log(`  ℹ️  Generated ${pros.length} pros from features`);
             }
             
-            // Extract cons - REQUIRED from API (no fallback generation)
-            const cons = extractCons(product, niche);
+            // Extract cons - try API first, then generate generic cons as fallback
+            let cons = extractCons(details, niche) || extractCons(product, niche);
+            
             if (!cons || cons.length === 0) {
-                console.warn(`⚠️  Skipping product ${i + 1} "${title}": missing cons from API`);
-                skippedCount++;
-                continue;
+                // Generate generic cons as fallback
+                cons = ['May vary by individual preferences', 'Check compatibility before purchase'];
+                console.log(`  ℹ️  Generated ${cons.length} generic cons`);
             }
+            
+            console.log(`  ✅ Product validated: "${title}"`);
             
             validProducts.push({
                 asin: asin,
@@ -504,6 +645,11 @@ async function fetchProducts(niche) {
             // Stop once we have 10 valid products
             if (validProducts.length >= 10) {
                 break;
+            }
+            
+            // Rate limiting: Small delay between product_details API calls
+            if (i < Math.min(productList.length, 20) - 1) {
+                await new Promise(resolve => setTimeout(resolve, 500)); // 500ms delay
             }
         }
         

@@ -36,8 +36,8 @@ function processProducts(productList) {
             continue;
         }
         
-        // Extract rating
-        let rating = null;
+        // Extract rating - OPTIONAL (defaults to 0)
+        let rating = '0';  // Default value
         if (typeof product.rating === 'number') {
             rating = String(product.rating);
         } else if (product.product_star_rating) {
@@ -46,26 +46,14 @@ function processProducts(productList) {
             rating = String(product.stars);
         }
         
-        if (!rating) {
-            console.warn(`   ⚠️  Skipping product ${i + 1} "${title}": missing rating`);
-            skippedCount++;
-            continue;
-        }
-        
-        // Extract review count
-        let reviews = null;
+        // Extract review count - OPTIONAL (defaults to 0)
+        let reviews = '0';  // Default value
         if (product.review_count) {
             reviews = String(product.review_count);
         } else if (product.product_num_ratings) {
             reviews = String(product.product_num_ratings);
         } else if (product.reviews_count) {
             reviews = String(product.reviews_count);
-        }
-        
-        if (!reviews) {
-            console.warn(`   ⚠️  Skipping product ${i + 1} "${title}": missing review count`);
-            skippedCount++;
-            continue;
         }
         
         // Extract price
