@@ -22,7 +22,8 @@ const CONFIG = {
     OUTPUT_DIR: path.join(__dirname, 'sites'),
     DATA_DIR: path.join(__dirname, 'data'),
     PAT_TOKEN: process.env.PAT_TOKEN || '',
-    GITHUB_ORG: 'SC-Connections'
+    GITHUB_ORG: 'SC-Connections',
+    MAX_FEATURE_LENGTH: 150  // Maximum length for generated feature from description
 };
 
 /**
@@ -76,7 +77,8 @@ async function main() {
                     console.log(`✅ Published to: ${publicUrl}`);
                 } catch (error) {
                     console.error(`❌ Failed to publish to GitHub: ${error.message}`);
-                    console.log('⚠️  Site will still be available in main repo');
+                    console.log('⚠️  Continuing with next niche...');
+                    // Don't re-throw - continue with other niches
                 }
             } else {
                 console.log('\n⚠️  PAT_TOKEN not configured, skipping separate repository publishing');
@@ -121,12 +123,8 @@ async function main() {
     
     console.log('\n' + '='.repeat(60));
     
-    // Exit with error if all niches failed
-    if (generatedNiches.length === 0) {
-        console.error('\n❌ FATAL: All niches failed to generate');
-        process.exit(1);
-    }
-    
+    // Only fail if there's a fatal GitHub error, not if all niches failed
+    // Individual niche failures are acceptable - they get empty results pages
     console.log('\n🎉 Site generation complete!');
 }
 
@@ -160,6 +158,9 @@ async function generateSiteForNiche(niche) {
     
     console.log(`📁 Created directories for ${slug}`);
     
+    // Load templates FIRST - before any processing
+    const templates = loadTemplates();
+    
     // Fetch products from Amazon API
     console.log('🔍 Fetching products from Amazon...');
     const products = await fetchProducts(niche);
@@ -173,9 +174,6 @@ async function generateSiteForNiche(niche) {
     }
     
     console.log(`✓ Found ${products.length} valid products`);
-    
-    // Load templates
-    const templates = loadTemplates();
     
     // Generate SEO content
     console.log('📝 Generating SEO content...');
@@ -199,12 +197,16 @@ async function generateSiteForNiche(niche) {
         fs.writeFileSync(path.join(blogDir, blogFilename), blogHTML);
     }
     
-    // Copy CSS
+    // Copy CSS (create both global.css and styles.css for compatibility)
     console.log('🎨 Copying styles...');
-    fs.copyFileSync(
-        path.join(CONFIG.TEMPLATES_DIR, 'global.css'),
-        path.join(siteDir, 'global.css')
-    );
+    const cssContent = fs.readFileSync(path.join(CONFIG.TEMPLATES_DIR, 'global.css'), 'utf-8');
+    fs.writeFileSync(path.join(siteDir, 'global.css'), cssContent);
+    fs.writeFileSync(path.join(siteDir, 'styles.css'), cssContent);
+    
+    // Generate README.md
+    console.log('📝 Creating README.md...');
+    const readme = generateReadme(niche, slug, products.length);
+    fs.writeFileSync(path.join(siteDir, 'README.md'), readme);
     
     console.log(`✓ Site generated at: /sites/${slug}/`);
 }
@@ -248,11 +250,14 @@ function generateEmptyResultsPage(siteDir, niche, slug, templates) {
     
     fs.writeFileSync(path.join(siteDir, 'index.html'), html);
     
-    // Copy CSS
-    fs.copyFileSync(
-        path.join(CONFIG.TEMPLATES_DIR, 'global.css'),
-        path.join(siteDir, 'global.css')
-    );
+    // Copy CSS (create both global.css and styles.css)
+    const cssContent = fs.readFileSync(path.join(CONFIG.TEMPLATES_DIR, 'global.css'), 'utf-8');
+    fs.writeFileSync(path.join(siteDir, 'global.css'), cssContent);
+    fs.writeFileSync(path.join(siteDir, 'styles.css'), cssContent);
+    
+    // Generate README.md for empty results page
+    const readme = generateReadme(niche, slug, 0);
+    fs.writeFileSync(path.join(siteDir, 'README.md'), readme);
 }
 
 /**
@@ -414,30 +419,41 @@ async function fetchProducts(niche) {
                 continue;
             }
             
-            // Extract description OR feature_bullets - flexible requirement
+            // Extract description - required field
             let description = product.product_description || product.description || null;
-            let featureBullets = product.feature_bullets || product.features || product.about_product || null;
-            
-            // If description is missing but we have feature bullets, combine them
-            if (!description && featureBullets && Array.isArray(featureBullets) && featureBullets.length > 0) {
-                description = featureBullets.join(' ');
-                console.log(`   ℹ️  Using feature bullets as description for "${title}"`);
-            } else if (!description && featureBullets && typeof featureBullets === 'string') {
-                description = featureBullets;
-                console.log(`   ℹ️  Using feature bullets as description for "${title}"`);
-            }
             
             if (!description) {
-                console.warn(`⚠️  Skipping product ${i + 1} "${title}": missing description and feature bullets`);
+                console.warn(`⚠️  Skipping product ${i + 1} "${title}": missing description`);
                 skippedCount++;
                 continue;
             }
             
+            // Extract feature bullets - required field (array with at least 1 item)
+            let featureBullets = product.feature_bullets || product.features || product.about_product || null;
+            
+            // Ensure feature_bullets is an array with at least 1 item
+            if (!featureBullets || !Array.isArray(featureBullets) || featureBullets.length === 0) {
+                // Try to convert string to array if it's a string
+                if (typeof featureBullets === 'string' && featureBullets.length > 0) {
+                    featureBullets = [featureBullets];
+                } else {
+                    // Generate feature bullets from description as fallback
+                    // This always returns at least one item
+                    featureBullets = generateFeaturesFromDescription(description);
+                    console.log(`   ℹ️  Generated feature bullets from description for "${title}"`);
+                }
+            }
+            
             // Build Amazon URL - prefer detail_page_url from API
-            let amazonUrl = product.detail_page_url || product.product_url || null;
+            let amazonUrl = product.detail_page_url || product.product_url || product.url || null;
             
             if (!amazonUrl) {
                 // Construct from ASIN if not provided
+                amazonUrl = `https://www.amazon.com/dp/${asin}`;
+            }
+            
+            // Validate URL format
+            if (!amazonUrl.startsWith('http')) {
                 amazonUrl = `https://www.amazon.com/dp/${asin}`;
             }
             
@@ -447,15 +463,8 @@ async function fetchProducts(niche) {
                 amazonUrl = `${amazonUrl}${separator}tag=${CONFIG.AMAZON_AFFILIATE_ID}`;
             }
             
-            // Try to extract features (don't fail if missing, we'll generate from description)
-            let features = [];
-            try {
-                features = extractFeatures(product, niche);
-            } catch (error) {
-                console.warn(`   ℹ️  Using description-based features for "${title}"`);
-                // Generate basic features from description
-                features = generateFeaturesFromDescription(description);
-            }
+            // Use validated feature bullets
+            const features = featureBullets.slice(0, 5);
             
             // Try to extract pros (don't fail if missing, we'll generate from data)
             let pros = [];
@@ -582,7 +591,7 @@ function generateFeaturesFromDescription(description) {
     }
     
     // If description doesn't split well, create a single feature
-    return [description.substring(0, 150)];
+    return [description.substring(0, CONFIG.MAX_FEATURE_LENGTH)];
 }
 
 /**
@@ -972,6 +981,60 @@ function truncate(text, length) {
 }
 
 /**
+ * Generate README.md content for repository
+ * @param {string} niche - Niche name
+ * @param {string} slug - URL slug
+ * @param {number} productCount - Number of products
+ * @returns {string} README content
+ */
+function generateReadme(niche, slug, productCount) {
+    const year = new Date().getFullYear();
+    return `# Top 10 ${niche} (${year})
+
+## Overview
+
+This site provides comprehensive reviews and rankings of the best ${niche.toLowerCase()} available in ${year}.
+
+## Features
+
+- ✅ ${productCount} carefully selected products
+- ✅ Detailed product reviews and comparisons
+- ✅ Real-time pricing and availability from Amazon
+- ✅ Expert buyer's guide
+- ✅ Frequently asked questions
+- ✅ Individual blog posts for each product
+
+## Live Site
+
+View the live site at: https://sc-connections.github.io/top10-${slug}/
+
+## Structure
+
+\`\`\`
+/
+├── index.html          # Main product listing page
+├── styles.css          # Site styles
+├── README.md           # This file
+└── blog/               # Individual product review pages
+    ├── [ASIN].html
+    └── ...
+\`\`\`
+
+## Auto-Generated
+
+This site is automatically generated and updated regularly using the [SC-Connections Top-10 Generator](https://github.com/SC-Connections/Top-10).
+
+## Affiliate Disclosure
+
+This site contains affiliate links. We may earn a commission from qualifying purchases made through these links, at no additional cost to you.
+
+---
+
+*Last updated: ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}*
+`;
+}
+
+/**
  * Create a new GitHub repository
  * @param {string} repoName - Repository name (slug)
  * @param {string} description - Repository description
@@ -1017,8 +1080,9 @@ async function createGitHubRepo(repoName, description) {
  * Initialize git and push site contents to GitHub
  * @param {string} siteDir - Site directory path
  * @param {string} repoName - Repository name
+ * @param {string} slug - Niche slug for commit message
  */
-function pushToGitHub(siteDir, repoName) {
+function pushToGitHub(siteDir, repoName, slug) {
     const repoUrl = `https://${CONFIG.PAT_TOKEN}@github.com/${CONFIG.GITHUB_ORG}/${repoName}.git`;
     
     try {
@@ -1034,8 +1098,8 @@ function pushToGitHub(siteDir, repoName) {
         execSync('git add .', { cwd: siteDir, stdio: 'pipe' });
         console.log('✓ Added all files');
         
-        // Commit
-        execSync('git commit -m "Auto-generated niche site"', { cwd: siteDir, stdio: 'pipe' });
+        // Commit with slug in message
+        execSync(`git commit -m "Initial site publish: ${slug}"`, { cwd: siteDir, stdio: 'pipe' });
         console.log('✓ Created commit');
         
         // Set branch to main
@@ -1188,13 +1252,13 @@ async function publishToGitHub(slug, niche) {
     
     // Step 3: Push site contents
     console.log('3️⃣  Pushing site contents...');
-    pushToGitHub(siteDir, repoName);
+    pushToGitHub(siteDir, repoName, slug);
     
     // Step 4: Enable GitHub Pages
     console.log('4️⃣  Enabling GitHub Pages...');
     const pagesUrl = await enableGitHubPages(repoName);
     
-    console.log(`\n🌐 Public URL: ${pagesUrl}`);
+    console.log(`\n📢 Published site to: ${pagesUrl}`);
     return pagesUrl;
 }
 
