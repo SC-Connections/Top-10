@@ -420,12 +420,7 @@ function renderTemplate(template, data) {
 
 // Main function to process all niches
 async function generateAllSites() {
-  const sitesDir = path.join(__dirname, '../../sites');
-  
-  // Create sites directory
-  if (!fs.existsSync(sitesDir)) {
-    fs.mkdirSync(sitesDir, { recursive: true });
-  }
+  const sitesDir = path.join(__dirname, '../..');
   
   const niches = readNiches();
   console.log(`Processing ${niches.length} niches...`);
@@ -469,7 +464,7 @@ async function generateAllSites() {
           month: 'long', 
           day: 'numeric' 
         }),
-        siteUrl: `https://sc-connections.github.io/Top-10/sites/${slug}/`,
+        siteUrl: `https://sc-connections.github.io/Top-10/${slug}/`,
         basePath: '.',
         products: productsWithRenderedLists,
         guide: generateBuyersGuide(niche.keyword),
@@ -521,7 +516,7 @@ This site contains Amazon affiliate links. We may earn a commission from qualify
         keyword: niche.keyword,
         year: niche.year,
         slug: slug,
-        path: `sites/${slug}/index.html`
+        path: `${slug}/index.html`
       });
     } catch (error) {
       console.error(`❌ Failed to generate site for ${niche.keyword}: ${error.message}`);

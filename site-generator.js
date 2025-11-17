@@ -20,7 +20,7 @@ const CONFIG = {
     BASE_URL: 'https://sc-connections.github.io/Top-10',
     NICHES_FILE: path.join(__dirname, 'niches.csv'),
     TEMPLATES_DIR: path.join(__dirname, 'templates'),
-    OUTPUT_DIR: path.join(__dirname, 'sites'),
+    OUTPUT_DIR: __dirname,
     DATA_DIR: path.join(__dirname, 'data'),
     PAT_TOKEN: process.env.PAT_TOKEN || '',
     GITHUB_ORG: 'SC-Connections',
@@ -71,7 +71,7 @@ async function main() {
             await generateSiteForNiche(niche);
             
             // Publish to separate GitHub repository if PAT_TOKEN is available
-            let publicUrl = `${CONFIG.BASE_URL}/sites/${slug}/`;
+            let publicUrl = `${CONFIG.BASE_URL}/${slug}/`;
             if (CONFIG.PAT_TOKEN) {
                 console.log('\n🚀 Publishing to separate GitHub repository...');
                 try {
@@ -178,7 +178,7 @@ async function generateSiteForNiche(niche) {
     if (products.length === 0) {
         console.error(`❌ ERROR: No products found for "${niche}" - Skipping.`);
         generateEmptyResultsPage(siteDir, niche, slug, templates);
-        console.log(`✓ Empty-results page generated at: /sites/${slug}/`);
+        console.log(`✓ Empty-results page generated at: /${slug}/`);
         return;
     }
     
@@ -217,7 +217,7 @@ async function generateSiteForNiche(niche) {
     const readme = generateReadme(niche, slug, products.length);
     fs.writeFileSync(path.join(siteDir, 'README.md'), readme);
     
-    console.log(`✓ Site generated at: /sites/${slug}/`);
+    console.log(`✓ Site generated at: /${slug}/`);
 }
 
 /**
@@ -255,7 +255,7 @@ function generateEmptyResultsPage(siteDir, niche, slug, templates) {
     html = html.replace(/{{LAST_UPDATED}}/g, lastUpdated);
     html = html.replace(/{{STRUCTURED_DATA}}/g, '{}');
     html = html.replace(/{{BASE_URL}}/g, CONFIG.BASE_URL);
-    html = html.replace(/{{PAGE_URL}}/g, `${CONFIG.BASE_URL}/sites/${slug}/`);
+    html = html.replace(/{{PAGE_URL}}/g, `${CONFIG.BASE_URL}/${slug}/`);
     
     fs.writeFileSync(path.join(siteDir, 'index.html'), html);
     
@@ -872,7 +872,7 @@ function generateIndexHTML(niche, slug, templates, seoContent, productsHTML, pro
     html = html.replace(/{{LAST_UPDATED}}/g, lastUpdated);
     html = html.replace(/{{STRUCTURED_DATA}}/g, JSON.stringify(structuredData, null, 2));
     html = html.replace(/{{BASE_URL}}/g, CONFIG.BASE_URL);
-    html = html.replace(/{{PAGE_URL}}/g, `${CONFIG.BASE_URL}/sites/${slug}/`);
+    html = html.replace(/{{PAGE_URL}}/g, `${CONFIG.BASE_URL}/${slug}/`);
     
     return html;
 }
