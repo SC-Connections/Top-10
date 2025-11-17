@@ -1,8 +1,8 @@
-# Top 10 Sleep Earbuds (2025)
+# Top 10 Student Laptops (2025)
 
 ## Overview
 
-This site provides comprehensive reviews and rankings of the best sleep earbuds available in 2025.
+This site provides comprehensive reviews and rankings of the best student laptops available in 2025.
 
 ## Features
 
@@ -15,7 +15,7 @@ This site provides comprehensive reviews and rankings of the best sleep earbuds 
 
 ## Live Site
 
-View the live site at: https://sc-connections.github.io/Top-10/sleep-earbuds/
+View the live site at: https://sc-connections.github.io/Top-10/student-laptops/
 
 ## Structure
 
