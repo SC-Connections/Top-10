@@ -213,7 +213,8 @@ async function generateSiteForNiche(niche) {
  */
 function generateEmptyResultsPage(siteDir, niche, slug, templates) {
     const templateData = templates.templateJSON;
-    const lastUpdated = new Date().toLocaleDateString('en-US', { 
+    // Use UPDATE_TIMESTAMP from environment if available, otherwise generate current date
+    const lastUpdated = process.env.UPDATE_TIMESTAMP || new Date().toLocaleDateString('en-US', { 
         year: 'numeric', 
         month: 'long', 
         day: 'numeric' 
@@ -562,6 +563,16 @@ async function fetchProducts(niche) {
                 console.log(`  ℹ️  No review count found, using default: 0`);
             }
             
+            // Skip products with 0 reviews or 0 rating
+            const ratingNum = parseFloat(rating);
+            const reviewsNum = parseInt(reviews);
+            
+            if (ratingNum === 0 || reviewsNum === 0) {
+                console.warn(`⚠️  Skipping product ${i + 1} "${title}": has 0 rating or 0 reviews (rating: ${rating}, reviews: ${reviews})`);
+                skippedCount++;
+                continue;
+            }
+            
             // Feature bullets - try to extract, generate from description as fallback
             let featureBullets = details.features || details.feature_bullets || 
                                details.about_product || product.features || 
@@ -771,8 +782,6 @@ function generateProductsHTML(products, template, niche) {
         html = html.replace(/{{PRICE}}/g, product.price);
         html = html.replace(/{{SHORT_DESCRIPTION}}/g, truncate(product.description, 200));
         html = html.replace(/{{FEATURES_LIST}}/g, generateListItems(product.features));
-        html = html.replace(/{{PROS_LIST}}/g, generateListItems(product.pros));
-        html = html.replace(/{{CONS_LIST}}/g, generateListItems(product.cons));
         html = html.replace(/{{AFFILIATE_LINK}}/g, generateAffiliateLink(product));
         html = html.replace(/{{ASIN}}/g, product.asin);
         
@@ -827,7 +836,8 @@ function generateAffiliateLink(product) {
  */
 function generateIndexHTML(niche, slug, templates, seoContent, productsHTML, products) {
     const templateData = templates.templateJSON;
-    const lastUpdated = new Date().toLocaleDateString('en-US', { 
+    // Use UPDATE_TIMESTAMP from environment if available, otherwise generate current date
+    const lastUpdated = process.env.UPDATE_TIMESTAMP || new Date().toLocaleDateString('en-US', { 
         year: 'numeric', 
         month: 'long', 
         day: 'numeric' 
