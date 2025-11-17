@@ -21,20 +21,25 @@ This system automatically generates professional, SEO-optimized review websites 
 
 ```
 /
-├── .github/workflows/
-│   └── build-sites.yml          # GitHub Actions workflow
+├── .github/
+│   ├── scripts/
+│   │   └── generate-sites.js     # Alternative generator script
+│   └── workflows/
+│       ├── build-sites.yml       # Main workflow (publishes to separate repos)
+│       └── generate-sites.yml    # Alternative workflow
 ├── templates/
 │   ├── template.html            # Main page HTML template
 │   ├── template.json            # JSON template configuration
 │   ├── product-template.html    # Product card template
 │   ├── blog-template.html       # Blog article template
 │   └── global.css               # Complete stylesheet
+├── data/                        # API response data (gitignored)
 ├── niches.csv                   # List of niches to generate
 ├── site-generator.js            # Main generator script
 ├── generate-seo.js              # SEO content generator
 ├── generate-blog.js             # Blog content generator
 ├── package.json                 # Node.js dependencies
-└── sites/                       # Generated sites (auto-created)
+└── sites/                       # Generated sites (gitignored)
 ```
 
 ## 🚀 Quick Start
@@ -60,9 +65,10 @@ npm install
 3. Set up environment variables (optional for local testing):
 ```bash
 export RAPIDAPI_KEY="your-rapidapi-key"
-export RAPIDAPI_HOST="amazon-real-time-api.p.rapidapi.com"
 export AMAZON_AFFILIATE_ID="scconnec0d-20"
 ```
+
+**Note**: The system uses the correct Amazon Real-Time API endpoint (`https://amazon-real-time-api.p.rapidapi.com/search`) with proper parameters (`q` for query and `domain` for Amazon domain). Mock data fallback has been removed - the generator will fail if API credentials are invalid or API returns an error.
 
 4. Run the generator:
 ```bash
@@ -94,10 +100,11 @@ For the GitHub Actions workflow to fetch real Amazon data and publish sites to s
 
 1. Go to Settings → Secrets and variables → Actions
 2. Add the following secrets:
-   - `RAPIDAPI_KEY`: Your RapidAPI key for Amazon Real-Time API
-   - `RAPIDAPI_HOST`: `amazon-real-time-api.p.rapidapi.com`
+   - `RAPIDAPI_KEY`: Your RapidAPI key for Amazon Real-Time API (https://rapidapi.com/letscrape-6bRBa3QguO5/api/amazon-real-time-api)
    - `AMAZON_AFFILIATE_ID`: Your Amazon Associates affiliate ID
    - `PAT_TOKEN`: Fine-grained Personal Access Token with repo:write access for SC-Connections account (required for auto-publishing to separate repos)
+
+**Note**: The API host is hardcoded to `amazon-real-time-api.p.rapidapi.com` and Amazon domain is set to `US`. These values are not configurable via secrets.
 
 ### Workflow Configuration
 
@@ -186,12 +193,21 @@ The `generate-blog.js` module creates detailed product reviews. Modify the conte
 ## 🔄 How It Works
 
 1. **Read Niches**: Reads product categories from `niches.csv`
-2. **Fetch Products**: Calls Amazon API to get top 10 products for each niche
-3. **Generate SEO Content**: Creates optimized content using `generate-seo.js`
-4. **Generate Blog Articles**: Creates detailed reviews using `generate-blog.js`
-5. **Build Pages**: Compiles templates with product data
-6. **Auto-Publish** (Optional): If GH_PAT is configured, publishes each site to its own GitHub repository
-7. **Deploy**: GitHub Actions publishes to GitHub Pages
+2. **Validate API Credentials**: Checks that RAPIDAPI_KEY is set (fails if not)
+3. **Fetch Products**: Calls Amazon Real-Time API `/search` endpoint with correct parameters (`q` and `domain`)
+4. **Save Raw Data**: Stores complete API response in `/data/<niche>.json` for debugging
+5. **Validate Response**: Ensures products have required fields (ASIN, title, image)
+6. **Generate SEO Content**: Creates optimized content using `generate-seo.js`
+7. **Generate Blog Articles**: Creates detailed reviews using `generate-blog.js`
+8. **Build Pages**: Compiles templates with product data
+9. **Auto-Publish** (Optional): If PAT_TOKEN is configured, publishes each site to its own GitHub repository
+10. **Deploy**: GitHub Actions publishes to GitHub Pages
+
+**Error Handling**: If any niche fails (API error, rate limit, no products), the generator:
+- Logs the exact error with full details
+- Continues processing other niches
+- Fails the entire build if ALL niches fail
+- Never generates mock or dummy data
 
 ## 🚀 Auto-Publishing Feature
 
@@ -282,7 +298,8 @@ MIT License - feel free to use this for your own projects!
 
 ## 🔗 Resources
 
-- [Amazon Real-Time API](https://rapidapi.com/letscrape-6bRBa3QguO5/api/real-time-amazon-data)
+- [Amazon Real-Time API on RapidAPI](https://rapidapi.com/letscrape-6bRBa3QguO5/api/amazon-real-time-api)
+- [API Documentation](https://rapidapi.com/letscrape-6bRBa3QguO5/api/amazon-real-time-api/details)
 - [Amazon Associates Program](https://affiliate-program.amazon.com/)
 - [GitHub Pages Documentation](https://docs.github.com/en/pages)
 - [Schema.org Product Documentation](https://schema.org/Product)
