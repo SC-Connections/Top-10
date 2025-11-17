@@ -1,122 +1,97 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-
-  <title>Top 10 {{NICHE}} ({{YEAR}}) – Comparison, Reviews & Buyer's Guide</title>
-
-  <!-- SEO -->
-  <meta name="description" content="Discover the best {{NICHE}} of {{YEAR}}. Updated daily with real Amazon data: ratings, reviews, prices, pros & cons, and expert insights. Compare the top 10 {{NICHE}} before you buy." />
-  <meta name="keywords" content="best {{NICHE}} {{YEAR}}, top {{NICHE}}, {{NICHE}} reviews, compare {{NICHE}}, {{NICHE}} buyer guide" />
-  <meta name="robots" content="index, follow" />
-  <link rel="canonical" href="{{SITE_URL}}" />
-
-  <!-- Open Graph -->
-  <meta property="og:title" content="Top 10 {{NICHE}} ({{YEAR}})" />
-  <meta property="og:description" content="See the best products in {{NICHE}}. Updated daily with Amazon ratings, prices, pros, cons & more." />
-  <meta property="og:type" content="website" />
-  <meta property="og:url" content="{{SITE_URL}}" />
-  <meta property="og:image" content="{{OG_IMAGE}}" />
-
-  <!-- Styles -->
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Top 10 Review Sites - SC Connections</title>
   <style>
-    body {
-      font-family: system-ui, -apple-system, sans-serif;
-      max-width: 900px;
-      margin: 40px auto;
-      padding: 20px;
-      background: #0d0f12;
-      color: #eaeef5;
+    body { 
+      font-family: system-ui, -apple-system, sans-serif; 
+      max-width: 900px; 
+      margin: 40px auto; 
+      padding: 20px; 
+      background: #0d0f12; 
+      color: #eaeef5; 
       line-height: 1.6;
     }
-    h1, h2 { font-weight: 700; }
-    .product {
-      margin: 40px 0;
-      padding: 20px;
-      background: #15181d;
-      border: 1px solid #222831;
-      border-radius: 12px;
-    }
-    .product img {
-      width: 200px;
-      border-radius: 8px;
+    h1 { 
+      color: #5aa9ff; 
       margin-bottom: 10px;
+      font-size: 2rem;
     }
-    .btn {
-      display: inline-block;
-      padding: 10px 16px;
-      background: #ff9900;
-      color: #fff;
-      text-decoration: none;
-      font-weight: bold;
-      border-radius: 6px;
-      margin-top: 10px;
-    }
-    .table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 20px;
-    }
-    .table th, .table td {
-      border: 1px solid #333;
-      padding: 8px;
-      color: #eaeef5;
-    }
-    footer {
-      margin-top: 50px;
-      font-size: 0.9rem;
+    .subtitle {
       color: #8a94a6;
+      margin-bottom: 30px;
+    }
+    ul { 
+      list-style: none; 
+      padding: 0; 
+    }
+    li { 
+      margin: 15px 0; 
+      padding: 20px; 
+      background: #15181d; 
+      border: 1px solid #222831; 
+      border-radius: 12px;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    li:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 5px 20px rgba(0,0,0,.3);
+    }
+    a { 
+      color: #5aa9ff; 
+      text-decoration: none; 
+      font-size: 1.15rem; 
+      font-weight: 600;
+      display: block;
+    }
+    a:hover { 
+      text-decoration: underline; 
+    }
+    .year {
+      color: #8a94a6;
+      font-size: 0.9rem;
+      margin-top: 5px;
+    }
+    .footer { 
+      margin-top: 50px; 
+      padding-top: 20px; 
+      border-top: 1px solid #222831; 
+      color: #8a94a6; 
+      font-size: 0.9rem;
       text-align: center;
     }
   </style>
 </head>
 <body>
-
-<h1>Top 10 {{NICHE}} ({{YEAR}})</h1>
-<p>Updated daily using real Amazon product data. Last updated: <strong>{{TODAY}}</strong></p>
-
-<h2>Quick Comparison Table</h2>
-<table class="table">
-  <tr>
-    <th>Rank</th>
-    <th>Product</th>
-    <th>Rating</th>
-    <th>Key Feature</th>
-    <th>Link</th>
-  </tr>
-
-  {{TABLE_ROWS}}
-
-</table>
-
-<h2>Full Product Reviews</h2>
-
-{{PRODUCT_BLOCKS}}
-
-<h2>How We Rank {{NICHE}}</h2>
-<p>Our ranking system uses real-world performance and customer sentiment. Weighting:</p>
-<ul>
-  <li>Customer Rating (40%)</li>
-  <li>Review Count (30%)</li>
-  <li>Feature Quality (20%)</li>
-  <li>Price-to-Value Score (10%)</li>
-</ul>
-
-<h2>Buying Guide: Choosing the Best {{NICHE}}</h2>
-<p>When selecting {{NICHE}}, consider build quality, performance, price-to-value ratio, brand trust, and warranty.</p>
-
-<h2>FAQ</h2>
-<h3>What are the best {{NICHE}} in {{YEAR}}?</h3>
-<p>The products listed above are selected using real Amazon reviews, ratings, and daily-updated data.</p>
-
-<h3>How much should I spend?</h3>
-<p>Budget items start around $20–$30, mid-range $50–150, and premium options $150+ depending on features.</p>
-
-<footer>
-  <p>© {{YEAR}} Top10Reviews — Auto-generated daily</p>
-  <p>As an Amazon Associate, we earn from qualifying purchases.</p>
-</footer>
-
+  <h1>🔟 Top 10 Review Sites</h1>
+  <p class="subtitle">Automated niche-site generator for product reviews</p>
+  <ul>
+    <li>
+      <a href="bluetooth-earbuds/index.html">Top 10 Bluetooth Earbuds (2025)</a>
+      <div class="year">Updated for 2025</div>
+    </li>
+    <li>
+      <a href="sleep-earbuds/index.html">Top 10 Sleep Earbuds (2025)</a>
+      <div class="year">Updated for 2025</div>
+    </li>
+    <li>
+      <a href="digital-cameras/index.html">Top 10 Digital Cameras (2025)</a>
+      <div class="year">Updated for 2025</div>
+    </li>
+    <li>
+      <a href="gaming-microphones/index.html">Top 10 Gaming Microphones (2025)</a>
+      <div class="year">Updated for 2025</div>
+    </li>
+    <li>
+      <a href="student-laptops/index.html">Top 10 Student Laptops (2025)</a>
+      <div class="year">Updated for 2025</div>
+    </li>
+  </ul>
+  <div class="footer">
+    <p>Auto-generated by GitHub Actions • Last updated: 11/17/2025, 4:25:15 PM</p>
+    <p>All sites contain Amazon affiliate links</p>
+  </div>
 </body>
 </html>
