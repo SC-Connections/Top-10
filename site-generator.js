@@ -7,7 +7,6 @@ require('dotenv').config();
 const fs = require('fs');
 const path = require('path');
 const axios = require('axios');
-const { execSync } = require('child_process');
 const { generateIntroContent, generateBuyersGuide, generateFAQ, generateFAQStructuredData, generateCTA } = require('./generate-seo');
 const { generateBlogArticle } = require('./generate-blog');
 
@@ -22,8 +21,6 @@ const CONFIG = {
     TEMPLATES_DIR: path.join(__dirname, 'templates'),
     OUTPUT_DIR: __dirname,
     DATA_DIR: path.join(__dirname, 'data'),
-    PAT_TOKEN: process.env.PAT_TOKEN || '',
-    GITHUB_ORG: 'SC-Connections',
     MAX_FEATURE_LENGTH: 150  // Maximum length for generated feature from description
 };
 
@@ -70,21 +67,8 @@ async function main() {
             const slug = createSlug(niche);
             await generateSiteForNiche(niche);
             
-            // Publish to separate GitHub repository if PAT_TOKEN is available
-            let publicUrl = `${CONFIG.BASE_URL}/${slug}/`;
-            if (CONFIG.PAT_TOKEN) {
-                console.log('\n🚀 Publishing to separate GitHub repository...');
-                try {
-                    publicUrl = await publishToGitHub(slug, niche);
-                    console.log(`✅ Published to: ${publicUrl}`);
-                } catch (error) {
-                    console.error(`❌ Failed to publish to GitHub: ${error.message}`);
-                    console.log('⚠️  Continuing with next niche...');
-                    // Don't re-throw - continue with other niches
-                }
-            } else {
-                console.log('\n⚠️  PAT_TOKEN not configured, skipping separate repository publishing');
-            }
+            // All sites are kept in this repository at /{slug}/
+            const publicUrl = `${CONFIG.BASE_URL}/${slug}/`;
             
             generatedNiches.push({ niche, slug, url: publicUrl });
             console.log(`✅ Successfully generated site for: ${niche}\n`);
@@ -1023,7 +1007,7 @@ This site provides comprehensive reviews and rankings of the best ${niche.toLowe
 
 ## Live Site
 
-View the live site at: https://sc-connections.github.io/top10-${slug}/
+View the live site at: https://sc-connections.github.io/Top-10/${slug}/
 
 ## Structure
 
@@ -1049,234 +1033,6 @@ This site contains affiliate links. We may earn a commission from qualifying pur
 
 *Last updated: ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}*
 `;
-}
-
-/**
- * Create a new GitHub repository
- * @param {string} repoName - Repository name (slug)
- * @param {string} description - Repository description
- * @returns {Promise<object>} Repository data
- */
-async function createGitHubRepo(repoName, description) {
-    const url = 'https://api.github.com/user/repos';
-    
-    try {
-        const response = await axios.post(url, {
-            name: repoName,
-            description: description,
-            private: false,
-            auto_init: false
-        }, {
-            headers: {
-                'Authorization': `Bearer ${CONFIG.PAT_TOKEN}`,
-                'Accept': 'application/vnd.github.v3+json',
-                'User-Agent': 'SC-Connections-Site-Generator'
-            }
-        });
-        
-        console.log(`✓ Repository created: ${response.data.html_url}`);
-        return response.data;
-    } catch (error) {
-        if (error.response && error.response.status === 422) {
-            // Repository already exists, fetch it
-            console.log(`⚠️  Repository ${repoName} already exists, fetching details...`);
-            const getResponse = await axios.get(`https://api.github.com/repos/${CONFIG.GITHUB_ORG}/${repoName}`, {
-                headers: {
-                    'Authorization': `Bearer ${CONFIG.PAT_TOKEN}`,
-                    'Accept': 'application/vnd.github.v3+json',
-                    'User-Agent': 'SC-Connections-Site-Generator'
-                }
-            });
-            return getResponse.data;
-        }
-        throw new Error(`Failed to create repository: ${error.message}`);
-    }
-}
-
-/**
- * Initialize git and push site contents to GitHub
- * @param {string} siteDir - Site directory path
- * @param {string} repoName - Repository name
- * @param {string} slug - Niche slug for commit message
- */
-function pushToGitHub(siteDir, repoName, slug) {
-    const repoUrl = `https://${CONFIG.PAT_TOKEN}@github.com/${CONFIG.GITHUB_ORG}/${repoName}.git`;
-    
-    try {
-        // Configure git
-        execSync('git config --global user.email "actions@github.com"', { stdio: 'pipe' });
-        execSync('git config --global user.name "GitHub Actions"', { stdio: 'pipe' });
-        
-        // Initialize git repository
-        execSync('git init', { cwd: siteDir, stdio: 'pipe' });
-        console.log('✓ Initialized git repository');
-        
-        // Add all files
-        execSync('git add .', { cwd: siteDir, stdio: 'pipe' });
-        console.log('✓ Added all files');
-        
-        // Commit with slug in message
-        execSync(`git commit -m "Initial site publish: ${slug}"`, { cwd: siteDir, stdio: 'pipe' });
-        console.log('✓ Created commit');
-        
-        // Set branch to main
-        execSync('git branch -M main', { cwd: siteDir, stdio: 'pipe' });
-        
-        // Add remote
-        execSync(`git remote add origin ${repoUrl}`, { cwd: siteDir, stdio: 'pipe' });
-        console.log('✓ Added remote origin');
-        
-        // Push to GitHub (force push to handle existing repos)
-        execSync('git push -f origin main', { cwd: siteDir, stdio: 'pipe' });
-        console.log('✓ Pushed to GitHub');
-        
-    } catch (error) {
-        throw new Error(`Failed to push to GitHub: ${error.message}`);
-    }
-}
-
-/**
- * Enable GitHub Pages for a repository
- * @param {string} repoName - Repository name
- * @returns {Promise<string>} Pages URL
- */
-async function enableGitHubPages(repoName) {
-    const url = `https://api.github.com/repos/${CONFIG.GITHUB_ORG}/${repoName}/pages`;
-    
-    try {
-        // Try to create/update Pages configuration
-        const response = await axios.post(url, {
-            source: {
-                branch: 'main',
-                path: '/'
-            }
-        }, {
-            headers: {
-                'Authorization': `Bearer ${CONFIG.GH_PAT}`,
-                'Accept': 'application/vnd.github+json',
-                'User-Agent': 'SC-Connections-Site-Generator'
-            }
-        });
-        
-        console.log('✓ GitHub Pages enabled');
-        return response.data.html_url;
-    } catch (error) {
-        if (error.response && error.response.status === 409) {
-            // Pages already enabled, try to update it
-            console.log('⚠️  GitHub Pages already enabled, updating configuration...');
-            try {
-                const updateResponse = await axios.put(url, {
-                    source: {
-                        branch: 'main',
-                        path: '/'
-                    }
-                }, {
-                    headers: {
-                        'Authorization': `Bearer ${CONFIG.PAT_TOKEN}`,
-                        'Accept': 'application/vnd.github+json',
-                        'User-Agent': 'SC-Connections-Site-Generator'
-                    }
-                });
-                console.log('✓ GitHub Pages configuration updated');
-                return `https://${CONFIG.GITHUB_ORG.toLowerCase()}.github.io/${repoName}/`;
-            } catch (updateError) {
-                console.log('⚠️  Could not update Pages config, using default URL');
-                return `https://${CONFIG.GITHUB_ORG.toLowerCase()}.github.io/${repoName}/`;
-            }
-        }
-        
-        // If error is not 409, still return the expected URL
-        console.log(`⚠️  Pages API error (${error.response?.status}), but Pages may auto-enable. Using expected URL.`);
-        return `https://${CONFIG.GITHUB_ORG.toLowerCase()}.github.io/${repoName}/`;
-    }
-}
-
-/**
- * Create GitHub Actions workflow file for Pages deployment
- * @param {string} siteDir - Site directory path
- */
-function createGitHubPagesWorkflow(siteDir) {
-    const workflowDir = path.join(siteDir, '.github', 'workflows');
-    fs.mkdirSync(workflowDir, { recursive: true });
-    
-    const workflowContent = `name: Deploy to GitHub Pages
-
-on:
-  push:
-    branches:
-      - main
-  workflow_dispatch:
-
-permissions:
-  contents: read
-  pages: write
-  id-token: write
-
-concurrency:
-  group: "pages"
-  cancel-in-progress: false
-
-jobs:
-  deploy:
-    runs-on: ubuntu-latest
-    
-    environment:
-      name: github-pages
-      url: \${{ steps.deployment.outputs.page_url }}
-    
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-      
-      - name: Setup Pages
-        uses: actions/configure-pages@v4
-      
-      - name: Upload artifact
-        uses: actions/upload-pages-artifact@v2
-        with:
-          path: '.'
-      
-      - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4
-`;
-    
-    const workflowPath = path.join(workflowDir, 'deploy.yml');
-    fs.writeFileSync(workflowPath, workflowContent);
-    console.log(`✓ Created workflow file: .github/workflows/deploy.yml`);
-}
-
-/**
- * Publish site to separate GitHub repository
- * @param {string} slug - Niche slug
- * @param {string} niche - Niche name
- * @returns {Promise<string>} Public site URL
- */
-async function publishToGitHub(slug, niche) {
-    const siteDir = path.join(CONFIG.OUTPUT_DIR, slug);
-    const repoName = `top10-${slug}`;  // Add top10- prefix to repo name
-    const description = `Auto-generated Top 10 ${niche} review site`;
-    
-    console.log(`\n📤 Publishing ${slug} to GitHub as ${repoName}...`);
-    
-    // Step 1: Create GitHub repository
-    console.log('1️⃣  Creating GitHub repository...');
-    await createGitHubRepo(repoName, description);
-    
-    // Step 2: Create GitHub Actions workflow file for deployment
-    console.log('2️⃣  Creating GitHub Actions workflow...');
-    createGitHubPagesWorkflow(siteDir);
-    
-    // Step 3: Push site contents
-    console.log('3️⃣  Pushing site contents...');
-    pushToGitHub(siteDir, repoName, slug);
-    
-    // Step 4: Enable GitHub Pages
-    console.log('4️⃣  Enabling GitHub Pages...');
-    const pagesUrl = await enableGitHubPages(repoName);
-    
-    console.log(`\n📢 Published site to: ${pagesUrl}`);
-    return pagesUrl;
 }
 
 // Run the generator
