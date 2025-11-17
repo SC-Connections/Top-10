@@ -276,12 +276,14 @@ node site-generator.js
 # Open sites/[niche-slug]/index.html in a browser
 ```
 
-### Mock Data
+### Important: No Mock Data
 
-When API keys are not configured, the generator uses mock data for testing. This allows you to:
-- Test the system without API access
-- Preview the site structure
-- Develop templates and styles
+**The generator requires valid API credentials and real API data to function.** There is no mock data fallback. If:
+- RAPIDAPI_KEY is not configured
+- API returns an error or invalid response
+- Products are missing required fields (ASIN, title, image, price, rating, reviews, description)
+
+The generator will **fail immediately** and will NOT generate any sites. This ensures that only real, complete product data from Amazon is used in generated sites.
 
 ## 🤝 Contributing
 

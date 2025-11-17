@@ -295,27 +295,66 @@ async function fetchProducts(niche) {
                 image = null; // Invalid image URL
             }
             
-            // Validate required fields
+            // Validate required fields - FAIL if missing instead of skipping
             if (!asin || !title || !image) {
-                console.log(`⚠️  Skipping product ${i + 1}: Missing required fields (ASIN: ${!!asin}, Title: ${!!title}, Image: ${!!image})`);
-                continue;
+                console.error(`❌ ERROR: Product ${i + 1} missing required fields`);
+                console.error(`   ASIN: ${!!asin ? asin : 'MISSING'}`);
+                console.error(`   Title: ${!!title ? title : 'MISSING'}`);
+                console.error(`   Image: ${!!image ? 'Present' : 'MISSING'}`);
+                console.error(`   Product data: ${JSON.stringify(product).substring(0, 300)}`);
+                throw new Error(`Product ${i + 1} for "${niche}" missing required fields (ASIN, title, or image). Cannot generate site with incomplete data.`);
             }
             
-            // Extract other fields with fallbacks
-            // New API uses 'rating' (number), legacy uses 'product_star_rating'
-            const rating = product.rating || product.product_star_rating || product.stars || '4.5';
+            // Extract rating - NO FALLBACKS
+            let rating = null;
+            if (typeof product.rating === 'number') {
+                rating = String(product.rating);
+            } else if (product.product_star_rating) {
+                rating = String(product.product_star_rating);
+            } else if (product.stars) {
+                rating = String(product.stars);
+            }
             
-            // New API uses 'review_count' (number), legacy uses 'product_num_ratings'
-            const reviews = product.review_count || product.product_num_ratings || product.reviews_count || '1000';
+            if (!rating) {
+                console.error(`❌ ERROR: Product ${i + 1} "${title}" has no rating data`);
+                throw new Error(`Product "${title}" missing rating. Cannot generate site with incomplete data.`);
+            }
             
-            // New API uses 'price' (number), legacy uses 'product_price' (string)
-            let price = '$99.99';
+            // Extract review count - NO FALLBACKS
+            let reviews = null;
+            if (product.review_count) {
+                reviews = String(product.review_count);
+            } else if (product.product_num_ratings) {
+                reviews = String(product.product_num_ratings);
+            } else if (product.reviews_count) {
+                reviews = String(product.reviews_count);
+            }
+            
+            if (!reviews) {
+                console.error(`❌ ERROR: Product ${i + 1} "${title}" has no review count`);
+                throw new Error(`Product "${title}" missing review count. Cannot generate site with incomplete data.`);
+            }
+            
+            // Extract price - NO FALLBACKS
+            let price = null;
             if (typeof product.price === 'number') {
-                price = `$${product.price}`;
+                price = `$${product.price.toFixed(2)}`;
             } else if (product.price) {
-                price = product.price;
+                price = String(product.price);
             } else if (product.product_price) {
-                price = product.product_price;
+                price = String(product.product_price);
+            }
+            
+            if (!price) {
+                console.error(`❌ ERROR: Product ${i + 1} "${title}" has no price data`);
+                throw new Error(`Product "${title}" missing price. Cannot generate site with incomplete data.`);
+            }
+            
+            // Extract description - NO FALLBACKS
+            const description = product.product_description || product.description || null;
+            if (!description) {
+                console.error(`❌ ERROR: Product ${i + 1} "${title}" has no description`);
+                throw new Error(`Product "${title}" missing description. Cannot generate site with incomplete data.`);
             }
             
             // Build Amazon URL using ASIN - new API may provide 'product_url'
@@ -333,23 +372,23 @@ async function fetchProducts(niche) {
             validProducts.push({
                 asin: asin,
                 title: title,
-                description: product.product_description || product.description || `High-quality ${niche.toLowerCase()} with excellent features.`,
-                rating: String(rating),
-                reviews: String(reviews),
+                description: description,
+                rating: rating,
+                reviews: reviews,
                 price: price,
                 image: image,
                 url: amazonUrl,
-                features: extractFeatures(product),
-                pros: extractPros(product),
-                cons: extractCons(product)
+                features: extractFeatures(product, niche),
+                pros: extractPros(product, niche),
+                cons: extractCons(product, niche)
             });
         }
         
-        console.log(`✅ Successfully validated ${validProducts.length} products`);
+        console.log(`✅ Successfully validated ${validProducts.length} products with complete real data`);
         
         if (validProducts.length === 0) {
             console.error('❌ ERROR: No valid products after validation');
-            throw new Error('No products with required fields (ASIN, title, image)');
+            throw new Error('No products with required fields. All products are missing critical data.');
         }
         
         return validProducts;
@@ -383,49 +422,116 @@ async function fetchProducts(niche) {
 }
 
 /**
- * Extract features from product data
+ * Extract features from product data - NO MOCK FALLBACKS
  * @param {object} product - Product object
+ * @param {string} niche - Niche name for error messages
  * @returns {Array} Features array
  */
-function extractFeatures(product) {
-    if (product.product_details) {
-        return Object.values(product.product_details).slice(0, 5);
+function extractFeatures(product, niche) {
+    // Try to extract features from various API fields
+    if (product.features && Array.isArray(product.features) && product.features.length > 0) {
+        return product.features.slice(0, 5);
     }
-    return [
-        'High-quality construction',
-        'Advanced features',
-        'User-friendly design',
-        'Excellent value',
-        'Trusted brand'
-    ];
+    
+    if (product.attributes && Array.isArray(product.attributes) && product.attributes.length > 0) {
+        return product.attributes.slice(0, 5);
+    }
+    
+    if (product.product_details && typeof product.product_details === 'object') {
+        const details = Object.values(product.product_details).filter(v => v && typeof v === 'string');
+        if (details.length > 0) {
+            return details.slice(0, 5);
+        }
+    }
+    
+    if (product.about_product && Array.isArray(product.about_product) && product.about_product.length > 0) {
+        return product.about_product.slice(0, 5);
+    }
+    
+    // If no features found, fail - do NOT generate mock data
+    console.error(`❌ ERROR: Product "${product.title || 'Unknown'}" has no features/attributes data`);
+    throw new Error(`Product "${product.title}" missing features. Cannot generate site without real product information.`);
 }
 
 /**
- * Extract pros from product data
+ * Extract pros from product data - NO MOCK FALLBACKS
  * @param {object} product - Product object
+ * @param {string} niche - Niche name for error messages
  * @returns {Array} Pros array
  */
-function extractPros(product) {
-    return [
-        'Excellent build quality',
-        'Great performance',
-        'Good value for money',
-        'Positive customer reviews',
-        'Reliable brand'
-    ];
+function extractPros(product, niche) {
+    const pros = [];
+    
+    // Try to extract pros from API data
+    if (product.pros && Array.isArray(product.pros) && product.pros.length > 0) {
+        return product.pros.slice(0, 5);
+    }
+    
+    if (product.positives && Array.isArray(product.positives) && product.positives.length > 0) {
+        return product.positives.slice(0, 5);
+    }
+    
+    // Build pros from available real data
+    if (product.rating && parseFloat(product.rating) >= 4.0) {
+        pros.push(`Highly rated (${product.rating} stars)`);
+    }
+    
+    if (product.review_count && parseInt(product.review_count) > 1000) {
+        pros.push(`Popular choice (${product.review_count.toLocaleString()} reviews)`);
+    }
+    
+    if (product.discount_percentage && product.discount_percentage > 10) {
+        pros.push(`Good value (${product.discount_percentage}% off)`);
+    }
+    
+    // Use features as pros if available
+    if (product.features && Array.isArray(product.features)) {
+        pros.push(...product.features.slice(0, 3));
+    } else if (product.about_product && Array.isArray(product.about_product)) {
+        pros.push(...product.about_product.slice(0, 3));
+    }
+    
+    if (pros.length === 0) {
+        console.error(`❌ ERROR: Product "${product.title || 'Unknown'}" has insufficient data to generate pros`);
+        throw new Error(`Product "${product.title}" missing pros/features. Cannot generate site without real product information.`);
+    }
+    
+    return pros.slice(0, 5);
 }
 
 /**
- * Extract cons from product data
+ * Extract cons from product data - Minimal, factual only
  * @param {object} product - Product object
+ * @param {string} niche - Niche name for error messages
  * @returns {Array} Cons array
  */
-function extractCons(product) {
-    return [
-        'May be pricey for some',
-        'Limited options',
-        'Availability may vary'
-    ];
+function extractCons(product, niche) {
+    const cons = [];
+    
+    // Try to extract cons from API data
+    if (product.cons && Array.isArray(product.cons) && product.cons.length > 0) {
+        return product.cons.slice(0, 3);
+    }
+    
+    if (product.negatives && Array.isArray(product.negatives) && product.negatives.length > 0) {
+        return product.negatives.slice(0, 3);
+    }
+    
+    // Build minimal cons from factual data
+    if (product.price && typeof product.price === 'number' && product.price > 100) {
+        cons.push('Higher price point');
+    }
+    
+    if (product.rating && parseFloat(product.rating) < 4.5) {
+        cons.push('Some mixed reviews');
+    }
+    
+    // Amazon API doesn't typically provide cons, so we need at least one factual statement
+    if (cons.length === 0) {
+        cons.push('Check compatibility with your specific needs');
+    }
+    
+    return cons;
 }
 
 /**

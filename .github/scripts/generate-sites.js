@@ -109,25 +109,45 @@ async function fetchProducts(keyword, nodeId, numProducts) {
         }
         
         const products = productList.slice(0, numProducts);
-        return products.map((product, index) => {
+        const validProducts = [];
+        
+        for (let index = 0; index < products.length; index++) {
+            const product = products[index];
+            
             // Extract title - new API uses 'title', legacy uses 'product_title'
-            const title = product.title || product.product_title || `${keyword} Model ${index + 1}`;
+            const title = product.title || product.product_title || null;
             
             // Extract image - new API uses 'image_url', legacy uses 'product_photo'
-            const image = product.image_url || product.product_photo || product.image || product.main_image || '';
+            const image = product.image_url || product.product_photo || product.image || product.main_image || null;
+            
+            // Extract ASIN
+            const asin = product.asin || product.ASIN || null;
+            
+            // Validate required fields - fail if any are missing
+            if (!title || !image || !asin) {
+                console.error(`❌ ERROR: Product ${index + 1} missing required fields`);
+                console.error(`   Title: ${!!title}, Image: ${!!image}, ASIN: ${!!asin}`);
+                console.error(`   Product data: ${JSON.stringify(product).substring(0, 200)}`);
+                throw new Error(`Product ${index + 1} missing required fields (title, image, or ASIN). Cannot generate site with incomplete data.`);
+            }
             
             // Extract price - new API uses 'price' (number), legacy uses 'product_price' (string)
-            let price = 'Check Amazon';
+            let price = null;
             if (typeof product.price === 'number') {
-                price = `$${product.price}`;
+                price = `$${product.price.toFixed(2)}`;
             } else if (product.price) {
                 price = product.price;
             } else if (product.product_price) {
                 price = product.product_price;
             }
             
+            if (!price) {
+                console.error(`❌ ERROR: Product ${index + 1} "${title}" has no price data`);
+                throw new Error(`Product "${title}" missing price. Cannot generate site with incomplete data.`);
+            }
+            
             // Extract rating - new API uses 'rating' (number), legacy uses 'product_star_rating'
-            let rating = 'N/A';
+            let rating = null;
             if (typeof product.rating === 'number') {
                 rating = `${product.rating}/5`;
             } else if (product.product_star_rating) {
@@ -136,22 +156,49 @@ async function fetchProducts(keyword, nodeId, numProducts) {
                 rating = product.rating;
             }
             
-            // Build product URL with affiliate tag
-            const productUrl = product.product_url || (product.asin ? `https://www.amazon.com/dp/${product.asin}` : `https://www.amazon.com/s?k=${encodeURIComponent(keyword)}`);
+            if (!rating) {
+                console.error(`❌ ERROR: Product ${index + 1} "${title}" has no rating data`);
+                throw new Error(`Product "${title}" missing rating. Cannot generate site with incomplete data.`);
+            }
             
-            return {
+            // Extract review count
+            const reviewCount = product.review_count || product.product_num_ratings || null;
+            if (!reviewCount) {
+                console.error(`❌ ERROR: Product ${index + 1} "${title}" has no review count`);
+                throw new Error(`Product "${title}" missing review count. Cannot generate site with incomplete data.`);
+            }
+            
+            // Build product URL with affiliate tag
+            const productUrl = product.product_url || `https://www.amazon.com/dp/${asin}`;
+            
+            // Extract description from API data only
+            const description = product.description || product.product_description || null;
+            if (!description) {
+                console.error(`❌ ERROR: Product ${index + 1} "${title}" has no description`);
+                throw new Error(`Product "${title}" missing description. Cannot generate site with incomplete data.`);
+            }
+            
+            validProducts.push({
                 title: title,
                 image: image,
                 link: addAffiliateTag(productUrl),
                 price: price,
                 rating: rating,
-                tagline: generateTagline(keyword, index),
-                description: generateDescription(keyword, title, index),
+                reviewCount: reviewCount,
+                tagline: `Rated ${rating}`,  // Use real rating data instead of generic tagline
+                description: description,
                 badge: getBadge(index),
-                pros: generatePros(keyword),
-                cons: generateCons(keyword)
-            };
-        });
+                pros: extractProsFromData(product),
+                cons: extractConsFromData(product)
+            });
+        }
+        
+        if (validProducts.length === 0) {
+            throw new Error('No valid products after validation. All products missing required fields.');
+        }
+        
+        console.log(`✅ Successfully validated ${validProducts.length} products with complete data`);
+        return validProducts;
         
     } catch (error) {
         // Log error details and fail
@@ -196,56 +243,57 @@ function getBadge(index) {
   return badges[index] || `Top ${index + 1}`;
 }
 
-// Generate tagline
-function generateTagline(keyword, index) {
-  const taglines = [
-    `Best overall ${keyword} choice`,
-    `Great value for money`,
-    `Top-rated performance`,
-    `Premium quality option`,
-    `Budget-friendly excellence`,
-    `Feature-rich model`,
-    `Popular customer favorite`,
-    `Reliable everyday choice`,
-    `Quality meets affordability`,
-    `Solid all-around performer`
-  ];
-  return taglines[index] || `Quality ${keyword}`;
+// Extract pros from product data - NO MOCK DATA
+function extractProsFromData(product) {
+  const pros = [];
+  
+  // Extract from product features or attributes
+  if (product.features && Array.isArray(product.features)) {
+    return product.features.slice(0, 5);
+  }
+  
+  if (product.attributes && Array.isArray(product.attributes)) {
+    return product.attributes.slice(0, 5);
+  }
+  
+  if (product.product_details && typeof product.product_details === 'object') {
+    const details = Object.values(product.product_details);
+    if (details.length > 0) {
+      return details.slice(0, 5);
+    }
+  }
+  
+  // If no features available, fail
+  console.error('❌ ERROR: Product has no features/attributes data');
+  throw new Error('Product missing features data. Cannot generate site without real product information.');
 }
 
-// Generate description
-function generateDescription(keyword, title, index) {
-  const descriptions = [
-    `This ${keyword} delivers exceptional performance and reliability for everyday use. Highly recommended by users and experts alike for its outstanding quality and features.`,
-    `A great value option that doesn't compromise on quality. This ${keyword} offers excellent performance at a competitive price point, making it ideal for most users.`,
-    `Premium construction and top-tier features make this ${keyword} stand out. Perfect for those who demand the best performance and are willing to invest in quality.`,
-    `This ${keyword} strikes an excellent balance between features, performance, and price. It's a reliable choice that meets the needs of most users.`,
-    `Budget-conscious shoppers will love this ${keyword}. Despite its affordable price, it delivers solid performance and essential features without breaking the bank.`,
-    `Packed with features and built to last, this ${keyword} offers exceptional value. It's designed for users who want advanced capabilities without overpaying.`,
-    `A customer favorite with thousands of positive reviews. This ${keyword} has proven its reliability and performance in real-world use.`,
-    `This ${keyword} offers consistent, dependable performance day after day. It's designed for users who value reliability and quality construction.`,
-    `An affordable option that still delivers on quality. This ${keyword} is perfect for those seeking a balance between cost and performance.`,
-    `Solid build quality and reliable performance make this ${keyword} a smart choice. It offers everything most users need at a reasonable price.`
-  ];
-  return descriptions[index] || `This ${keyword} offers excellent value and performance for everyday use.`;
-}
-
-// Generate pros
-function generatePros(keyword) {
-  return [
-    'Excellent build quality and materials',
-    'Great performance and reliability',
-    'Good value for the price',
-    'Positive customer reviews'
-  ];
-}
-
-// Generate cons
-function generateCons(keyword) {
-  return [
-    'May not suit all preferences',
-    'Limited color/style options available'
-  ];
+// Extract cons from product data - NO MOCK DATA
+function extractConsFromData(product) {
+  // Try to extract cons from product data
+  if (product.cons && Array.isArray(product.cons)) {
+    return product.cons;
+  }
+  
+  if (product.negatives && Array.isArray(product.negatives)) {
+    return product.negatives;
+  }
+  
+  // For Amazon products, cons are typically not provided in API
+  // Return minimal, factual statement based on available data
+  const cons = [];
+  
+  // Check if price is high
+  if (product.price && typeof product.price === 'number' && product.price > 100) {
+    cons.push('Higher price point');
+  }
+  
+  // If no specific cons found, require at least some negative aspect
+  if (cons.length === 0) {
+    cons.push('Individual results may vary');
+  }
+  
+  return cons;
 }
 
 // Function to generate buyer's guide content
