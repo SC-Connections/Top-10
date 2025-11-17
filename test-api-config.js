@@ -31,9 +31,14 @@ const checks = [
         expected: 'q parameter for query'
     },
     {
-        name: 'Uses "domain" parameter',
-        pattern: /domain:\s*CONFIG\.AMAZON_DOMAIN/,
-        expected: 'domain parameter'
+        name: 'Uses "country" parameter',
+        pattern: /country:\s*['"]US['"]/,
+        expected: 'country parameter'
+    },
+    {
+        name: 'Uses "sort_by" parameter',
+        pattern: /sort_by:\s*['"]RELEVANCE['"]/,
+        expected: 'sort_by parameter'
     },
     {
         name: 'No mock data fallback in fetchProducts',
