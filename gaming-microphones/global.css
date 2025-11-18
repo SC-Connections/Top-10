@@ -306,41 +306,6 @@ section h2 {
     font-weight: 700;
 }
 
-/* Pros and Cons */
-.product-pros-cons {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 1rem;
-}
-
-.pros h4,
-.cons h4 {
-    font-size: 1rem;
-    font-weight: 600;
-    margin-bottom: 0.5rem;
-}
-
-.pros h4 {
-    color: var(--success-color);
-}
-
-.cons h4 {
-    color: var(--error-color);
-}
-
-.pros ul,
-.cons ul {
-    list-style: none;
-    padding-left: 0;
-}
-
-.pros li,
-.cons li {
-    padding: 0.25rem 0;
-    font-size: 0.875rem;
-    color: var(--text-secondary);
-}
-
 /* Product Actions */
 .product-actions {
     display: flex;
@@ -361,6 +326,10 @@ section h2 {
     border: none;
     cursor: pointer;
     font-size: 1rem;
+    min-height: 44px; /* Minimum touch target size for mobile */
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .btn-primary {
@@ -599,39 +568,136 @@ section h2 {
     }
 }
 
-/* Original mobile responsive styles */
+/* Mobile responsive styles */
 @media (max-width: 768px) {
+    .container {
+        padding: 0 16px;
+    }
+
+    .hero {
+        padding: 2rem 0;
+    }
+
     .hero-title {
-        font-size: 2rem;
+        font-size: 1.75rem;
+        line-height: 1.2;
     }
 
     .hero-subtitle {
-        font-size: 1rem;
+        font-size: 0.95rem;
+    }
+
+    .last-updated {
+        font-size: 0.8rem;
+    }
+
+    .logo h1 {
+        font-size: 1.25rem;
     }
 
     .nav-links {
-        gap: 1rem;
-        font-size: 0.875rem;
+        gap: 0.75rem;
+        font-size: 0.8rem;
+        flex-wrap: wrap;
     }
 
-    .product-pros-cons {
+    section {
+        padding: 2.5rem 0;
+    }
+
+    section h2 {
+        font-size: 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .products-grid {
         grid-template-columns: 1fr;
+        gap: 16px;
+    }
+
+    .product-card {
+        padding: 12px;
+    }
+
+    .product-title {
+        font-size: 1.25rem;
     }
 
     .product-actions {
         flex-direction: column;
     }
 
-    .product-hero {
-        grid-template-columns: 1fr;
+    .btn-primary,
+    .btn-secondary {
+        padding: 0.875rem 1.25rem;
+        font-size: 0.95rem;
+        width: 100%;
     }
 
-    section h2 {
-        font-size: 1.5rem;
+    .product-hero {
+        grid-template-columns: 1fr;
+        padding: 1.5rem;
     }
 
     .article-header h1 {
         font-size: 1.75rem;
+    }
+
+    .guide-content,
+    .faq-content,
+    .intro-content,
+    .article-content {
+        font-size: 1rem;
+    }
+
+    .faq-item {
+        padding: 1rem;
+    }
+
+    .faq-question {
+        font-size: 1.1rem;
+    }
+}
+
+/* Extra small mobile devices */
+@media (max-width: 480px) {
+    .hero-title {
+        font-size: 1.5rem;
+    }
+
+    .logo h1 {
+        font-size: 1.1rem;
+    }
+
+    .nav-links {
+        gap: 0.5rem;
+        font-size: 0.75rem;
+    }
+
+    .nav-links li {
+        flex: 0 1 auto;
+    }
+
+    section h2 {
+        font-size: 1.3rem;
+    }
+
+    .product-image img {
+        max-height: 200px;
+    }
+
+    .product-title {
+        font-size: 1.1rem;
+    }
+
+    .product-rating {
+        font-size: 0.875rem;
+    }
+
+    .btn-primary,
+    .btn-secondary {
+        padding: 0.75rem 1rem;
+        font-size: 0.9rem;
     }
 }
 
