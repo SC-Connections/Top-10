@@ -212,6 +212,18 @@ function main() {
         }
     });
 
+    // Check for skipped products log
+    const skippedProductsLog = path.join(__dirname, '..', 'logs', 'skipped-products.json');
+    let skippedProductCount = 0;
+    if (fs.existsSync(skippedProductsLog)) {
+        try {
+            const skippedProducts = JSON.parse(fs.readFileSync(skippedProductsLog, 'utf-8'));
+            skippedProductCount = Array.isArray(skippedProducts) ? skippedProducts.length : 0;
+        } catch (error) {
+            // Ignore errors reading skipped products log
+        }
+    }
+
     // Summary
     console.log('\n' + '='.repeat(60));
     console.log('📊 VALIDATION SUMMARY');
@@ -223,6 +235,11 @@ function main() {
     console.log(`Sites validated: ${niches.length}`);
     console.log(`Errors: ${totalErrors}`);
     console.log(`Warnings: ${totalWarnings}`);
+    
+    // Display skipped products info if any
+    if (skippedProductCount > 0) {
+        console.log(`\n⚠️ ${skippedProductCount} product(s) skipped (missing brand) — continuing without failure.`);
+    }
 
     if (allValid) {
         console.log('\n✅ All sites passed validation!');
