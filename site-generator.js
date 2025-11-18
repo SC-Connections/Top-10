@@ -19,7 +19,7 @@ const CONFIG = {
     BASE_URL: 'https://sc-connections.github.io/Top-10',
     NICHES_FILE: path.join(__dirname, 'niches.csv'),
     TEMPLATES_DIR: path.join(__dirname, 'templates'),
-    OUTPUT_DIR: path.join(__dirname, 'sites'),
+    OUTPUT_DIR: __dirname,
     DATA_DIR: path.join(__dirname, 'data'),
     MAX_FEATURE_LENGTH: 150  // Maximum length for generated feature from description
 };
@@ -41,12 +41,6 @@ async function main() {
     console.log('✅ API credentials validated');
     console.log(`📡 API Host: ${CONFIG.RAPIDAPI_HOST}`);
     console.log(`🌍 Amazon Domain: ${CONFIG.AMAZON_DOMAIN}\n`);
-    
-    // Create output directory (sites/) for all niche sites
-    if (!fs.existsSync(CONFIG.OUTPUT_DIR)) {
-        fs.mkdirSync(CONFIG.OUTPUT_DIR, { recursive: true });
-        console.log(`📁 Created output directory: ${CONFIG.OUTPUT_DIR}\n`);
-    }
     
     // Create data directory for API responses
     if (!fs.existsSync(CONFIG.DATA_DIR)) {
@@ -73,8 +67,8 @@ async function main() {
             const slug = createSlug(niche);
             await generateSiteForNiche(niche);
             
-            // Sites are now at /sites/{slug}/
-            const publicUrl = `${CONFIG.BASE_URL}/sites/${slug}/`;
+            // All sites are kept in this repository at /{slug}/
+            const publicUrl = `${CONFIG.BASE_URL}/${slug}/`;
             
             generatedNiches.push({ niche, slug, url: publicUrl });
             console.log(`✅ Successfully generated site for: ${niche}\n`);
@@ -97,17 +91,7 @@ async function main() {
         const dataFile = path.join(CONFIG.OUTPUT_DIR, '_niches_data.json');
         fs.writeFileSync(dataFile, JSON.stringify(generatedNiches, null, 2));
         console.log(`\n📝 Saved niche data to: ${dataFile}`);
-        
-        // Generate sites/index.html listing all niche sites
-        console.log('📄 Generating sites index page...');
-        generateSitesIndexPage(generatedNiches);
-        console.log('✅ Sites index page created');
     }
-    
-    // Generate root index.html that redirects to sites/
-    console.log('📄 Generating root index page...');
-    generateRootIndexPage();
-    console.log('✅ Root index page created');
     
     // Report summary
     console.log('\n' + '='.repeat(60));
@@ -280,35 +264,6 @@ function createSlug(niche) {
         .toLowerCase()
         .replace(/[^a-z0-9]+/g, '-')
         .replace(/^-|-$/g, '');
-}
-
-/**
- * Clean product name to show only the main title without specs/descriptions
- * @param {string} amazonTitle - Full Amazon product title
- * @returns {string} Clean product name
- */
-function getCleanProductName(amazonTitle) {
-    if (!amazonTitle) return '';
-    
-    let cleanName = amazonTitle.trim();
-    
-    // Remove content from first opening parenthesis onward
-    const parenIndex = cleanName.indexOf('(');
-    if (parenIndex > 0) {
-        cleanName = cleanName.substring(0, parenIndex).trim();
-    }
-    
-    // Remove content from common separator characters
-    const separators = [' - ', ' | ', ' : ', ' – ', ' — '];
-    for (const sep of separators) {
-        const sepIndex = cleanName.indexOf(sep);
-        if (sepIndex > 0) {
-            cleanName = cleanName.substring(0, sepIndex).trim();
-            break;
-        }
-    }
-    
-    return cleanName;
 }
 
 /**
@@ -671,7 +626,6 @@ async function fetchProducts(niche) {
             validProducts.push({
                 asin: asin,
                 title: title,
-                cleanTitle: getCleanProductName(title),
                 description: description,
                 rating: rating,
                 reviews: reviews,
@@ -821,8 +775,7 @@ function generateProductsHTML(products, template, niche) {
         html = html.replace(/{{RANK}}/g, rank);
         html = html.replace(/{{BADGE}}/g, badge);
         html = html.replace(/{{IMAGE_URL}}/g, product.image);
-        html = html.replace(/{{PRODUCT_TITLE}}/g, escapeHtml(product.cleanTitle || product.title));
-        html = html.replace(/{{FULL_PRODUCT_TITLE}}/g, escapeHtml(product.title));
+        html = html.replace(/{{PRODUCT_TITLE}}/g, escapeHtml(product.title));
         html = html.replace(/{{RATING_STARS}}/g, generateStars(parseFloat(product.rating)));
         html = html.replace(/{{RATING}}/g, product.rating);
         html = html.replace(/{{REVIEW_COUNT}}/g, product.reviews);
@@ -872,59 +825,6 @@ function generateAffiliateLink(product) {
 }
 
 /**
- * Generate comparison table HTML
- * @param {Array} products - Products array
- * @returns {string} Comparison table HTML
- */
-function generateComparisonTable(products) {
-    const rows = products.map((product, index) => {
-        const rank = index + 1;
-        const cleanTitle = escapeHtml(product.cleanTitle || product.title);
-        const keyFeatures = product.features.slice(0, 2).join('; ');
-        const rating = `${product.rating}/5 (${product.reviews} reviews)`;
-        const affiliateLink = generateAffiliateLink(product);
-        
-        return `
-        <tr>
-            <td class="rank-col">${rank}</td>
-            <td class="product-col">
-                <div class="table-product">
-                    <img src="${product.image}" alt="${escapeHtml(product.title)}" class="table-product-img">
-                    <span class="table-product-name">${cleanTitle}</span>
-                </div>
-            </td>
-            <td class="features-col">${escapeHtml(truncate(keyFeatures, 100))}</td>
-            <td class="rating-col">${rating}</td>
-            <td class="price-col">${product.price}</td>
-            <td class="link-col">
-                <a href="${affiliateLink}" class="btn-table-cta" target="_blank" rel="nofollow noopener">
-                    See price on Amazon
-                </a>
-            </td>
-        </tr>`;
-    }).join('\n');
-    
-    return `
-    <div class="comparison-table-wrapper">
-        <table class="comparison-table">
-            <thead>
-                <tr>
-                    <th class="rank-col">Rank</th>
-                    <th class="product-col">Product</th>
-                    <th class="features-col">Key Features</th>
-                    <th class="rating-col">Rating</th>
-                    <th class="price-col">Price</th>
-                    <th class="link-col">Link</th>
-                </tr>
-            </thead>
-            <tbody>
-                ${rows}
-            </tbody>
-        </table>
-    </div>`;
-}
-
-/**
  * Generate index.html
  * @param {string} niche - Niche name
  * @param {string} slug - URL slug
@@ -946,9 +846,6 @@ function generateIndexHTML(niche, slug, templates, seoContent, productsHTML, pro
     // Generate structured data
     const structuredData = generateStructuredData(niche, slug, products);
     
-    // Generate comparison table
-    const comparisonTable = generateComparisonTable(products);
-    
     let html = templates.mainTemplate;
     
     // Replace all placeholders
@@ -959,7 +856,6 @@ function generateIndexHTML(niche, slug, templates, seoContent, productsHTML, pro
     html = html.replace(/{{HERO_TITLE}}/g, templateData.sections.hero_title.replace(/{{NICHE}}/g, niche));
     html = html.replace(/{{INTRO_TITLE}}/g, templateData.sections.intro_title.replace(/{{NICHE}}/g, niche));
     html = html.replace(/{{INTRO_PARAGRAPH}}/g, seoContent.intro);
-    html = html.replace(/{{COMPARISON_TABLE}}/g, comparisonTable);
     html = html.replace(/{{PRODUCTS_SECTION_TITLE}}/g, templateData.sections.products_section_title.replace(/{{NICHE}}/g, niche));
     html = html.replace(/{{PRODUCTS_LIST}}/g, productsHTML);
     html = html.replace(/{{BUYERS_GUIDE_TITLE}}/g, templateData.sections.buyers_guide_title.replace(/{{NICHE}}/g, niche));
@@ -1096,195 +992,6 @@ function truncate(text, length) {
 }
 
 /**
- * Generate sites/index.html listing all niche sites
- * @param {Array} niches - Array of generated niche objects
- */
-function generateSitesIndexPage(niches) {
-    const year = new Date().getFullYear();
-    const lastUpdated = process.env.UPDATE_TIMESTAMP || new Date().toLocaleDateString('en-US', { 
-        year: 'numeric', 
-        month: 'long', 
-        day: 'numeric' 
-    });
-    
-    const nichesList = niches.map(({ niche, slug }) => {
-        return `
-        <li class="niche-item">
-            <a href="./${slug}/" class="niche-link">
-                <h3>${escapeHtml(niche)}</h3>
-                <p>View top 10 ${escapeHtml(niche.toLowerCase())}</p>
-            </a>
-        </li>`;
-    }).join('\n');
-    
-    const html = `<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Top 10 Product Reviews - Browse All Categories</title>
-    <meta name="description" content="Browse our comprehensive collection of top 10 product reviews across multiple categories. Updated weekly with real Amazon data.">
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-            line-height: 1.6;
-            color: #1f2937;
-            background-color: #f9fafb;
-        }
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 2rem 20px;
-        }
-        header {
-            background-color: #2563eb;
-            color: white;
-            padding: 2rem 0;
-            margin-bottom: 3rem;
-        }
-        h1 {
-            font-size: 2.5rem;
-            margin-bottom: 0.5rem;
-        }
-        .subtitle {
-            font-size: 1.1rem;
-            opacity: 0.9;
-        }
-        .last-updated {
-            margin-top: 1rem;
-            font-size: 0.9rem;
-            opacity: 0.8;
-        }
-        .niches-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-            gap: 1.5rem;
-            list-style: none;
-        }
-        .niche-item {
-            background: white;
-            border-radius: 8px;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-            transition: transform 0.2s, box-shadow 0.2s;
-        }
-        .niche-item:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-        }
-        .niche-link {
-            display: block;
-            padding: 2rem;
-            text-decoration: none;
-            color: inherit;
-        }
-        .niche-link h3 {
-            color: #2563eb;
-            font-size: 1.3rem;
-            margin-bottom: 0.5rem;
-        }
-        .niche-link p {
-            color: #6b7280;
-        }
-        footer {
-            margin-top: 4rem;
-            padding: 2rem 0;
-            text-align: center;
-            color: #6b7280;
-            border-top: 1px solid #e5e7eb;
-        }
-        @media (max-width: 768px) {
-            h1 {
-                font-size: 1.8rem;
-            }
-            .niches-grid {
-                grid-template-columns: 1fr;
-            }
-        }
-    </style>
-</head>
-<body>
-    <header>
-        <div class="container">
-            <h1>Top 10 Product Reviews</h1>
-            <p class="subtitle">Expert-curated product reviews across ${niches.length} categories</p>
-            <div class="last-updated">Updated weekly • Last updated: ${lastUpdated}</div>
-        </div>
-    </header>
-    
-    <div class="container">
-        <ul class="niches-grid">
-            ${nichesList}
-        </ul>
-    </div>
-    
-    <footer>
-        <div class="container">
-            <p>&copy; ${year} Top10Reviews. All rights reserved.</p>
-            <p>As an Amazon Associate, we earn from qualifying purchases.</p>
-        </div>
-    </footer>
-</body>
-</html>`;
-    
-    const indexPath = path.join(CONFIG.OUTPUT_DIR, 'index.html');
-    fs.writeFileSync(indexPath, html);
-}
-
-/**
- * Generate root index.html that redirects to sites/
- */
-function generateRootIndexPage() {
-    const html = `<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Top 10 Product Reviews</title>
-    <meta http-equiv="refresh" content="0; url=./sites/">
-    <link rel="canonical" href="./sites/">
-    <style>
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            margin: 0;
-            background-color: #f9fafb;
-        }
-        .message {
-            text-align: center;
-            padding: 2rem;
-        }
-        .message h1 {
-            color: #2563eb;
-            margin-bottom: 1rem;
-        }
-        .message a {
-            color: #2563eb;
-            text-decoration: none;
-            font-weight: 500;
-        }
-    </style>
-</head>
-<body>
-    <div class="message">
-        <h1>Redirecting...</h1>
-        <p>If you are not redirected automatically, <a href="./sites/">click here</a>.</p>
-    </div>
-</body>
-</html>`;
-    
-    const rootIndexPath = path.join(__dirname, 'index.html');
-    fs.writeFileSync(rootIndexPath, html);
-}
-
-/**
  * Generate README.md content for repository
  * @param {string} niche - Niche name
  * @param {string} slug - URL slug
@@ -1310,7 +1017,7 @@ This site provides comprehensive reviews and rankings of the best ${niche.toLowe
 
 ## Live Site
 
-View the live site at: https://sc-connections.github.io/Top-10/sites/${slug}/
+View the live site at: https://sc-connections.github.io/Top-10/${slug}/
 
 ## Structure
 

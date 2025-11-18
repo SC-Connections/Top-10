@@ -41,8 +41,15 @@ jobs:
         run: |
           git config user.name "GitHub Actions Bot"
           git config user.email "actions@github.com"
-          # Add niche site directories from sites/ folder and index files
-          git add sites/ index.html
+          # Add niche site directories and index.html
+          # This will add any directories that match niche slugs
+          for dir in */; do
+            # Skip special directories
+            if [[ "$dir" != ".github/" && "$dir" != "node_modules/" && "$dir" != "templates/" && "$dir" != "assets/" && "$dir" != "_layouts/" && "$dir" != "data/" ]]; then
+              git add "$dir" 2>/dev/null || true
+            fi
+          done
+          git add index.html _niches_data.json 2>/dev/null || true
           git diff-index --quiet HEAD || git commit -m "Generate sites from niches.csv [skip ci]"
           git push
         env:
