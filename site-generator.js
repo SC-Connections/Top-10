@@ -573,6 +573,13 @@ async function fetchProducts(niche) {
                 continue;
             }
             
+            // Skip products without a recognizable brand name (generic products)
+            if (!hasBrandName(title)) {
+                console.warn(`⚠️  Skipping product ${i + 1} "${title}": no recognizable brand name (generic product)`);
+                skippedCount++;
+                continue;
+            }
+            
             // Feature bullets - try to extract, generate from description as fallback
             let featureBullets = details.features || details.feature_bullets || 
                                details.about_product || product.features || 
@@ -771,11 +778,14 @@ function generateProductsHTML(products, template, niche) {
         const badge = rank === 1 ? '<span class="badge-best">Best Overall</span>' : 
                      rank === 2 ? '<span class="badge-value">Best Value</span>' : '';
         
+        // Extract short product name for display
+        const shortName = extractShortProductName(product.title);
+        
         let html = template;
         html = html.replace(/{{RANK}}/g, rank);
         html = html.replace(/{{BADGE}}/g, badge);
         html = html.replace(/{{IMAGE_URL}}/g, product.image);
-        html = html.replace(/{{PRODUCT_TITLE}}/g, escapeHtml(product.title));
+        html = html.replace(/{{PRODUCT_TITLE}}/g, escapeHtml(shortName));
         html = html.replace(/{{RATING_STARS}}/g, generateStars(parseFloat(product.rating)));
         html = html.replace(/{{RATING}}/g, product.rating);
         html = html.replace(/{{REVIEW_COUNT}}/g, product.reviews);
@@ -846,6 +856,9 @@ function generateIndexHTML(niche, slug, templates, seoContent, productsHTML, pro
     // Generate structured data
     const structuredData = generateStructuredData(niche, slug, products);
     
+    // Generate comparison table
+    const comparisonTable = generateComparisonTable(products);
+    
     let html = templates.mainTemplate;
     
     // Replace all placeholders
@@ -856,6 +869,7 @@ function generateIndexHTML(niche, slug, templates, seoContent, productsHTML, pro
     html = html.replace(/{{HERO_TITLE}}/g, templateData.sections.hero_title.replace(/{{NICHE}}/g, niche));
     html = html.replace(/{{INTRO_TITLE}}/g, templateData.sections.intro_title.replace(/{{NICHE}}/g, niche));
     html = html.replace(/{{INTRO_PARAGRAPH}}/g, seoContent.intro);
+    html = html.replace(/{{COMPARISON_TABLE}}/g, comparisonTable);
     html = html.replace(/{{PRODUCTS_SECTION_TITLE}}/g, templateData.sections.products_section_title.replace(/{{NICHE}}/g, niche));
     html = html.replace(/{{PRODUCTS_LIST}}/g, productsHTML);
     html = html.replace(/{{BUYERS_GUIDE_TITLE}}/g, templateData.sections.buyers_guide_title.replace(/{{NICHE}}/g, niche));
@@ -925,6 +939,9 @@ function generateBlogHTML(product, niche, rank, templates) {
         day: 'numeric' 
     });
     
+    // Extract short product name
+    const shortName = extractShortProductName(product.title);
+    
     // Generate product schema
     const productSchema = {
         "@context": "https://schema.org",
@@ -949,7 +966,7 @@ function generateBlogHTML(product, niche, rank, templates) {
     let html = templates.blogTemplate;
     html = html.replace(/{{BLOG_TITLE}}/g, escapeHtml(blog.title));
     html = html.replace(/{{BLOG_META_DESCRIPTION}}/g, escapeHtml(blog.metaDescription));
-    html = html.replace(/{{PRODUCT_TITLE}}/g, escapeHtml(product.title));
+    html = html.replace(/{{PRODUCT_TITLE}}/g, escapeHtml(shortName));
     html = html.replace(/{{PUBLISH_DATE}}/g, publishDate);
     html = html.replace(/{{READING_TIME}}/g, blog.readingTime);
     html = html.replace(/{{IMAGE_URL}}/g, product.image);
@@ -989,6 +1006,140 @@ function escapeHtml(text) {
 function truncate(text, length) {
     if (text.length <= length) return text;
     return text.substring(0, length).trim() + '...';
+}
+
+/**
+ * Check if product has a recognizable brand name
+ * Skips products with only generic descriptive text (no brand)
+ * @param {string} title - Product title
+ * @returns {boolean} True if has brand name, false if generic
+ */
+function hasBrandName(title) {
+    // Common generic starting patterns that indicate no brand
+    const genericPatterns = [
+        /^[0-9]+ Pack/i,
+        /^[0-9]+ Pcs/i,
+        /^[0-9]+ Piece/i,
+        /^[0-9]+ Set/i,
+        /^Generic /i,
+        /^Universal /i,
+        /^Compatible /i,
+        /^Replacement /i,
+        /^[0-9]{3,}/  // Starting with numbers like "100 Pack"
+    ];
+    
+    // Check if title starts with generic patterns
+    for (const pattern of genericPatterns) {
+        if (pattern.test(title)) {
+            return false;
+        }
+    }
+    
+    // Check if first word is capitalized and looks like a brand name
+    // Brand names typically start with capital letters and are at the beginning
+    const firstWord = title.trim().split(/[\s-]/)[0];
+    
+    // If starts with lowercase, likely generic description
+    if (firstWord.length > 0 && firstWord[0] === firstWord[0].toLowerCase()) {
+        return false;
+    }
+    
+    // Check minimum length and proper capitalization
+    // Brand names are usually 2+ characters and start with uppercase
+    if (firstWord.length >= 2 && firstWord[0] === firstWord[0].toUpperCase()) {
+        return true;
+    }
+    
+    return false;
+}
+
+/**
+ * Extract short product name from full Amazon title
+ * Extracts brand name and model/short name, e.g., "JBL Tune 720BT" from long title
+ * @param {string} fullTitle - Full Amazon product title
+ * @returns {string} Short product name
+ */
+function extractShortProductName(fullTitle) {
+    // Common patterns to split on
+    const splitPatterns = [
+        ' - ',
+        ' – ',  // em dash
+        ' | ',
+        ' with ',
+        ' featuring ',
+        ', ',
+        ' (',
+        ' for '
+    ];
+    
+    // Try to find the first natural break point
+    let shortName = fullTitle;
+    let splitIndex = -1;
+    
+    for (const pattern of splitPatterns) {
+        const index = fullTitle.indexOf(pattern);
+        if (index !== -1 && (splitIndex === -1 || index < splitIndex)) {
+            splitIndex = index;
+        }
+    }
+    
+    if (splitIndex !== -1) {
+        shortName = fullTitle.substring(0, splitIndex);
+    }
+    
+    // Clean up and limit length
+    shortName = shortName.trim();
+    
+    // If still too long (more than 50 chars), try to get just brand and model
+    if (shortName.length > 50) {
+        const words = shortName.split(' ');
+        // Take first 3-4 words as they usually contain brand + model
+        shortName = words.slice(0, Math.min(4, words.length)).join(' ');
+    }
+    
+    return shortName;
+}
+
+/**
+ * Generate comparison table HTML
+ * @param {Array} products - Products array
+ * @returns {string} Comparison table HTML
+ */
+function generateComparisonTable(products) {
+    const tableRows = products.map((product, index) => {
+        const rank = index + 1;
+        const shortName = extractShortProductName(product.title);
+        const cardId = `product-${rank}`;
+        
+        return `                <tr>
+                    <td class="rank-cell">${rank}</td>
+                    <td class="product-name-cell">
+                        <a href="#${cardId}" class="product-link">${escapeHtml(shortName)}</a>
+                    </td>
+                    <td class="rating-cell">${product.rating} ⭐</td>
+                    <td class="reviews-cell">${product.reviews}</td>
+                    <td class="price-cell">${product.price}</td>
+                    <td class="action-cell">
+                        <a href="blog/${product.asin}.html" class="btn-table">Review</a>
+                    </td>
+                </tr>`;
+    }).join('\n');
+    
+    return `                <table class="comparison-table">
+                    <thead>
+                        <tr>
+                            <th>Rank</th>
+                            <th>Product</th>
+                            <th>Rating</th>
+                            <th>Reviews</th>
+                            <th>Price</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+${tableRows}
+                    </tbody>
+                </table>`;
 }
 
 /**
