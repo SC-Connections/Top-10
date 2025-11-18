@@ -518,7 +518,7 @@ async function fetchProducts(niche) {
         }
         
         // Process and validate products, limit to top 10
-        const validProducts = [];
+        let validProducts = [];
         let skippedCount = 0;
         
         for (let i = 0; i < Math.min(productList.length, 20); i++) {  // Check more products to get 10 valid ones
@@ -530,7 +530,7 @@ async function fetchProducts(niche) {
             const asin = product.asin || product.ASIN || null;
             
             if (!asin) {
-                console.warn(`⚠️  Skipping product ${i + 1}: missing ASIN`);
+                console.warn(`⚠️  Skipping product ${i + 1}: Missing required API field: 'asin' or 'ASIN'`);
                 skippedCount++;
                 continue;
             }
@@ -551,7 +551,7 @@ async function fetchProducts(niche) {
                          product.title || product.product_title || product.name || null;
             
             if (!title) {
-                console.warn(`⚠️  Skipping product ${i + 1}: missing title for ASIN ${asin}`);
+                console.warn(`⚠️  Skipping product ${i + 1}: Missing required API field: 'title', 'product_title', or 'name' for ASIN ${asin}`);
                 skippedCount++;
                 continue;
             }
@@ -581,7 +581,7 @@ async function fetchProducts(niche) {
             }
             
             if (!image) {
-                console.warn(`⚠️  Skipping product ${i + 1} "${title}": missing image for ASIN ${asin}`);
+                console.warn(`⚠️  Skipping product ${i + 1} "${title}": Missing required API field: valid 'image_url', 'image', 'product_photo', or 'main_image' for ASIN ${asin}`);
                 skippedCount++;
                 continue;
             }
@@ -610,7 +610,7 @@ async function fetchProducts(niche) {
             }
             
             if (!price) {
-                console.warn(`⚠️  Skipping product ${i + 1} "${title}": missing price for ASIN ${asin}`);
+                console.warn(`⚠️  Skipping product ${i + 1} "${title}": Missing required API field: 'price' or 'product_price' for ASIN ${asin}`);
                 skippedCount++;
                 continue;
             }
@@ -637,7 +637,7 @@ async function fetchProducts(niche) {
             }
             
             if (!description) {
-                console.warn(`⚠️  Skipping product ${i + 1} "${title}": missing description for ASIN ${asin}`);
+                console.warn(`⚠️  Skipping product ${i + 1} "${title}": Missing required API field: 'description', 'product_description', 'short_description', or 'features' for ASIN ${asin}`);
                 skippedCount++;
                 continue;
             }
