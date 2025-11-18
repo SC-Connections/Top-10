@@ -41,6 +41,9 @@ jobs:
           node site-generator.js
           echo "✅ All sites generated successfully!"
       
+      - name: Generate root index.html
+        run: npm run generate-root-index
+      
       - name: Commit and push generated sites
         run: |
           git config user.name "github-actions"
