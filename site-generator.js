@@ -21,8 +21,103 @@ const CONFIG = {
     TEMPLATES_DIR: path.join(__dirname, 'templates'),
     OUTPUT_DIR: __dirname,
     DATA_DIR: path.join(__dirname, 'data'),
-    MAX_FEATURE_LENGTH: 150  // Maximum length for generated feature from description
+    LOGS_DIR: path.join(__dirname, 'logs'),
+    SRC_DATA_DIR: path.join(__dirname, 'src', 'data'),
+    MAX_FEATURE_LENGTH: 150,  // Maximum length for generated feature from description
+    MIN_REVIEW_THRESHOLD: 100,  // Rule 5: Minimum review threshold
+    NEW_ENTRY_THRESHOLD: 500  // Rule 5: Badge threshold for new entries
 };
+
+// Rule 2: Skipped ASINs log
+const SKIPPED_ASINS = [];
+
+/**
+ * Rule 2: Log skipped ASIN with reason
+ * @param {string} asin - Product ASIN
+ * @param {string} reason - Reason for skipping
+ */
+function logSkippedAsin(asin, reason) {
+    SKIPPED_ASINS.push({
+        asin: asin,
+        reason: reason,
+        timestamp: new Date().toISOString()
+    });
+}
+
+/**
+ * Rule 2: Save skipped ASINs log to file
+ */
+function saveSkippedAsinsLog() {
+    if (SKIPPED_ASINS.length > 0) {
+        const logFile = path.join(CONFIG.LOGS_DIR, 'skipped-asins.json');
+        if (!fs.existsSync(CONFIG.LOGS_DIR)) {
+            fs.mkdirSync(CONFIG.LOGS_DIR, { recursive: true });
+        }
+        fs.writeFileSync(logFile, JSON.stringify(SKIPPED_ASINS, null, 2));
+        console.log(`\n📝 Saved ${SKIPPED_ASINS.length} skipped ASINs to: ${logFile}`);
+    }
+}
+
+/**
+ * Rule 4: Save products to single source of truth
+ * @param {string} niche - Niche name
+ * @param {Array} products - Products array
+ */
+function saveProductsData(niche, products) {
+    const productsFile = path.join(CONFIG.SRC_DATA_DIR, 'products.json');
+    
+    // Create directory if it doesn't exist
+    if (!fs.existsSync(CONFIG.SRC_DATA_DIR)) {
+        fs.mkdirSync(CONFIG.SRC_DATA_DIR, { recursive: true });
+    }
+    
+    // Load existing data or create new
+    let allProducts = {};
+    if (fs.existsSync(productsFile)) {
+        try {
+            allProducts = JSON.parse(fs.readFileSync(productsFile, 'utf-8'));
+        } catch (error) {
+            console.warn('⚠️  Could not read existing products.json, creating new');
+        }
+    }
+    
+    // Update with current niche products
+    allProducts[niche] = products.map(p => ({
+        asin: p.asin,
+        title: p.title,
+        brand: extractBrandFromTitle(p.title),
+        image: p.image,
+        price: p.price,
+        rating: p.rating,
+        reviews: p.reviews,
+        battery: p.battery || null,
+        weight: p.weight || null,
+        driver: p.driver || null,
+        description: p.description,
+        features: p.features,
+        pros: p.pros,
+        cons: p.cons,
+        url: p.url
+    }));
+    
+    // Save updated data
+    fs.writeFileSync(productsFile, JSON.stringify(allProducts, null, 2));
+    console.log(`✓ Saved ${products.length} products to ${productsFile}`);
+}
+
+/**
+ * Extract brand name from product title
+ * @param {string} title - Product title
+ * @returns {string} Brand name or null
+ */
+function extractBrandFromTitle(title) {
+    // Extract first word/phrase that looks like a brand
+    const words = title.trim().split(/[\s-]/);
+    if (words.length > 0 && words[0][0] === words[0][0].toUpperCase()) {
+        return words[0];
+    }
+    return null;
+}
 
 /**
  * Main execution function
@@ -116,6 +211,9 @@ async function main() {
     
     console.log('\n' + '='.repeat(60));
     
+    // Rule 2: Save skipped ASINs log
+    saveSkippedAsinsLog();
+    
     // Only fail if there's a fatal GitHub error, not if all niches failed
     // Individual niche failures are acceptable - they get empty results pages
     console.log('\n🎉 Site generation complete!');
@@ -167,6 +265,10 @@ async function generateSiteForNiche(niche) {
     }
     
     console.log(`✓ Found ${products.length} valid products`);
+    
+    // Rule 4: Save products to single source of truth
+    console.log('💾 Saving products data...');
+    saveProductsData(niche, products);
     
     // Generate SEO content
     console.log('📝 Generating SEO content...');
@@ -565,13 +667,34 @@ async function fetchProducts(niche) {
             
             if (ratingNum === 0 || reviewsNum === 0) {
                 console.warn(`⚠️  Skipping product ${i + 1} "${title}": has 0 rating or 0 reviews (rating: ${rating}, reviews: ${reviews})`);
+                logSkippedAsin(asin, 'Zero rating or zero reviews');
                 skippedCount++;
                 continue;
             }
             
-            // Skip products without a recognizable brand name (generic products)
+            // Rule 5: Skip products with less than minimum review threshold
+            if (reviewsNum < CONFIG.MIN_REVIEW_THRESHOLD) {
+                console.warn(`⚠️  Skipping product ${i + 1} "${title}": has ${reviewsNum} reviews (minimum: ${CONFIG.MIN_REVIEW_THRESHOLD})`);
+                logSkippedAsin(asin, `Less than ${CONFIG.MIN_REVIEW_THRESHOLD} reviews (${reviewsNum})`);
+                skippedCount++;
+                continue;
+            }
+            
+            // Rule 2: Check for brand from API (not just title)
+            let brand = details.brand || product.brand || null;
+            
+            // If brand is explicitly null or empty string, skip the product
+            if (brand === null || brand === '') {
+                console.warn(`⚠️  Skipping product ${i + 1} "${title}": brand is null or empty (generic product)`);
+                logSkippedAsin(asin, 'Brand is null or empty');
+                skippedCount++;
+                continue;
+            }
+            
+            // Also check if product has a recognizable brand name in title (generic products)
             if (!hasBrandName(title)) {
                 console.warn(`⚠️  Skipping product ${i + 1} "${title}": no recognizable brand name (generic product)`);
+                logSkippedAsin(asin, 'No recognizable brand name in title');
                 skippedCount++;
                 continue;
             }
@@ -624,6 +747,9 @@ async function fetchProducts(niche) {
                 console.log(`  ℹ️  Generated ${cons.length} generic cons`);
             }
             
+            // Rule 4: Extract product specs (battery, weight, driver) for table-card sync
+            const specs = extractProductSpecs({ description, features });
+            
             console.log(`  ✅ Product validated: "${title}"`);
             
             validProducts.push({
@@ -632,12 +758,17 @@ async function fetchProducts(niche) {
                 description: description,
                 rating: rating,
                 reviews: reviews,
+                reviewsNum: reviewsNum,  // Store numeric value for badge logic
                 price: price,
                 image: image,
                 url: amazonUrl,
                 features: features,
                 pros: pros,
-                cons: cons
+                cons: cons,
+                battery: specs.battery,  // Rule 4: Spec data
+                weight: specs.weight,    // Rule 4: Spec data
+                driver: specs.driver,    // Rule 4: Spec data
+                brand: brand             // Rule 2: Store brand
             });
             
             // Stop once we have 10 valid products
@@ -769,35 +900,59 @@ function generateSEOContent(niche, products) {
  * @returns {string} Products HTML
  */
 function generateProductsHTML(products, template, niche) {
-    // Tier 1.1: Deduplicate products by ASIN before rendering
-    const seenAsins = new Set();
-    const deduplicatedProducts = products.filter(product => {
-        if (seenAsins.has(product.asin)) {
-            console.log(`  ⚠️  Skipping duplicate ASIN: ${product.asin}`);
-            return false;
+    // Rule 1: Deduplicate products by ASIN, keeping the one with highest review count
+    const asinMap = new Map();
+    
+    for (const product of products) {
+        if (!asinMap.has(product.asin)) {
+            asinMap.set(product.asin, product);
+        } else {
+            const existing = asinMap.get(product.asin);
+            const existingReviews = parseInt(existing.reviews) || 0;
+            const currentReviews = parseInt(product.reviews) || 0;
+            
+            if (currentReviews > existingReviews) {
+                console.log(`  ⚠️  Replacing duplicate ASIN ${product.asin} (${existingReviews} reviews) with higher review count (${currentReviews} reviews)`);
+                asinMap.set(product.asin, product);
+            } else {
+                console.log(`  ⚠️  Skipping duplicate ASIN ${product.asin} with lower review count (${currentReviews} vs ${existingReviews})`);
+            }
         }
-        seenAsins.add(product.asin);
-        return true;
-    });
+    }
+    
+    const deduplicatedProducts = Array.from(asinMap.values());
     
     if (deduplicatedProducts.length < products.length) {
-        console.log(`✓ Tier 1.1: Deduplicated ${products.length - deduplicatedProducts.length} products`);
+        console.log(`✓ Rule 1: Deduplicated ${products.length - deduplicatedProducts.length} products`);
     }
     
     return deduplicatedProducts.map((product, index) => {
         const rank = index + 1;
-        const badge = rank === 1 ? '<span class="badge-best">Best Overall</span>' : 
-                     rank === 2 ? '<span class="badge-value">Best Value</span>' : '';
+        
+        // Rule 5: Add "New entry" badge for products with 100-499 reviews
+        const reviewsNum = product.reviewsNum || parseInt(product.reviews) || 0;
+        let badge = rank === 1 ? '<span class="badge-best">Best Overall</span>' : 
+                    rank === 2 ? '<span class="badge-value">Best Value</span>' : '';
+        
+        // Add New Entry badge if reviews are between threshold and 500
+        if (reviewsNum >= CONFIG.MIN_REVIEW_THRESHOLD && reviewsNum < CONFIG.NEW_ENTRY_THRESHOLD) {
+            badge += badge ? ' ' : '';
+            badge += '<span class="badge-new">New entry</span>';
+        }
         
         // Extract short product name for display
         const shortName = extractShortProductName(product.title);
+        
+        // Rule 6: Proper alt text with Brand, Model, Color
+        const altText = `${product.brand || ''} ${shortName}`.trim();
         
         let html = template;
         html = html.replace(/{{RANK}}/g, rank);
         html = html.replace(/{{BADGE}}/g, badge);
         html = html.replace(/{{IMAGE_URL}}/g, product.image);
         html = html.replace(/{{PRODUCT_TITLE}}/g, escapeHtml(shortName));
-        html = html.replace(/{{RATING_STARS}}/g, generateStars(parseFloat(product.rating)));
+        html = html.replace(/{{ALT_TEXT}}/g, escapeHtml(altText));  // Rule 6: Proper alt text
+        html = html.replace(/{{RATING_STARS}}/g, generateStars(parseFloat(product.rating), product.rating));  // Rule 6: Pass rating for aria-label
         html = html.replace(/{{RATING}}/g, product.rating);
         html = html.replace(/{{REVIEW_COUNT}}/g, product.reviews);
         html = html.replace(/{{PRICE}}/g, product.price);
@@ -812,17 +967,24 @@ function generateProductsHTML(products, template, niche) {
 
 /**
  * Generate stars HTML
+ * Rule 6: Add role="img" and aria-label for accessibility
  * @param {number} rating - Rating value
- * @returns {string} Stars HTML
+ * @param {string} ratingText - Rating text for aria-label
+ * @returns {string} Stars HTML with accessibility attributes
  */
-function generateStars(rating) {
+function generateStars(rating, ratingText = null) {
     const fullStars = Math.floor(rating);
     const halfStar = rating % 1 >= 0.5;
     const emptyStars = 5 - fullStars - (halfStar ? 1 : 0);
     
-    return '★'.repeat(fullStars) + 
+    const starsHtml = '★'.repeat(fullStars) + 
            (halfStar ? '⯨' : '') + 
            '☆'.repeat(emptyStars);
+    
+    // Rule 6: Add role and aria-label for screen readers
+    const ariaLabel = ratingText ? `${ratingText} out of 5 stars` : `${rating} out of 5 stars`;
+    
+    return `<span role="img" aria-label="${ariaLabel}">${starsHtml}</span>`;
 }
 
 /**
@@ -894,12 +1056,14 @@ function generateIndexHTML(niche, slug, templates, seoContent, productsHTML, pro
 
 /**
  * Generate structured data for products
+ * Rule 9: JSON-LD Product + AggregateRating for items that pass review threshold
  * @param {string} niche - Niche name
  * @param {string} slug - URL slug
  * @param {Array} products - Products array
  * @returns {object} Structured data object
  */
 function generateStructuredData(niche, slug, products) {
+    // Rule 9: Only include products that passed the review threshold (already filtered)
     return {
         "@context": "https://schema.org",
         "@type": "ItemList",
@@ -911,12 +1075,18 @@ function generateStructuredData(niche, slug, products) {
             "item": {
                 "@type": "Product",
                 "name": product.title,
+                "brand": {
+                    "@type": "Brand",
+                    "name": product.brand || extractBrandFromTitle(product.title)
+                },
                 "image": product.image,
                 "description": product.description,
                 "aggregateRating": {
                     "@type": "AggregateRating",
                     "ratingValue": product.rating,
-                    "reviewCount": product.reviews
+                    "reviewCount": product.reviews,
+                    "bestRating": "5",
+                    "worstRating": "1"
                 },
                 "offers": {
                     "@type": "Offer",
@@ -971,13 +1141,18 @@ function generateBlogHTML(product, niche, rank, templates) {
     };
     
     let html = templates.blogTemplate;
+    
+    // Rule 6: Proper alt text with Brand, Model
+    const altText = `${product.brand || ''} ${shortName}`.trim();
+    
     html = html.replace(/{{BLOG_TITLE}}/g, escapeHtml(blog.title));
     html = html.replace(/{{BLOG_META_DESCRIPTION}}/g, escapeHtml(blog.metaDescription));
     html = html.replace(/{{PRODUCT_TITLE}}/g, escapeHtml(shortName));
+    html = html.replace(/{{ALT_TEXT}}/g, escapeHtml(altText));  // Rule 6: Alt text
     html = html.replace(/{{PUBLISH_DATE}}/g, publishDate);
     html = html.replace(/{{READING_TIME}}/g, blog.readingTime);
     html = html.replace(/{{IMAGE_URL}}/g, product.image);
-    html = html.replace(/{{RATING_STARS}}/g, generateStars(parseFloat(product.rating)));
+    html = html.replace(/{{RATING_STARS}}/g, generateStars(parseFloat(product.rating), product.rating));
     html = html.replace(/{{RATING}}/g, product.rating);
     html = html.replace(/{{REVIEW_COUNT}}/g, product.reviews);
     html = html.replace(/{{PRICE}}/g, product.price);
@@ -1172,14 +1347,23 @@ function generateComparisonTable(products) {
     headerRow += `\n                            <th>Action</th>
                         </tr>`;
     
-    return `                <table class="comparison-table">
-                    <thead>
+    // Rule 3: Price freshness disclaimer
+    const priceDisclaimer = `<div class="price-disclaimer" style="margin-top: 1rem; font-size: 0.875rem; color: var(--text-secondary); text-align: center;">
+        Price shown is the Amazon.com listing as of writing (updated weekly). Click-through for real-time price.
+    </div>`;
+    
+    // Rule 7: Wrap table with table-wrapper div with tabindex for keyboard accessibility
+    return `                <div class="table-wrapper" tabindex="0">
+                    <table class="comparison-table">
+                        <thead>
 ${headerRow}
-                    </thead>
-                    <tbody>
+                        </thead>
+                        <tbody>
 ${tableRows}
-                    </tbody>
-                </table>`;
+                        </tbody>
+                    </table>
+                </div>
+${priceDisclaimer}`;
 }
 
 /**
