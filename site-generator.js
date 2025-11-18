@@ -31,6 +31,9 @@ const CONFIG = {
 // Rule 2: Skipped ASINs log
 const SKIPPED_ASINS = [];
 
+// Skipped products due to missing brand
+const SKIPPED_PRODUCTS = [];
+
 /**
  * Rule 2: Log skipped ASIN with reason
  * @param {string} asin - Product ASIN
@@ -45,6 +48,14 @@ function logSkippedAsin(asin, reason) {
 }
 
 /**
+ * Log skipped product with missing brand
+ * @param {string} asin - Product ASIN
+ */
+function logSkippedProduct(asin) {
+    SKIPPED_PRODUCTS.push(asin || "UNKNOWN-ASIN");
+}
+
+/**
  * Rule 2: Save skipped ASINs log to file
  */
 function saveSkippedAsinsLog() {
@@ -55,6 +66,21 @@ function saveSkippedAsinsLog() {
         }
         fs.writeFileSync(logFile, JSON.stringify(SKIPPED_ASINS, null, 2));
         console.log(`\n📝 Saved ${SKIPPED_ASINS.length} skipped ASINs to: ${logFile}`);
+    }
+}
+
+/**
+ * Save skipped products to log file
+ */
+function saveSkippedProductsLog() {
+    if (SKIPPED_PRODUCTS.length > 0) {
+        const logFile = path.join(CONFIG.LOGS_DIR, 'skipped-products.json');
+        if (!fs.existsSync(CONFIG.LOGS_DIR)) {
+            fs.mkdirSync(CONFIG.LOGS_DIR, { recursive: true });
+        }
+        fs.writeFileSync(logFile, JSON.stringify(SKIPPED_PRODUCTS, null, 2));
+        console.log(`\n⚠️ ${SKIPPED_PRODUCTS.length} product(s) were skipped due to missing brand — this is allowed.`);
+        console.log(`📝 Saved skipped products to: ${logFile}`);
     }
 }
 
@@ -117,6 +143,20 @@ function extractBrandFromTitle(title) {
         return words[0];
     }
     return null;
+}
+
+/**
+ * Get brand with fallback to manufacturer or seller
+ * @param {object} product - Product object from API
+ * @returns {string|null} Brand name or null
+ */
+function getBrand(product) {
+    return (
+        product.brand?.trim() ||
+        product.manufacturer?.trim() ||
+        product.seller?.trim() ||
+        null
+    );
 }
 
 /**
@@ -213,6 +253,9 @@ async function main() {
     
     // Rule 2: Save skipped ASINs log
     saveSkippedAsinsLog();
+    
+    // Save skipped products log
+    saveSkippedProductsLog();
     
     // Only fail if there's a fatal GitHub error, not if all niches failed
     // Individual niche failures are acceptable - they get empty results pages
@@ -680,13 +723,14 @@ async function fetchProducts(niche) {
                 continue;
             }
             
-            // Rule 2: Check for brand from API (not just title)
-            let brand = details.brand || product.brand || null;
+            // Rule 2: Check for brand from API with fallback to manufacturer/seller
+            let brand = getBrand(details) || getBrand(product);
             
             // If brand is explicitly null or empty string, skip the product
-            if (brand === null || brand === '') {
+            if (!brand) {
                 console.warn(`⚠️  Skipping product ${i + 1} "${title}": brand is null or empty (generic product)`);
                 logSkippedAsin(asin, 'Brand is null or empty');
+                logSkippedProduct(asin);
                 skippedCount++;
                 continue;
             }
