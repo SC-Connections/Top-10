@@ -1354,15 +1354,16 @@ function cleanProductTitle(title, brand) {
     const wordsToRemove = [
         'wireless', 'bluetooth', 'anc', 'over-ear', 'over ear', 'on-ear', 'on ear',
         'in-ear', 'in ear', 'earbuds', 'headphones', 'headphone', 'earphones', 'earphone',
-        '2025', '2024', '2023', 'version', 'noise cancelling', 'noise-cancelling',
-        'active noise', 'true wireless', 'tws', 'with microphone', 'with mic',
+        '2025', '2024', '2023', 'version', 'noise cancelling', 'noise-cancelling', 'cancelling', 'noise',
+        'active noise', 'true wireless', 'tws', 'with microphone', 'with mic', 'microphone',
         'foldable', 'portable', 'lightweight', 'comfortable', 'stereo', 'hifi',
         'hi-fi', 'bass', 'sound', 'audio', 'music', 'gaming', 'sports', 'running',
         'workout', 'gym', 'travel', 'commute', 'office', 'home', 'kids', 'children',
         'waterproof', 'water-proof', 'water resistant', 'sweatproof', 'ipx',
         'charging case', 'charging', 'battery', 'playtime', 'hours', 'hr', 'h',
         'built-in', 'built in', 'compatible', 'android', 'ios', 'iphone', 'samsung',
-        'connectivity', 'connection', 'pairing', 'dual', 'triple', 'quad'
+        'connectivity', 'connection', 'pairing', 'dual', 'triple', 'quad',
+        'featuring', 'includes', 'included', 'generation'
     ];
     
     // Split title into main part (before any dash/separator)
@@ -1387,18 +1388,32 @@ function cleanProductTitle(title, brand) {
     // Remove words that match the removal list (case-insensitive)
     words = words.filter(word => {
         const lowerWord = word.toLowerCase().replace(/[^a-z0-9]/g, '');
+        
+        // Skip very short words (likely numbers or model codes)
+        if (lowerWord.length <= 2 && /[0-9]/.test(lowerWord)) {
+            return true;
+        }
+        
+        // Check if word should be removed
         return !wordsToRemove.some(removeWord => {
             const lowerRemove = removeWord.toLowerCase().replace(/[^a-z0-9]/g, '');
-            return lowerWord === lowerRemove || lowerWord.includes(lowerRemove);
+            return lowerWord === lowerRemove;
         });
     });
     
-    // Ensure brand is at the beginning
+    // Ensure brand is at the beginning (normalize case)
     const brandLower = brand.toLowerCase();
     const firstWordLower = words[0] ? words[0].toLowerCase() : '';
     
-    if (!firstWordLower.includes(brandLower) && !brandLower.includes(firstWordLower)) {
+    if (firstWordLower === brandLower || firstWordLower === brandLower.toUpperCase()) {
+        // First word is the brand, just normalize it
+        words[0] = brand;
+    } else if (!firstWordLower.includes(brandLower) && !brandLower.includes(firstWordLower)) {
+        // Brand not present, add it
         words.unshift(brand);
+    } else {
+        // Brand is present but may need normalization
+        words[0] = brand;
     }
     
     // Limit to 6 words maximum
