@@ -1,6 +1,6 @@
 # Top-10 Automated Niche Site Generator
 
-🚀 A complete automated niche-site generator that creates SEO-optimized "Top 10" review sites for any product category using real Amazon data.
+🚀 A complete automated niche-site generator that creates SEO-optimized "Top 10" review sites for any product category using real Amazon data, Google Trends, and AI-powered content generation.
 
 ## 🎯 Overview
 
@@ -16,6 +16,10 @@ This system automatically generates professional, SEO-optimized review websites 
 - ✅ Daily updates via GitHub Actions
 - ✅ **All niche sites hosted in this repository at `/{slug}/` paths**
 - ✅ Automatic deployment pipeline via GitHub Pages
+- 🆕 **Puppeteer-based web scraping with RapidAPI fallback**
+- 🆕 **Google Trends integration for ranking optimization**
+- 🆕 **AI-powered content generation for reviews and blogs**
+- 🆕 **Auto-fix validation to prevent CI failures**
 
 ## 📁 Repository Structure
 
@@ -45,6 +49,107 @@ This system automatically generates professional, SEO-optimized review websites 
 └── package.json                 # Node.js dependencies
 ```
 
+## 🤖 Automation Features
+
+### 1. Puppeteer-Based Web Scraping
+
+The system now includes advanced web scraping capabilities using Puppeteer:
+
+**Script**: `scripts/scrape-amazon.js`
+
+Features:
+- Scrapes Amazon Best Sellers and search results directly
+- Extracts product details from product pages (brand, description, features)
+- Automatic fallback to RapidAPI if Puppeteer fails
+- Rate limiting and error handling
+
+Usage:
+```bash
+node scripts/scrape-amazon.js "bluetooth headphones" 20
+```
+
+### 2. Google Trends Integration
+
+**Script**: `scripts/scrape-google-trends.js`
+
+Features:
+- Fetches rising search terms for any niche
+- Identifies trending products and keywords
+- Synthetic fallback data when scraping fails
+- Trend scoring for ranking optimization
+
+Usage:
+```bash
+node scripts/scrape-google-trends.js "bluetooth headphones"
+```
+
+### 3. Intelligent Ranking Merger
+
+**Script**: `scripts/merge-rankings.js`
+
+Features:
+- Combines Amazon Best Sellers with Google Trends data
+- Weighted scoring system:
+  - Amazon ranking: 60%
+  - Google Trends: 40%
+- Identifies high-priority items (appear in both sources)
+- Composite scoring for optimal product rankings
+
+Usage:
+```bash
+node scripts/merge-rankings.js "bluetooth headphones"
+```
+
+### 4. AI-Powered Content Generation
+
+**Script**: `scripts/generate-reviews.js`
+
+Features:
+- Generates natural, human-like product reviews using OpenAI
+- Creates blog intros and conclusions
+- Template-based fallback when API unavailable
+- Customizable tone and style
+
+Requirements:
+- Set `OPENAI_API_KEY` environment variable for AI features
+- Falls back to templates if key not provided
+
+Usage:
+```bash
+export OPENAI_API_KEY="your-openai-api-key"
+node scripts/generate-reviews.js "bluetooth headphones"
+```
+
+### 5. Auto-Fix Validation
+
+**Script**: `scripts/auto-fix-validation.js`
+
+Features:
+- Automatically fixes common validation errors
+- Blank brand → "Unknown" (prevents CI failures)
+- Missing descriptions → Generated from features
+- Missing prices → "Check Amazon" placeholder
+
+The auto-fix runs automatically in CI pipeline:
+- Pre-generation: Fixes existing data files
+- Post-generation: Fixes newly scraped data
+- Integrated into `site-generator.js`
+
+Usage:
+```bash
+node scripts/auto-fix-validation.js
+```
+
+### Integration in CI/CD
+
+All automation features are integrated into the GitHub Actions workflow (`.github/workflows/build-sites.yml`):
+
+1. Install Puppeteer dependencies
+2. Run auto-fix validation (pre-generation)
+3. Generate sites (with auto-fix for brands)
+4. Run auto-fix validation (post-generation)
+5. Validate and deploy
+
 ## 🚀 Quick Start
 
 ### Prerequisites
@@ -69,9 +174,14 @@ npm install
 ```bash
 export RAPIDAPI_KEY="your-rapidapi-key"
 export AMAZON_AFFILIATE_ID="scconnec0d-20"
+export OPENAI_API_KEY="your-openai-api-key"  # Optional: for AI content generation
 ```
 
-**Note**: The system uses the correct Amazon Real-Time API endpoint (`https://amazon-real-time-api.p.rapidapi.com/search`) with proper parameters (`q` for query and `domain` for Amazon domain). Mock data fallback has been removed - the generator will fail if API credentials are invalid or API returns an error.
+**Note**: 
+- The system uses Puppeteer as primary scraping method with RapidAPI fallback
+- RAPIDAPI_KEY is required for fallback functionality
+- OPENAI_API_KEY is optional (uses templates if not provided)
+- The generator includes auto-fix validation to prevent CI failures
 
 4. Run the generator:
 ```bash
