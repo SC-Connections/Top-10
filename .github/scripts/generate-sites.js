@@ -420,7 +420,13 @@ function renderTemplate(template, data) {
 
 // Main function to process all niches
 async function generateAllSites() {
-  const sitesDir = path.join(__dirname, '../..');
+  const sitesDir = path.join(__dirname, '../../sites');
+  
+  // Create sites directory if it doesn't exist
+  if (!fs.existsSync(sitesDir)) {
+    fs.mkdirSync(sitesDir, { recursive: true });
+    console.log(`📁 Created sites directory: ${sitesDir}\n`);
+  }
   
   const niches = readNiches();
   console.log(`Processing ${niches.length} niches...`);
@@ -516,7 +522,7 @@ This site contains Amazon affiliate links. We may earn a commission from qualify
         keyword: niche.keyword,
         year: niche.year,
         slug: slug,
-        path: `${slug}/index.html`
+        path: `sites/${slug}/index.html`
       });
     } catch (error) {
       console.error(`❌ Failed to generate site for ${niche.keyword}: ${error.message}`);
@@ -555,7 +561,7 @@ This site contains Amazon affiliate links. We may earn a commission from qualify
     process.exit(1);
   }
   
-  // Create main index.html only if we have successful sites
+  // Create sites/index.html only if we have successful sites
   const indexHtml = `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -627,7 +633,7 @@ This site contains Amazon affiliate links. We may earn a commission from qualify
   <p class="subtitle">Automated niche-site generator for product reviews</p>
   <ul>
 ${siteLinks.map(site => `    <li>
-      <a href="${site.path}">Top 10 ${site.keyword} (${site.year})</a>
+      <a href="./${site.slug}/">Top 10 ${site.keyword} (${site.year})</a>
       <div class="year">Updated for ${site.year}</div>
     </li>`).join('\n')}
   </ul>
@@ -638,8 +644,53 @@ ${siteLinks.map(site => `    <li>
 </body>
 </html>`;
   
-  fs.writeFileSync(path.join(__dirname, '../../index.html'), indexHtml);
-  console.log('✓ Created main index.html');
+  fs.writeFileSync(path.join(sitesDir, 'index.html'), indexHtml);
+  console.log('✓ Created sites/index.html');
+  
+  // Create root redirect page
+  const rootRedirect = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Top 10 Product Reviews</title>
+  <meta http-equiv="refresh" content="0; url=./sites/">
+  <link rel="canonical" href="./sites/">
+  <style>
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+      background-color: #0d0f12;
+      color: #eaeef5;
+    }
+    .message {
+      text-align: center;
+      padding: 2rem;
+    }
+    .message h1 {
+      color: #5aa9ff;
+      margin-bottom: 1rem;
+    }
+    .message a {
+      color: #5aa9ff;
+      text-decoration: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="message">
+    <h1>Redirecting...</h1>
+    <p>If you are not redirected automatically, <a href="./sites/">click here</a>.</p>
+  </div>
+</body>
+</html>`;
+  
+  fs.writeFileSync(path.join(__dirname, '../../index.html'), rootRedirect);
+  console.log('✓ Created root index.html redirect');
   
   console.log('\n=== Site generation completed! ===');
   console.log(`Total successful sites: ${siteLinks.length}`);
