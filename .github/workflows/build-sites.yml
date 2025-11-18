@@ -28,33 +28,42 @@ jobs:
       - name: Install dependencies
         run: npm install
       
-      - name: Install Puppeteer dependencies
-        run: |
-          sudo apt-get update
+   - name: Install Puppeteer dependencies
+  run: |
+    sudo apt-get update
 
-          # Determine correct libasound package name for this runner
-          if apt-cache show libasound2 >/dev/null 2>&1; then
-            SOUND_PKG=libasound2
-          elif apt-cache show libasound2t64 >/dev/null 2>&1; then
-            SOUND_PKG=libasound2t64
-          else
-            echo "Neither libasound2 nor libasound2t64 is available in apt repositories on this runner."
-            exit 1
-          fi
+    # Determine correct libasound package name for this runner
+    if apt-cache show libasound2 >/dev/null 2>&1; then
+      SOUND_PKG=libasound2
+    elif apt-cache show libasound2t64 >/dev/null 2>&1; then
+      SOUND_PKG=libasound2t64
+    else
+      echo "No ALSA sound library found in apt repositories on this runner. Continuing without ALSA package."
+      SOUND_PKG=""
+    fi
 
-          echo "Installing Puppeteer dependencies; using $SOUND_PKG for ALSA"
-          sudo apt-get install -y \
-            libnss3 \
-            libatk-bridge2.0-0 \
-            libdrm2 \
-            libxkbcommon0 \
-            libgbm1 \
-            "$SOUND_PKG" \
-            libxrandr2 \
-            libxcomposite1 \
-            libxdamage1 \
-            libxfixes3 \
-            libcups2
+    echo "Installing Puppeteer dependencies; using ${SOUND_PKG:-<none>} for ALSA"
+
+    # Build base package list
+    PKGS=(
+      libnss3
+      libatk-bridge2.0-0
+      libdrm2
+      libxkbcommon0
+      libgbm1
+      libxrandr2
+      libxcomposite1
+      libxdamage1
+      libxfixes3
+      libcups2
+    )
+
+    # Add SOUND_PKG if set
+    if [ -n "$SOUND_PKG" ]; then
+      PKGS+=("$SOUND_PKG")
+    fi
+
+    sudo apt-get install -y "${PKGS[@]}"
       
       - name: Set timestamp
         run: echo "UPDATE_TIMESTAMP=$(date '+%B %d, %Y')" >> $GITHUB_ENV
