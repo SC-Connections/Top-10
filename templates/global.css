@@ -701,6 +701,130 @@ section h2 {
     }
 }
 
+/* Comparison Table Styles */
+.comparison-section {
+    padding: 3rem 0;
+    background-color: var(--background-alt);
+}
+
+.comparison-table-wrapper {
+    overflow-x: auto;
+    margin: 2rem 0;
+    box-shadow: var(--shadow-md);
+    border-radius: var(--border-radius);
+}
+
+.comparison-table {
+    width: 100%;
+    border-collapse: collapse;
+    background-color: var(--background);
+}
+
+.comparison-table thead {
+    background-color: var(--primary-color);
+    color: white;
+}
+
+.comparison-table th {
+    padding: 1rem;
+    text-align: left;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.comparison-table td {
+    padding: 1rem;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.comparison-table tbody tr:hover {
+    background-color: var(--background-alt);
+}
+
+.comparison-table .rank-col {
+    width: 60px;
+    text-align: center;
+    font-weight: 700;
+    color: var(--primary-color);
+}
+
+.comparison-table .product-col {
+    min-width: 200px;
+}
+
+.comparison-table .features-col {
+    min-width: 250px;
+}
+
+.comparison-table .rating-col {
+    min-width: 150px;
+}
+
+.comparison-table .price-col {
+    min-width: 100px;
+    font-weight: 600;
+    color: var(--success-color);
+}
+
+.comparison-table .link-col {
+    min-width: 180px;
+    text-align: center;
+}
+
+.table-product {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.table-product-img {
+    width: 50px;
+    height: 50px;
+    object-fit: contain;
+    border-radius: 4px;
+}
+
+.table-product-name {
+    font-weight: 500;
+}
+
+.btn-table-cta {
+    display: inline-block;
+    padding: 0.5rem 1rem;
+    background-color: var(--secondary-color);
+    color: white;
+    text-decoration: none;
+    border-radius: 4px;
+    font-weight: 500;
+    transition: background-color 0.2s;
+    white-space: nowrap;
+}
+
+.btn-table-cta:hover {
+    background-color: #d97706;
+}
+
+@media (max-width: 768px) {
+    .comparison-table {
+        font-size: 0.875rem;
+    }
+    
+    .comparison-table th,
+    .comparison-table td {
+        padding: 0.75rem 0.5rem;
+    }
+    
+    .table-product {
+        flex-direction: column;
+        text-align: center;
+    }
+    
+    .table-product-img {
+        width: 40px;
+        height: 40px;
+    }
+}
+
 /* Utility Classes */
 .text-center {
     text-align: center;
