@@ -213,12 +213,8 @@ async function generateSiteForNiche(niche) {
  */
 function generateEmptyResultsPage(siteDir, niche, slug, templates) {
     const templateData = templates.templateJSON;
-    // Use UPDATE_TIMESTAMP from environment if available, otherwise generate current date
-    const lastUpdated = process.env.UPDATE_TIMESTAMP || new Date().toLocaleDateString('en-US', { 
-        year: 'numeric', 
-        month: 'long', 
-        day: 'numeric' 
-    });
+    // Use ISO date format for consistency
+    const lastUpdated = process.env.UPDATE_TIMESTAMP || new Date().toISOString().split('T')[0];
     
     let html = templates.mainTemplate;
     
@@ -773,7 +769,22 @@ function generateSEOContent(niche, products) {
  * @returns {string} Products HTML
  */
 function generateProductsHTML(products, template, niche) {
-    return products.map((product, index) => {
+    // Tier 1.1: Deduplicate products by ASIN before rendering
+    const seenAsins = new Set();
+    const deduplicatedProducts = products.filter(product => {
+        if (seenAsins.has(product.asin)) {
+            console.log(`  ⚠️  Skipping duplicate ASIN: ${product.asin}`);
+            return false;
+        }
+        seenAsins.add(product.asin);
+        return true;
+    });
+    
+    if (deduplicatedProducts.length < products.length) {
+        console.log(`✓ Tier 1.1: Deduplicated ${products.length - deduplicatedProducts.length} products`);
+    }
+    
+    return deduplicatedProducts.map((product, index) => {
         const rank = index + 1;
         const badge = rank === 1 ? '<span class="badge-best">Best Overall</span>' : 
                      rank === 2 ? '<span class="badge-value">Best Value</span>' : '';
@@ -846,12 +857,8 @@ function generateAffiliateLink(product) {
  */
 function generateIndexHTML(niche, slug, templates, seoContent, productsHTML, products) {
     const templateData = templates.templateJSON;
-    // Use UPDATE_TIMESTAMP from environment if available, otherwise generate current date
-    const lastUpdated = process.env.UPDATE_TIMESTAMP || new Date().toLocaleDateString('en-US', { 
-        year: 'numeric', 
-        month: 'long', 
-        day: 'numeric' 
-    });
+    // Tier 2.6: Use ISO date format for last-updated timestamp
+    const lastUpdated = process.env.UPDATE_TIMESTAMP || new Date().toISOString().split('T')[0];
     
     // Generate structured data
     const structuredData = generateStructuredData(niche, slug, products);
@@ -1106,40 +1113,120 @@ function extractShortProductName(fullTitle) {
  * @returns {string} Comparison table HTML
  */
 function generateComparisonTable(products) {
+    // Tier 1.5: Generate specs comparison table with Battery, Weight, Driver size
+    // Only include columns with at least one non-empty value
+    
+    // Extract specs from product descriptions and features
+    const productSpecs = products.map(product => extractProductSpecs(product));
+    
+    // Determine which spec columns have data
+    const hasWeight = productSpecs.some(s => s.weight);
+    const hasBattery = productSpecs.some(s => s.battery);
+    const hasDriver = productSpecs.some(s => s.driver);
+    
     const tableRows = products.map((product, index) => {
         const rank = index + 1;
         const shortName = extractShortProductName(product.title);
         const cardId = `product-${rank}`;
+        const specs = productSpecs[index];
         
-        return `                <tr>
+        let row = `                <tr>
                     <td class="rank-cell">${rank}</td>
                     <td class="product-name-cell">
                         <a href="#${cardId}" class="product-link">${escapeHtml(shortName)}</a>
                     </td>
                     <td class="rating-cell">${product.rating} ⭐</td>
                     <td class="reviews-cell">${product.reviews}</td>
-                    <td class="price-cell">${product.price}</td>
-                    <td class="action-cell">
+                    <td class="price-cell">${product.price}</td>`;
+        
+        if (hasBattery) {
+            row += `\n                    <td class="battery-cell">${specs.battery || '-'}</td>`;
+        }
+        if (hasWeight) {
+            row += `\n                    <td class="weight-cell">${specs.weight || '-'}</td>`;
+        }
+        if (hasDriver) {
+            row += `\n                    <td class="driver-cell">${specs.driver || '-'}</td>`;
+        }
+        
+        row += `\n                    <td class="action-cell">
                         <a href="blog/${product.asin}.html" class="btn-table">Review</a>
                     </td>
                 </tr>`;
+        
+        return row;
     }).join('\n');
     
-    return `                <table class="comparison-table">
-                    <thead>
-                        <tr>
+    // Build header with dynamic columns
+    let headerRow = `                        <tr>
                             <th>Rank</th>
                             <th>Product</th>
                             <th>Rating</th>
                             <th>Reviews</th>
-                            <th>Price</th>
-                            <th>Action</th>
-                        </tr>
+                            <th>Price</th>`;
+    
+    if (hasBattery) headerRow += `\n                            <th>Battery</th>`;
+    if (hasWeight) headerRow += `\n                            <th>Weight</th>`;
+    if (hasDriver) headerRow += `\n                            <th>Driver</th>`;
+    
+    headerRow += `\n                            <th>Action</th>
+                        </tr>`;
+    
+    return `                <table class="comparison-table">
+                    <thead>
+${headerRow}
                     </thead>
                     <tbody>
 ${tableRows}
                     </tbody>
                 </table>`;
+}
+
+/**
+ * Extract product specifications from description and features
+ * @param {object} product - Product object
+ * @returns {object} Specs object with battery, weight, driver
+ */
+function extractProductSpecs(product) {
+    const text = (product.description + ' ' + product.features.join(' ')).toLowerCase();
+    
+    const specs = {
+        battery: null,
+        weight: null,
+        driver: null
+    };
+    
+    // Extract battery life (hours)
+    const batteryMatch = text.match(/(\d+)\s*(h|hr|hrs|hour|hours)\s*(battery|playtime|play time)/i) ||
+                        text.match(/battery[:\s]+(\d+)\s*(h|hr|hrs|hour|hours)/i) ||
+                        text.match(/up to\s+(\d+)\s*(h|hr|hrs|hour|hours)/i);
+    if (batteryMatch) {
+        specs.battery = `${batteryMatch[1]}h`;
+    }
+    
+    // Extract weight (oz, g, lbs)
+    const weightMatch = text.match(/(\d+\.?\d*)\s*(oz|ounce|ounces|g|gram|grams|lb|lbs|pound|pounds)/i) ||
+                       text.match(/weight[:\s]+(\d+\.?\d*)\s*(oz|ounce|ounces|g|gram|grams|lb|lbs|pound|pounds)/i);
+    if (weightMatch) {
+        const value = weightMatch[1];
+        const unit = weightMatch[2].toLowerCase();
+        if (unit.startsWith('oz') || unit.startsWith('ounce')) {
+            specs.weight = `${value}oz`;
+        } else if (unit.startsWith('g') || unit.startsWith('gram')) {
+            specs.weight = `${value}g`;
+        } else if (unit.startsWith('lb') || unit.startsWith('pound')) {
+            specs.weight = `${value}lb`;
+        }
+    }
+    
+    // Extract driver size (mm)
+    const driverMatch = text.match(/(\d+)\s*mm\s*(driver|drivers)/i) ||
+                       text.match(/driver[s]?[:\s]+(\d+)\s*mm/i);
+    if (driverMatch) {
+        specs.driver = `${driverMatch[1]}mm`;
+    }
+    
+    return specs;
 }
 
 /**
