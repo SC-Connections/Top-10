@@ -306,41 +306,6 @@ section h2 {
     font-weight: 700;
 }
 
-/* Pros and Cons */
-.product-pros-cons {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 1rem;
-}
-
-.pros h4,
-.cons h4 {
-    font-size: 1rem;
-    font-weight: 600;
-    margin-bottom: 0.5rem;
-}
-
-.pros h4 {
-    color: var(--success-color);
-}
-
-.cons h4 {
-    color: var(--error-color);
-}
-
-.pros ul,
-.cons ul {
-    list-style: none;
-    padding-left: 0;
-}
-
-.pros li,
-.cons li {
-    padding: 0.25rem 0;
-    font-size: 0.875rem;
-    color: var(--text-secondary);
-}
-
 /* Product Actions */
 .product-actions {
     display: flex;
@@ -656,10 +621,6 @@ section h2 {
 
     .product-title {
         font-size: 1.25rem;
-    }
-
-    .product-pros-cons {
-        grid-template-columns: 1fr;
     }
 
     .product-actions {
