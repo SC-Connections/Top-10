@@ -28,18 +28,45 @@ jobs:
       - name: Install dependencies
         run: npm install
       
+      - name: Install Puppeteer dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libnss3 \
+            libatk-bridge2.0-0 \
+            libdrm2 \
+            libxkbcommon0 \
+            libgbm1 \
+            libasound2 \
+            libxrandr2 \
+            libxcomposite1 \
+            libxdamage1 \
+            libxfixes3 \
+            libcups2
+      
       - name: Set timestamp
         run: echo "UPDATE_TIMESTAMP=$(date '+%B %d, %Y')" >> $GITHUB_ENV
+      
+      - name: Auto-fix validation errors (pre-generation)
+        run: |
+          echo "🔧 Running auto-fix validation..."
+          node scripts/auto-fix-validation.js || echo "No existing data to fix"
       
       - name: Generate niche sites
         env:
           RAPIDAPI_KEY: ${{ secrets.RAPIDAPI_KEY }}
           AMAZON_AFFILIATE_ID: ${{ secrets.AMAZON_AFFILIATE_ID }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           UPDATE_TIMESTAMP: ${{ env.UPDATE_TIMESTAMP }}
         run: |
           echo "🚀 Generating niche sites..."
           node site-generator.js
           echo "✅ All sites generated successfully!"
+      
+      - name: Auto-fix validation errors (post-generation)
+        run: |
+          echo "🔧 Running post-generation auto-fix..."
+          node scripts/auto-fix-validation.js
       
       - name: Setup Python
         uses: actions/setup-python@v4

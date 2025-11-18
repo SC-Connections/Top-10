@@ -9,7 +9,8 @@
     "validate": "python3 scripts/validate.py",
     "validate-titles": "node scripts/validate-titles.js",
     "test": "npm run generate && npm run validate && npm run validate-titles",
-    "maintenance": "node auto-maintenance.js"
+    "maintenance": "node auto-maintenance.js",
+    "postinstall": "echo 'Puppeteer Chrome download skipped (using system Chrome in CI)'"
   },
   "keywords": [
     "seo",
@@ -25,5 +26,8 @@
     "dotenv": "^16.0.0",
     "puppeteer": "^21.0.0",
     "openai": "^4.20.0"
+  },
+  "puppeteer": {
+    "skipDownload": "true"
   }
 }
