@@ -1,0 +1,118 @@
+name: Auto Site Maintenance
+
+on:
+  workflow_dispatch:
+  schedule:
+    # Run daily at 6 AM UTC
+    - cron: '0 6 * * *'
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  auto-maintenance:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          # Start from the default branch
+          ref: ${{ github.event.repository.default_branch || 'copilot/auto-fix-generate-html-issues' }}
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+      
+      - name: Install dependencies
+        run: npm install
+      
+      - name: Install codespell
+        run: |
+          pip install codespell
+      
+      - name: Create maintenance branch
+        id: branch
+        run: |
+          DATE=$(date '+%Y-%m-%d')
+          BRANCH_NAME="copilot-agent/${DATE}"
+          echo "branch_name=${BRANCH_NAME}" >> $GITHUB_OUTPUT
+          git checkout -b "${BRANCH_NAME}"
+      
+      - name: Run auto-maintenance agent
+        env:
+          AMAZON_AFFILIATE_ID: ${{ secrets.AMAZON_AFFILIATE_ID }}
+        run: |
+          echo "🤖 Running auto-site-maintenance agent..."
+          node auto-maintenance.js
+          echo "✅ Maintenance complete!"
+      
+      - name: Commit changes - Tier 1 fixes
+        run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+          git add .
+          git commit -m "fix: apply Tier 1 generator-level fixes
+
+- Deduplicate products by ASIN
+- Fix spelling errors with codespell
+- Replace star characters with SVG icons
+- Ensure affiliate tags on all Amazon links
+- Update comparison tables with specs" || echo "No Tier 1 changes"
+      
+      - name: Commit changes - Tier 2 freshness
+        run: |
+          git add .
+          git commit -m "feat: apply Tier 2 freshness signals
+
+- Update last-updated timestamp to current date (ISO format)
+- Apply price overrides from data/prices.json
+- Add trending badges for review count increases >5%" || echo "No Tier 2 changes"
+      
+      - name: Commit changes - Tier 3 SEO
+        run: |
+          git add .
+          git commit -m "feat: apply Tier 3 SEO & compliance fixes
+
+- Ensure meta tags are present (title, description)
+- Add affiliate disclosure footer
+- Run accessibility checks with axe-core" || echo "No Tier 3 changes"
+      
+      - name: Push branch
+        run: |
+          git push -u origin "${{ steps.branch.outputs.branch_name }}"
+      
+      - name: Create Pull Request
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          # Read PR body from file if it exists
+          if [ -f "PR_BODY.md" ]; then
+            PR_BODY=$(cat PR_BODY.md)
+          else
+            PR_BODY="Auto-generated maintenance updates for $(date '+%Y-%m-%d')"
+          fi
+          
+          # Create PR
+          gh pr create \
+            --title "chore: auto-dedupe, spell-fix, schema, price-update (copilot-agent)" \
+            --body "$PR_BODY" \
+            --base "${{ github.event.repository.default_branch || 'copilot/auto-fix-generate-html-issues' }}" \
+            --head "${{ steps.branch.outputs.branch_name }}" \
+            || echo "PR may already exist or no changes were made"
+      
+      - name: Summary
+        run: |
+          echo "## Auto-Maintenance Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "✅ Maintenance agent completed successfully" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Branch**: \`${{ steps.branch.outputs.branch_name }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          if [ -f "PR_BODY.md" ]; then
+            echo "### Details" >> $GITHUB_STEP_SUMMARY
+            cat PR_BODY.md >> $GITHUB_STEP_SUMMARY
+          fi
