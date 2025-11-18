@@ -199,16 +199,6 @@ section h2 {
     font-size: 0.875rem;
 }
 
-/* Rule 5: New Entry Badge */
-.badge-new {
-    background: #8b5cf6;
-    color: white;
-    padding: 0.25rem 0.75rem;
-    border-radius: 20px;
-    font-weight: 600;
-    font-size: 0.875rem;
-}
-
 /* Product Image */
 .product-image {
     text-align: center;
@@ -565,19 +555,6 @@ section h2 {
     margin-bottom: 0.5rem;
 }
 
-/* Rule 8: Affiliate disclosure styling */
-.affiliate-disclosure {
-    font-size: 0.75rem;
-    color: rgba(255, 255, 255, 0.7);
-    margin-top: 1rem;
-    padding: 1rem;
-    background-color: rgba(0, 0, 0, 0.2);
-    border-radius: var(--border-radius);
-    max-width: 800px;
-    margin-left: auto;
-    margin-right: auto;
-}
-
 .disclaimer {
     font-size: 0.875rem;
     opacity: 0.8;
@@ -752,18 +729,6 @@ section h2 {
     color: var(--text-primary);
 }
 
-/* Rule 7: Table wrapper with overflow and tabindex for accessibility */
-.table-wrapper {
-    overflow-x: auto;
-    margin-top: 2rem;
-    border-radius: var(--border-radius);
-}
-
-.table-wrapper:focus {
-    outline: 2px solid var(--primary-color);
-    outline-offset: 2px;
-}
-
 .table-responsive {
     overflow-x: auto;
     margin-top: 2rem;
@@ -877,57 +842,5 @@ section h2 {
     
     .product-name-cell {
         min-width: 150px;
-    }
-}
-
-/* Rule 7: Mobile table card layout for viewport ≤ 600px */
-@media (max-width: 600px) {
-    .comparison-table thead {
-        display: none;
-    }
-    
-    .comparison-table tbody tr {
-        display: block;
-        margin-bottom: 1rem;
-        border: 1px solid var(--border-color);
-        border-radius: var(--border-radius);
-        background-color: var(--background);
-        box-shadow: var(--shadow-sm);
-    }
-    
-    .comparison-table tbody tr.table-mobile-card {
-        display: block;
-    }
-    
-    .comparison-table td {
-        display: block;
-        text-align: right;
-        padding: 0.75rem;
-        border-bottom: 1px solid var(--border-color);
-        position: relative;
-        padding-left: 50%;
-    }
-    
-    .comparison-table td:last-child {
-        border-bottom: none;
-    }
-    
-    .comparison-table td::before {
-        content: attr(data-label);
-        position: absolute;
-        left: 0.75rem;
-        font-weight: 600;
-        text-align: left;
-        color: var(--text-secondary);
-        text-transform: uppercase;
-        font-size: 0.75rem;
-    }
-    
-    .rank-cell,
-    .rating-cell,
-    .reviews-cell,
-    .price-cell,
-    .action-cell {
-        text-align: right;
     }
 }
