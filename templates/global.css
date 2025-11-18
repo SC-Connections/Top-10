@@ -209,6 +209,26 @@ section h2 {
     font-size: 0.875rem;
 }
 
+/* Premium Pick Badge */
+.badge-premium {
+    background: #d4af37;
+    color: #1a1a1a;
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    font-weight: 600;
+    font-size: 0.875rem;
+}
+
+/* Mid-Range Pick Badge */
+.badge-midrange {
+    background: #3b82f6;
+    color: white;
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    font-weight: 600;
+    font-size: 0.875rem;
+}
+
 /* Product Image */
 .product-image {
     text-align: center;
