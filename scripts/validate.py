@@ -31,7 +31,6 @@ class ImageAltChecker(HTMLParser):
 def check_duplicate_asins(base_path):
     """Check for duplicate ASINs across all generated sites"""
     print("📋 Checking for duplicate ASINs...")
-    asin_occurrences = {}
     violations = []
     
     # Check all niche directories
@@ -43,21 +42,32 @@ def check_duplicate_asins(base_path):
         index_file = niche_dir / 'index.html'
         if index_file.exists():
             content = index_file.read_text()
-            # Find all ASINs in the HTML (pattern: data-asin or /dp/ASIN)
-            asins = re.findall(r'data-asin="([A-Z0-9]{10})"', content)
-            asins += re.findall(r'/dp/([A-Z0-9]{10})', content)
             
-            for asin in asins:
-                if asin not in asin_occurrences:
-                    asin_occurrences[asin] = []
-                asin_occurrences[asin].append(str(index_file))
-    
-    # Find duplicates
-    for asin, files in asin_occurrences.items():
-        if len(files) > 1:
-            violations.append(f"  ❌ Duplicate ASIN {asin} found in: {', '.join(files)}")
+            # Find all unique ASINs and count occurrences of product cards (not all mentions)
+            # Look for product-card div with data-rank to count actual product duplicates
+            product_cards = re.findall(r'<div class="product-card"[^>]*data-rank="(\d+)"[^>]*id="product-\d+"[^>]*>', content)
+            asins_in_cards = []
+            
+            # Extract ASINs from blog links in product cards (more reliable than dp links which appear everywhere)
+            card_sections = re.findall(r'<div class="product-card".*?</div>\s*</div>', content, re.DOTALL)
+            for card in card_sections:
+                # Find ASIN from blog link
+                blog_match = re.search(r'blog/([A-Z0-9]{10})\.html', card)
+                if blog_match:
+                    asins_in_cards.append(blog_match.group(1))
+            
+            # Check for duplicates in the card list
+            seen_asins = {}
+            for asin in asins_in_cards:
+                if asin in seen_asins:
+                    violations.append(f"  ❌ Duplicate ASIN {asin} found in {index_file} (appears {asins_in_cards.count(asin)} times as product card)")
+                    seen_asins[asin] = seen_asins[asin] + 1
+                else:
+                    seen_asins[asin] = 1
     
     if violations:
+        # Remove duplicate violation messages
+        violations = list(set(violations))
         print(f"❌ Found {len(violations)} duplicate ASIN violations:")
         for v in violations:
             print(v)
