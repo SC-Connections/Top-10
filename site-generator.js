@@ -31,9 +31,6 @@ const CONFIG = {
 // Rule 2: Skipped ASINs log
 const SKIPPED_ASINS = [];
 
-// Skipped products due to missing brand
-const SKIPPED_PRODUCTS = [];
-
 /**
  * Rule 2: Log skipped ASIN with reason
  * @param {string} asin - Product ASIN
@@ -48,14 +45,6 @@ function logSkippedAsin(asin, reason) {
 }
 
 /**
- * Log skipped product with missing brand
- * @param {string} asin - Product ASIN
- */
-function logSkippedProduct(asin) {
-    SKIPPED_PRODUCTS.push(asin || "UNKNOWN-ASIN");
-}
-
-/**
  * Rule 2: Save skipped ASINs log to file
  */
 function saveSkippedAsinsLog() {
@@ -66,21 +55,6 @@ function saveSkippedAsinsLog() {
         }
         fs.writeFileSync(logFile, JSON.stringify(SKIPPED_ASINS, null, 2));
         console.log(`\n📝 Saved ${SKIPPED_ASINS.length} skipped ASINs to: ${logFile}`);
-    }
-}
-
-/**
- * Save skipped products to log file
- */
-function saveSkippedProductsLog() {
-    if (SKIPPED_PRODUCTS.length > 0) {
-        const logFile = path.join(CONFIG.LOGS_DIR, 'skipped-products.json');
-        if (!fs.existsSync(CONFIG.LOGS_DIR)) {
-            fs.mkdirSync(CONFIG.LOGS_DIR, { recursive: true });
-        }
-        fs.writeFileSync(logFile, JSON.stringify(SKIPPED_PRODUCTS, null, 2));
-        console.log(`\n⚠️ ${SKIPPED_PRODUCTS.length} product(s) were skipped due to missing brand — this is allowed.`);
-        console.log(`📝 Saved skipped products to: ${logFile}`);
     }
 }
 
@@ -143,20 +117,6 @@ function extractBrandFromTitle(title) {
         return words[0];
     }
     return null;
-}
-
-/**
- * Get brand with fallback to manufacturer or seller
- * @param {object} product - Product object from API
- * @returns {string|null} Brand name or null
- */
-function getBrand(product) {
-    return (
-        product.brand?.trim() ||
-        product.manufacturer?.trim() ||
-        product.seller?.trim() ||
-        null
-    );
 }
 
 /**
@@ -253,9 +213,6 @@ async function main() {
     
     // Rule 2: Save skipped ASINs log
     saveSkippedAsinsLog();
-    
-    // Save skipped products log
-    saveSkippedProductsLog();
     
     // Only fail if there's a fatal GitHub error, not if all niches failed
     // Individual niche failures are acceptable - they get empty results pages
@@ -518,7 +475,7 @@ async function fetchProducts(niche) {
         }
         
         // Process and validate products, limit to top 10
-        let validProducts = [];
+        const validProducts = [];
         let skippedCount = 0;
         
         for (let i = 0; i < Math.min(productList.length, 20); i++) {  // Check more products to get 10 valid ones
@@ -530,7 +487,7 @@ async function fetchProducts(niche) {
             const asin = product.asin || product.ASIN || null;
             
             if (!asin) {
-                console.warn(`⚠️  Skipping product ${i + 1}: Missing required API field: 'asin' or 'ASIN'`);
+                console.warn(`⚠️  Skipping product ${i + 1}: missing ASIN`);
                 skippedCount++;
                 continue;
             }
@@ -551,7 +508,7 @@ async function fetchProducts(niche) {
                          product.title || product.product_title || product.name || null;
             
             if (!title) {
-                console.warn(`⚠️  Skipping product ${i + 1}: Missing required API field: 'title', 'product_title', or 'name' for ASIN ${asin}`);
+                console.warn(`⚠️  Skipping product ${i + 1}: missing title for ASIN ${asin}`);
                 skippedCount++;
                 continue;
             }
@@ -581,7 +538,7 @@ async function fetchProducts(niche) {
             }
             
             if (!image) {
-                console.warn(`⚠️  Skipping product ${i + 1} "${title}": Missing required API field: valid 'image_url', 'image', 'product_photo', or 'main_image' for ASIN ${asin}`);
+                console.warn(`⚠️  Skipping product ${i + 1} "${title}": missing image for ASIN ${asin}`);
                 skippedCount++;
                 continue;
             }
@@ -610,7 +567,7 @@ async function fetchProducts(niche) {
             }
             
             if (!price) {
-                console.warn(`⚠️  Skipping product ${i + 1} "${title}": Missing required API field: 'price' or 'product_price' for ASIN ${asin}`);
+                console.warn(`⚠️  Skipping product ${i + 1} "${title}": missing price for ASIN ${asin}`);
                 skippedCount++;
                 continue;
             }
@@ -637,7 +594,7 @@ async function fetchProducts(niche) {
             }
             
             if (!description) {
-                console.warn(`⚠️  Skipping product ${i + 1} "${title}": Missing required API field: 'description', 'product_description', 'short_description', or 'features' for ASIN ${asin}`);
+                console.warn(`⚠️  Skipping product ${i + 1} "${title}": missing description for ASIN ${asin}`);
                 skippedCount++;
                 continue;
             }
@@ -723,18 +680,24 @@ async function fetchProducts(niche) {
                 continue;
             }
             
-            // Rule 2: Check for brand from API with fallback to manufacturer/seller
-            let brand = getBrand(details) || getBrand(product);
+            // Rule 2: Check for brand from API (not just title)
+            let brand = details.brand || product.brand || null;
             
-            // Auto-fix blank brand instead of failing CI
-            if (!brand || brand.trim() === "") {
-                console.warn(`⚠️ Auto-fixing blank brand for ASIN ${asin}`);
-                brand = "Unknown"; // TODO: optionally use AI guess later
+            // If brand is explicitly null or empty string, skip the product
+            if (brand === null || brand === '') {
+                console.warn(`⚠️  Skipping product ${i + 1} "${title}": brand is null or empty (generic product)`);
+                logSkippedAsin(asin, 'Brand is null or empty');
+                skippedCount++;
+                continue;
             }
             
-            // Note: We skip the hasBrandName check since we're now allowing "Unknown" brand
-            // Previously this would skip products without recognizable brand names
-
+            // Also check if product has a recognizable brand name in title (generic products)
+            if (!hasBrandName(title)) {
+                console.warn(`⚠️  Skipping product ${i + 1} "${title}": no recognizable brand name (generic product)`);
+                logSkippedAsin(asin, 'No recognizable brand name in title');
+                skippedCount++;
+                continue;
+            }
             
             // Feature bullets - try to extract, generate from description as fallback
             let featureBullets = details.features || details.feature_bullets || 
@@ -787,22 +750,11 @@ async function fetchProducts(niche) {
             // Rule 4: Extract product specs (battery, weight, driver) for table-card sync
             const specs = extractProductSpecs({ description, features });
             
-            // TITLE CLEANUP: Clean product title - Brand + Model only (max 6 words)
-            const cleanedTitle = cleanProductTitle(title, brand);
-            
-            if (!cleanedTitle) {
-                console.warn(`⚠️  Skipping product ${i + 1} "${title}": title too generic or cleanup failed`);
-                logSkippedAsin(asin, 'Title too generic or cleanup failed');
-                skippedCount++;
-                continue;
-            }
-            
-            console.log(`  ✅ Product validated: "${title}" → "${cleanedTitle}"`);
+            console.log(`  ✅ Product validated: "${title}"`);
             
             validProducts.push({
                 asin: asin,
-                title: cleanedTitle,  // Use cleaned title
-                originalTitle: title,  // Keep original for reference
+                title: title,
                 description: description,
                 rating: rating,
                 reviews: reviews,
@@ -839,33 +791,6 @@ async function fetchProducts(niche) {
             console.warn('⚠️  WARNING: No valid products after validation');
             console.warn('⚠️  Will generate empty-results page for this niche');
             return []; // Return empty array instead of throwing error
-        }
-        
-        // PREMIUM BRAND PRIORITIZATION: Sort products with premium brands first
-        console.log('\n📊 Prioritizing premium brands...');
-        validProducts = prioritizePremiumBrands(validProducts);
-        
-        // Check if we have premium brands in results
-        const hasPremiumBrands = validProducts.some(p => isPremiumBrand(p.brand));
-        if (!hasPremiumBrands) {
-            console.log('⚠️  No premium brands (Sony, Apple, Beats, Bose, Sennheiser) found in results');
-            console.log('   Note will be displayed: "No high-end models detected this week – results based on best sellers only."');
-        } else {
-            const premiumCount = validProducts.filter(p => isPremiumBrand(p.brand)).length;
-            console.log(`✓ Found ${premiumCount} premium brand product(s) in results`);
-        }
-        
-        // Check product diversity (premium, mid-range, budget balance)
-        const diversity = checkProductDiversity(validProducts.slice(0, 10));
-        console.log('\n📊 Product diversity check:');
-        console.log(`   Premium ($200+): ${diversity.premiumCount}`);
-        console.log(`   Mid-Range ($80-$200): ${diversity.midRangeCount}`);
-        console.log(`   Budget (<$80): ${diversity.budgetCount}`);
-        
-        if (!diversity.hasPremium || !diversity.hasMidRange) {
-            console.warn('⚠️  WARNING: Missing diversity - need at least 1 premium and 1 mid-range product');
-        } else {
-            console.log('✓ Product diversity requirements met');
         }
         
         return validProducts;
@@ -1015,19 +940,8 @@ function generateProductsHTML(products, template, niche) {
             badge += '<span class="badge-new">New entry</span>';
         }
         
-        // PRICE CATEGORY BADGE: Add Premium/Mid-Range/Budget badge
-        const priceCategory = getPriceCategory(product.price);
-        if (priceCategory === 'premium') {
-            badge += badge ? ' ' : '';
-            badge += '<span class="badge-premium">Premium Pick</span>';
-        } else if (priceCategory === 'mid-range') {
-            badge += badge ? ' ' : '';
-            badge += '<span class="badge-midrange">Mid-Range Pick</span>';
-        }
-        // Budget picks are automatically considered, no explicit badge needed
-        
-        // Product title is already cleaned, use it directly
-        const shortName = product.title;  // Already cleaned during validation
+        // Extract short product name for display
+        const shortName = extractShortProductName(product.title);
         
         // Rule 6: Proper alt text with Brand, Model, Color
         const altText = `${product.brand || ''} ${shortName}`.trim();
@@ -1114,12 +1028,6 @@ function generateIndexHTML(niche, slug, templates, seoContent, productsHTML, pro
     // Generate comparison table
     const comparisonTable = generateComparisonTable(products);
     
-    // Check if we have premium brands and generate note if not
-    const hasPremiumBrands = products.some(p => isPremiumBrand(p.brand));
-    const premiumNote = !hasPremiumBrands 
-        ? '<div class="premium-note" style="background: #fef3c7; padding: 1rem; border-radius: 8px; margin: 1rem 0; text-align: center; color: #92400e;">ℹ️ No high-end models detected this week – results based on best sellers only.</div>'
-        : '';
-    
     let html = templates.mainTemplate;
     
     // Replace all placeholders
@@ -1129,7 +1037,7 @@ function generateIndexHTML(niche, slug, templates, seoContent, productsHTML, pro
     html = html.replace(/{{NICHE}}/g, niche);
     html = html.replace(/{{HERO_TITLE}}/g, templateData.sections.hero_title.replace(/{{NICHE}}/g, niche));
     html = html.replace(/{{INTRO_TITLE}}/g, templateData.sections.intro_title.replace(/{{NICHE}}/g, niche));
-    html = html.replace(/{{INTRO_PARAGRAPH}}/g, premiumNote + seoContent.intro);
+    html = html.replace(/{{INTRO_PARAGRAPH}}/g, seoContent.intro);
     html = html.replace(/{{COMPARISON_TABLE}}/g, comparisonTable);
     html = html.replace(/{{PRODUCTS_SECTION_TITLE}}/g, templateData.sections.products_section_title.replace(/{{NICHE}}/g, niche));
     html = html.replace(/{{PRODUCTS_LIST}}/g, productsHTML);
@@ -1208,8 +1116,8 @@ function generateBlogHTML(product, niche, rank, templates) {
         day: 'numeric' 
     });
     
-    // Use cleaned product title directly
-    const shortName = product.title;  // Already cleaned during validation
+    // Extract short product name
+    const shortName = extractShortProductName(product.title);
     
     // Generate product schema
     const productSchema = {
@@ -1375,217 +1283,6 @@ function extractShortProductName(fullTitle) {
 }
 
 /**
- * Clean product title - Only Brand + Product name (NO specs, NO features)
- * Remove words: wireless, bluetooth, ANC, over-ear, earbuds, headphones, 2025, version, etc.
- * Max 6 words. Example: "SONY WH-1000XM5 Wireless Over-Ear..." → "Sony WH-1000XM5"
- * @param {string} title - Original product title
- * @param {string} brand - Product brand
- * @returns {string|null} Cleaned title or null if too generic
- */
-function cleanProductTitle(title, brand) {
-    if (!title || !brand) {
-        return null;
-    }
-    
-    // List of words/patterns to remove (specs, features, descriptive terms)
-    const wordsToRemove = [
-        'wireless', 'bluetooth', 'anc', 'over-ear', 'over ear', 'on-ear', 'on ear',
-        'in-ear', 'in ear', 'earbuds', 'headphones', 'headphone', 'earphones', 'earphone',
-        '2025', '2024', '2023', 'version', 'noise cancelling', 'noise-cancelling', 'cancelling', 'noise',
-        'active noise', 'true wireless', 'tws', 'with microphone', 'with mic', 'microphone',
-        'foldable', 'portable', 'lightweight', 'comfortable', 'stereo', 'hifi',
-        'hi-fi', 'bass', 'sound', 'audio', 'music', 'gaming', 'sports', 'running',
-        'workout', 'gym', 'travel', 'commute', 'office', 'home', 'kids', 'children',
-        'waterproof', 'water-proof', 'water resistant', 'sweatproof', 'ipx',
-        'charging case', 'charging', 'battery', 'playtime', 'hours', 'hr', 'h',
-        'built-in', 'built in', 'compatible', 'android', 'ios', 'iphone', 'samsung',
-        'connectivity', 'connection', 'pairing', 'dual', 'triple', 'quad',
-        'featuring', 'includes', 'included', 'generation'
-    ];
-    
-    // Split title into main part (before any dash/separator)
-    let cleanTitle = title.trim();
-    
-    // Find first major separator
-    const separators = [' - ', ' – ', ' | ', ' with ', ' featuring ', ' for '];
-    for (const sep of separators) {
-        const idx = cleanTitle.indexOf(sep);
-        if (idx > 0) {
-            cleanTitle = cleanTitle.substring(0, idx);
-            break;
-        }
-    }
-    
-    // Remove parenthetical content
-    cleanTitle = cleanTitle.replace(/\([^)]*\)/g, '');
-    
-    // Split into words
-    let words = cleanTitle.split(/\s+/).filter(w => w.length > 0);
-    
-    // Remove words that match the removal list (case-insensitive)
-    words = words.filter(word => {
-        const lowerWord = word.toLowerCase().replace(/[^a-z0-9]/g, '');
-        
-        // Skip very short words (likely numbers or model codes)
-        if (lowerWord.length <= 2 && /[0-9]/.test(lowerWord)) {
-            return true;
-        }
-        
-        // Check if word should be removed
-        return !wordsToRemove.some(removeWord => {
-            const lowerRemove = removeWord.toLowerCase().replace(/[^a-z0-9]/g, '');
-            return lowerWord === lowerRemove;
-        });
-    });
-    
-    // Ensure brand is at the beginning (normalize case)
-    const brandLower = brand.toLowerCase();
-    const firstWordLower = words[0] ? words[0].toLowerCase() : '';
-    
-    if (firstWordLower === brandLower || firstWordLower === brandLower.toUpperCase()) {
-        // First word is the brand, just normalize it
-        words[0] = brand;
-    } else if (!firstWordLower.includes(brandLower) && !brandLower.includes(firstWordLower)) {
-        // Brand not present, add it
-        words.unshift(brand);
-    } else {
-        // Brand is present but may need normalization
-        words[0] = brand;
-    }
-    
-    // Limit to 6 words maximum
-    words = words.slice(0, 6);
-    
-    // Rejoin
-    cleanTitle = words.join(' ').trim();
-    
-    // Validation: Must have at least brand + one more word (the model)
-    if (words.length < 2) {
-        return null;
-    }
-    
-    // Check if title is too generic
-    if (isGenericTitle(cleanTitle)) {
-        return null;
-    }
-    
-    return cleanTitle;
-}
-
-/**
- * Check if a title is too generic (e.g., "Bluetooth Headphones")
- * @param {string} title - Product title
- * @returns {boolean} True if generic
- */
-function isGenericTitle(title) {
-    const genericPatterns = [
-        /^bluetooth\s+headphones?$/i,
-        /^wireless\s+headphones?$/i,
-        /^earbuds?$/i,
-        /^headphones?$/i,
-        /^over.?ear\s+headphones?$/i,
-        /^in.?ear\s+headphones?$/i,
-        /^noise\s+cancell?ing\s+headphones?$/i
-    ];
-    
-    const titleLower = title.toLowerCase().trim();
-    return genericPatterns.some(pattern => pattern.test(titleLower));
-}
-
-/**
- * Extract price category for badge assignment
- * @param {string} priceStr - Price string like "$199.99"
- * @returns {string} Category: "premium", "mid-range", or "budget"
- */
-function getPriceCategory(priceStr) {
-    const price = parseFloat(priceStr.replace(/[^0-9.]/g, ''));
-    
-    if (price > 200) return 'premium';
-    if (price > 80) return 'mid-range';
-    return 'budget';
-}
-
-/**
- * Check if brand is in premium list
- * @param {string} brand - Brand name
- * @returns {boolean} True if premium brand
- */
-function isPremiumBrand(brand) {
-    if (!brand) return false;
-    
-    const premiumBrands = ['sony', 'apple', 'beats', 'bose', 'sennheiser'];
-    return premiumBrands.includes(brand.toLowerCase());
-}
-
-/**
- * Sort and prioritize products with premium brands first
- * @param {Array} products - Products array
- * @returns {Array} Sorted products with premium brands prioritized
- */
-function prioritizePremiumBrands(products) {
-    // Separate premium and non-premium
-    const premium = [];
-    const nonPremium = [];
-    
-    for (const product of products) {
-        if (isPremiumBrand(product.brand)) {
-            premium.push(product);
-        } else {
-            nonPremium.push(product);
-        }
-    }
-    
-    // Sort premium by rating * reviews (relevance score)
-    premium.sort((a, b) => {
-        const scoreA = parseFloat(a.rating) * parseInt(a.reviews);
-        const scoreB = parseFloat(b.rating) * parseInt(b.reviews);
-        return scoreB - scoreA;
-    });
-    
-    // Sort non-premium by same metric
-    nonPremium.sort((a, b) => {
-        const scoreA = parseFloat(a.rating) * parseInt(a.reviews);
-        const scoreB = parseFloat(b.rating) * parseInt(b.reviews);
-        return scoreB - scoreA;
-    });
-    
-    // Combine: premium first, then non-premium
-    return [...premium, ...nonPremium];
-}
-
-/**
- * Check if products meet diversity requirements (1 premium + 1 mid-range minimum)
- * @param {Array} products - Products array
- * @returns {object} Object with hasPremium, hasMidRange, hasBudget flags
- */
-function checkProductDiversity(products) {
-    const diversity = {
-        hasPremium: false,
-        hasMidRange: false,
-        hasBudget: false,
-        premiumCount: 0,
-        midRangeCount: 0,
-        budgetCount: 0
-    };
-    
-    for (const product of products) {
-        const category = getPriceCategory(product.price);
-        if (category === 'premium') {
-            diversity.hasPremium = true;
-            diversity.premiumCount++;
-        } else if (category === 'mid-range') {
-            diversity.hasMidRange = true;
-            diversity.midRangeCount++;
-        } else {
-            diversity.hasBudget = true;
-            diversity.budgetCount++;
-        }
-    }
-    
-    return diversity;
-}
-
-/**
  * Generate comparison table HTML
  * @param {Array} products - Products array
  * @returns {string} Comparison table HTML
@@ -1604,7 +1301,7 @@ function generateComparisonTable(products) {
     
     const tableRows = products.map((product, index) => {
         const rank = index + 1;
-        const shortName = product.title;  // Already cleaned during validation
+        const shortName = extractShortProductName(product.title);
         const cardId = `product-${rank}`;
         const specs = productSpecs[index];
         
