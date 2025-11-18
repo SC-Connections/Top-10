@@ -30,6 +30,27 @@ jobs:
       - name: Setup Pages
         uses: actions/configure-pages@v4
       
+      - name: Move niche folders to Pages root
+        run: |
+          # If sites/ directory exists, move all subdirectories to root
+          if [ -d "sites" ]; then
+            echo "📦 Moving niche folders from sites/ to root..."
+            shopt -s dotglob
+            for dir in sites/*; do
+              if [ -d "$dir" ]; then
+                basename=$(basename "$dir")
+                echo "  Moving $dir to ./$basename/"
+                mv "$dir" .
+              fi
+            done
+            # Remove empty sites directory
+            rmdir sites 2>/dev/null || true
+            echo "✅ Niche folders moved successfully!"
+          else
+            echo "ℹ️  No sites/ directory found,"
+            echo "   niche folders already at root level"
+          fi
+      
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
