@@ -6,21 +6,35 @@
 const fs = require('fs');
 const path = require('path');
 
-const SITES_DIR = path.join(__dirname, 'sites');
+const ROOT_DIR = __dirname;
 const AFFILIATE_TAG = 'scconnec0d-20';
+const NICHES_DATA_FILE = path.join(ROOT_DIR, '_niches_data.json');
 
 function validateSites() {
     console.log('🔍 Validating generated sites...\n');
     
-    if (!fs.existsSync(SITES_DIR)) {
-        console.log('❌ Sites directory not found. Run site-generator.js first.');
-        return false;
+    // Read niches from _niches_data.json
+    let niches = [];
+    if (fs.existsSync(NICHES_DATA_FILE)) {
+        const nichesData = JSON.parse(fs.readFileSync(NICHES_DATA_FILE, 'utf-8'));
+        niches = nichesData.map(n => n.slug);
+    } else {
+        // Fallback: scan root directory for niche directories
+        console.log('⚠️  _niches_data.json not found, scanning root directory...\n');
+        const excludeDirs = ['.git', '.github', 'node_modules', 'templates', 'assets', '_layouts', 'data'];
+        niches = fs.readdirSync(ROOT_DIR).filter(dir => {
+            const dirPath = path.join(ROOT_DIR, dir);
+            return fs.statSync(dirPath).isDirectory() && 
+                   !excludeDirs.includes(dir) &&
+                   !dir.startsWith('.') &&
+                   fs.existsSync(path.join(dirPath, 'index.html'));
+        });
     }
     
-    const niches = fs.readdirSync(SITES_DIR).filter(dir => {
-        const dirPath = path.join(SITES_DIR, dir);
-        return fs.statSync(dirPath).isDirectory() && dir !== '_niches_data.json';
-    });
+    if (niches.length === 0) {
+        console.log('❌ No niche sites found. Run site-generator.js first.');
+        return false;
+    }
     
     console.log(`📋 Found ${niches.length} niche sites to validate\n`);
     
@@ -31,7 +45,9 @@ function validateSites() {
         console.log(`📦 Validating: ${niche}`);
         console.log('='.repeat(60));
         
-        const indexPath = path.join(SITES_DIR, niche, 'index.html');
+        const nichePath = path.join(ROOT_DIR, niche);
+        const indexPath = path.join(nichePath, 'index.html');
+        
         if (!fs.existsSync(indexPath)) {
             console.log('❌ index.html not found');
             allValid = false;
@@ -84,7 +100,7 @@ function validateSites() {
         console.log(`✓ ${amazonImages.length} images use Amazon CDN`);
         
         // Check blog directory
-        const blogDir = path.join(SITES_DIR, niche, 'blog');
+        const blogDir = path.join(nichePath, 'blog');
         if (fs.existsSync(blogDir)) {
             const blogFiles = fs.readdirSync(blogDir).filter(f => f.endsWith('.html'));
             console.log(`✓ Found ${blogFiles.length} blog articles`);
@@ -103,9 +119,10 @@ function validateSites() {
             }
         }
         
-        // Check CSS file
-        const cssPath = path.join(SITES_DIR, niche, 'global.css');
-        if (fs.existsSync(cssPath)) {
+        // Check CSS file - look for both styles.css and global.css
+        const cssPath1 = path.join(nichePath, 'styles.css');
+        const cssPath2 = path.join(nichePath, 'global.css');
+        if (fs.existsSync(cssPath1) || fs.existsSync(cssPath2)) {
             console.log('✓ CSS file exists');
         } else {
             console.log('❌ CSS file missing');

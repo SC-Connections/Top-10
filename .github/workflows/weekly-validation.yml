@@ -1,0 +1,73 @@
+name: Weekly Site Validation
+
+on:
+  schedule:
+    # Run weekly on Monday at 8 AM UTC
+    - cron: '0 8 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  validate-sites:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+      
+      - name: Install dependencies
+        run: npm install
+      
+      - name: Validate all existing sites
+        id: validation
+        run: |
+          echo "🔍 Running site validation checks..."
+          npm run validate > validation-output.txt 2>&1 || echo "VALIDATION_FAILED=true" >> $GITHUB_ENV
+          cat validation-output.txt
+      
+      - name: Check validation results
+        run: |
+          if [ "$VALIDATION_FAILED" = "true" ]; then
+            echo "❌ Validation failed! See output above for details."
+            exit 1
+          else
+            echo "✅ All site validation checks passed!"
+          fi
+      
+      - name: Upload validation report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: validation-report
+          path: validation-output.txt
+          retention-days: 30
+      
+      - name: Summary
+        if: always()
+        run: |
+          echo "## Weekly Site Validation Report" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Date:** $(date '+%B %d, %Y at %H:%M UTC')" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          if [ "$VALIDATION_FAILED" = "true" ]; then
+            echo "### ❌ Validation Failed" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "Some validation checks failed. Please review the details below:" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+            tail -50 validation-output.txt >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+          else
+            echo "### ✅ All Checks Passed" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "All site validation checks completed successfully!" >> $GITHUB_STEP_SUMMARY
+          fi
