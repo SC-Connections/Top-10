@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Top 10 Product Reviews - Browse All Categories</title>
+    <meta name="description" content="Browse our comprehensive collection of top 10 product reviews across multiple categories. Updated weekly with real Amazon data.">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.6;
+            color: #1f2937;
+            background-color: #f9fafb;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem 20px;
+        }
+        header {
+            background-color: #2563eb;
+            color: white;
+            padding: 2rem 0;
+            margin-bottom: 3rem;
+        }
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+        }
+        .subtitle {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+        .last-updated {
+            margin-top: 1rem;
+            font-size: 0.9rem;
+            opacity: 0.8;
+        }
+        .niches-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 1.5rem;
+            list-style: none;
+        }
+        .niche-item {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .niche-item:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+        .niche-link {
+            display: block;
+            padding: 2rem;
+            text-decoration: none;
+            color: inherit;
+        }
+        .niche-link h3 {
+            color: #2563eb;
+            font-size: 1.3rem;
+            margin-bottom: 0.5rem;
+        }
+        .niche-link p {
+            color: #6b7280;
+        }
+        footer {
+            margin-top: 4rem;
+            padding: 2rem 0;
+            text-align: center;
+            color: #6b7280;
+            border-top: 1px solid #e5e7eb;
+        }
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 1.8rem;
+            }
+            .niches-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <h1>Top 10 Product Reviews</h1>
+            <p class="subtitle">Expert-curated product reviews across 1 categories</p>
+            <div class="last-updated">Updated weekly • Last updated: November 18, 2025</div>
+        </div>
+    </header>
+    
+    <div class="container">
+        <ul class="niches-grid">
+            
+        <li class="niche-item">
+            <a href="./bluetooth-headphones/" class="niche-link">
+                <h3>bluetooth headphones</h3>
+                <p>View top 10 bluetooth headphones</p>
+            </a>
+        </li>
+        </ul>
+    </div>
+    
+    <footer>
+        <div class="container">
+            <p>&copy; 2025 Top10Reviews. All rights reserved.</p>
+            <p>As an Amazon Associate, we earn from qualifying purchases.</p>
+        </div>
+    </footer>
+</body>
+</html>
