@@ -7,6 +7,8 @@
 This system automatically generates professional, SEO-optimized review websites featuring top 10 products in various niches. All sites are hosted within this repository and served via GitHub Pages.
 
 **Key Features:**
+- ✅ **Intelligent multi-source data gathering** (Google Trends, Amazon Best Sellers, RapidAPI fallback)
+- ✅ **Premium brand filtering** for higher-quality products
 - ✅ SEO-optimized HTML with proper meta tags and structured data
 - ✅ Responsive, modern design
 - ✅ Individual product review pages
@@ -38,6 +40,10 @@ This system automatically generates professional, SEO-optimized review websites 
 │   ├── blog-template.html       # Blog article template
 │   └── global.css               # Complete stylesheet
 ├── data/                        # API response data (gitignored)
+├── data-sources.js              # **NEW** Intelligent data layer orchestrator
+├── google-trends.js             # **NEW** Google Trends scraper
+├── amazon-scraper.js            # **NEW** Amazon Best Sellers scraper
+├── api-fallback.js              # **NEW** RapidAPI fallback handler
 ├── niches.csv                   # List of niches to generate
 ├── site-generator.js            # Main generator script
 ├── generate-seo.js              # SEO content generator
@@ -51,6 +57,7 @@ This system automatically generates professional, SEO-optimized review websites 
 
 - Node.js 18 or higher
 - npm
+- Puppeteer system dependencies (for scraping): libx11-xcb1, libxtst6, libxcomposite1, libxi6, libxrender1, libxrandr2
 
 ### Installation
 
@@ -71,7 +78,13 @@ export RAPIDAPI_KEY="your-rapidapi-key"
 export AMAZON_AFFILIATE_ID="scconnec0d-20"
 ```
 
-**Note**: The system uses the correct Amazon Real-Time API endpoint (`https://amazon-real-time-api.p.rapidapi.com/search`) with proper parameters (`q` for query and `domain` for Amazon domain). Mock data fallback has been removed - the generator will fail if API credentials are invalid or API returns an error.
+**Note**: The system now uses an **intelligent multi-source data layer** that gathers products from:
+1. **Google Trends** (Puppeteer web scraping) - Shows market demand
+2. **Amazon Best Sellers** (Puppeteer web scraping) - Shows proven sales
+3. **Premium Brand Filtering** - Filters for high-value brands (Apple, Sony, Bose, Sennheiser, etc.)
+4. **RapidAPI Fallback** - Uses Amazon Real-Time API only when fewer than 8 products are found
+
+This ensures sites are generated using real demand data and premium products for higher affiliate commissions.
 
 4. Run the generator:
 ```bash
@@ -144,6 +157,24 @@ All templates are in the `templates/` directory:
 - **blog-template.html**: Blog article page structure
 - **global.css**: All styles (fully customizable)
 
+### Intelligent Data Layer
+
+The new multi-source data gathering system (`data-sources.js`) orchestrates product discovery:
+
+**Priority Flow:**
+1. **Google Trends** (`google-trends.js`) - Identifies trending products via Puppeteer scraping
+2. **Amazon Best Sellers** (`amazon-scraper.js`) - Finds best-selling products via Puppeteer scraping
+3. **Premium Brand Filter** - Filters products from premium brands:
+   - Apple, Sony, Bose, Sennheiser, Bang & Olufsen
+   - Shure, Razer, Logitech, Samsung, JBL, Beats
+4. **RapidAPI Fallback** (`api-fallback.js`) - Uses Amazon Real-Time API if < 8 premium products
+
+**Benefits:**
+- ✅ Real market demand data from Google Trends
+- ✅ Proven sellers from Amazon rankings
+- ✅ Premium brand focus = higher affiliate commissions
+- ✅ Automatic fallback ensures consistent results
+
 ### SEO Content
 
 The `generate-seo.js` module handles:
@@ -164,6 +195,14 @@ The `generate-blog.js` module creates detailed product reviews. Modify the conte
 - Use case recommendations
 
 ## 📊 Features
+
+### Intelligent Data Gathering (NEW)
+
+- ✅ **Multi-source product discovery** from Google Trends and Amazon Best Sellers
+- ✅ **Web scraping with Puppeteer** for real-time market data
+- ✅ **Premium brand filtering** for higher-quality products
+- ✅ **Automatic fallback** to RapidAPI when needed
+- ✅ **Top 10 best products** from combined sources
 
 ### SEO Optimization
 
@@ -196,8 +235,13 @@ The `generate-blog.js` module creates detailed product reviews. Modify the conte
 
 1. **Read Niches**: Reads product categories from `niches.csv`
 2. **Validate API Credentials**: Checks that RAPIDAPI_KEY is set (fails if not)
-3. **Fetch Products**: Calls Amazon Real-Time API `/search` endpoint with correct parameters (`q` and `domain`)
-4. **Save Raw Data**: Stores complete API response in `/data/<niche>.json` for debugging
+3. **Intelligent Data Gathering** (NEW): Uses multi-source data layer:
+   - Scrapes Google Trends for trending products (Puppeteer)
+   - Scrapes Amazon Best Sellers for proven products (Puppeteer)
+   - Applies premium brand filter (Apple, Sony, Bose, Sennheiser, Bang & Olufsen, etc.)
+   - Falls back to RapidAPI if < 8 premium products found
+   - Returns top 10 products combined from all sources
+4. **Save Raw Data**: Stores gathered products in `/data/<niche>.json` for debugging
 5. **Validate Response**: Ensures products have required fields (ASIN, title, image)
 6. **Generate SEO Content**: Creates optimized content using `generate-seo.js`
 7. **Generate Blog Articles**: Creates detailed reviews using `generate-blog.js`
