@@ -41,17 +41,6 @@ jobs:
           node site-generator.js
           echo "✅ All sites generated successfully!"
       
-      - name: Setup Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.x'
-      
-      - name: Run validation checks
-        run: |
-          echo "🔍 Running validation checks..."
-          python3 scripts/validate.py
-          echo "✅ Validation passed!"
-      
       - name: Generate root index.html
         run: npm run generate-root-index
       

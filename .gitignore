@@ -19,11 +19,5 @@ data/*.json
 *.log
 npm-debug.log*
 
-# Generated logs
-logs/*.json
-
-# Generated data
-src/data/products.json
-
 # Auto-maintenance artifacts
 PR_BODY.md

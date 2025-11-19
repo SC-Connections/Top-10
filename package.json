@@ -6,7 +6,7 @@
   "scripts": {
     "generate": "node site-generator.js",
     "generate-root-index": "node scripts/generate-root-index.js",
-    "validate": "python3 scripts/validate.py",
+    "validate": "node validate-sites.js",
     "test": "npm run generate && npm run validate",
     "maintenance": "node auto-maintenance.js"
   },
