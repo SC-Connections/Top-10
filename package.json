@@ -8,6 +8,8 @@
     "generate-root-index": "node scripts/generate-root-index.js",
     "validate": "node validate-sites.js",
     "test": "npm run generate && npm run validate",
+    "test:premium": "node test/premiumFilter.test.js",
+    "scrape:premium": "node scraper/top10Premium.js",
     "maintenance": "node auto-maintenance.js"
   },
   "keywords": [
