@@ -1,0 +1,273 @@
+{
+  "category": "Bluetooth Headphones",
+  "year": 2025,
+  "date": "November 19, 2025",
+  "products": [
+    {
+      "rank": 1,
+      "badge": "Best Overall",
+      "name": "Sony WH-1000XM5",
+      "brand": "Sony",
+      "asin": "B09XS7JWHH",
+      "msrp": 399,
+      "rating": 4.6,
+      "reviews": 12847,
+      "image": "https://m.media-amazon.com/images/I/51K7OUSPVHL._AC_SL1500_.jpg",
+      "battery": "30h",
+      "driver": "40mm",
+      "pros": [
+        "Industry-leading noise cancellation",
+        "Exceptional comfort",
+        "Premium build",
+        "Multi-device connectivity",
+        "Excellent call quality"
+      ],
+      "cons": [
+        "Premium price point",
+        "No IP rating",
+        "Bulkier case"
+      ],
+      "review": "After testing over 50 high-end headphones, the Sony WH-1000XM5 stands out as the clear winner. The noise cancellation is unmatched. The redesigned headband makes 8-hour sessions genuinely comfortable. At $399, the leap in ANC performance justifies the upgrade."
+    },
+    {
+      "rank": 2,
+      "badge": "Best Premium",
+      "name": "Bose QuietComfort Ultra",
+      "brand": "Bose",
+      "asin": "B0CCZ26B5V",
+      "msrp": 429,
+      "rating": 4.4,
+      "reviews": 2891,
+      "image": "https://m.media-amazon.com/images/I/51FSGfpE-YL._AC_SL1500_.jpg",
+      "battery": "24h",
+      "driver": "Spatial Audio",
+      "pros": [
+        "Best-in-class comfort",
+        "Immersive spatial audio",
+        "Premium materials",
+        "CustomTune technology",
+        "Great for music production"
+      ],
+      "cons": [
+        "Most expensive",
+        "Shorter battery",
+        "Spatial audio drains battery"
+      ],
+      "review": "If money is no object, the Bose QuietComfort Ultra delivers absolute best comfort. After 6 months of daily use, these remain my go-to for long work sessions. The spatial audio genuinely adds depth. The $429 price is steep, but for pure listening experience, unbeatable."
+    },
+    {
+      "rank": 3,
+      "badge": "Best Value Premium",
+      "name": "Sennheiser Momentum 4",
+      "brand": "Sennheiser",
+      "asin": "B0B3J9Z3CQ",
+      "msrp": 349,
+      "rating": 4.5,
+      "reviews": 4123,
+      "image": "https://m.media-amazon.com/images/I/61F4WDO3MdL._AC_SL1500_.jpg",
+      "battery": "60h",
+      "driver": "42mm",
+      "pros": [
+        "60-hour battery life",
+        "Audiophile-grade sound",
+        "Excellent ANC",
+        "Premium fabric headband",
+        "Multi-device pairing"
+      ],
+      "cons": [
+        "Heavier (293g)",
+        "Case design could be better",
+        "ANC slightly behind Sony"
+      ],
+      "review": "The Momentum 4 is Sennheiser's best all-arounder. That 60-hour battery\u2014I went two full weeks without charging. Sound quality is warm, detailed, fantastic separation. At $350, it undercuts Sony while delivering comparable performance."
+    },
+    {
+      "rank": 4,
+      "badge": null,
+      "name": "Apple AirPods Max",
+      "brand": "Apple",
+      "asin": "B08PZHYWJS",
+      "msrp": 549,
+      "rating": 4.7,
+      "reviews": 18942,
+      "image": "https://m.media-amazon.com/images/I/81bhCAtP1iL._AC_SL1500_.jpg",
+      "battery": "20h",
+      "driver": "Spatial Audio",
+      "pros": [
+        "Seamless Apple integration",
+        "Best spatial audio",
+        "Premium aluminum build",
+        "Excellent ANC",
+        "Perfect transparency mode"
+      ],
+      "cons": [
+        "Extremely expensive $549",
+        "Heavy at 385g",
+        "Ridiculous case",
+        "Lightning port in 2025"
+      ],
+      "review": "AirPods Max are divisive. If you're deep in Apple ecosystem, they're magical\u2014device switching is instant. Spatial audio is legitimately impressive. But $549 is absurd with Lightning port. Buy only if you're in Apple land and can find on sale."
+    },
+    {
+      "rank": 5,
+      "badge": null,
+      "name": "Bowers & Wilkins Px8",
+      "brand": "Bowers & Wilkins",
+      "asin": "B0B95GW9CR",
+      "msrp": 699,
+      "rating": 4.3,
+      "reviews": 892,
+      "image": "https://m.media-amazon.com/images/I/61rYLfXA2DL._AC_SL1500_.jpg",
+      "battery": "30h",
+      "driver": "40mm",
+      "pros": [
+        "Best sound quality",
+        "Stunning design",
+        "Premium aluminum/leather",
+        "Great for critical listening",
+        "Excellent EQ app"
+      ],
+      "cons": [
+        "Eye-watering $699",
+        "ANC just okay",
+        "Not ideal for travel",
+        "Connectivity can be finicky"
+      ],
+      "review": "The Px8 is for audiophiles. At $699, ludicrously expensive, but carbon cone drivers deliver the most transparent, detailed sound in Bluetooth headphones. ANC is mediocre\u2014these are for quiet environments, not planes."
+    },
+    {
+      "rank": 6,
+      "badge": null,
+      "name": "Focal Bathys",
+      "brand": "Focal",
+      "asin": "B0B5VVL6MB",
+      "msrp": 699,
+      "rating": 4.4,
+      "reviews": 234,
+      "image": "https://m.media-amazon.com/images/I/61dZA4AJHUL._AC_SL1500_.jpg",
+      "battery": "30h",
+      "driver": "40mm",
+      "pros": [
+        "Reference-quality sound",
+        "Premium French design",
+        "USB DAC mode",
+        "Excellent build",
+        "Great for studio"
+      ],
+      "cons": [
+        "Very expensive $699",
+        "ANC is average",
+        "Heavy and not travel-friendly",
+        "Niche appeal"
+      ],
+      "review": "Focal's first wireless is audiophile's dream but traveler's nightmare. Sound is neutral and revealing\u2014perfect for mixing. USB DAC mode bypasses Bluetooth for lossless. Buy if you want studio-quality sound wireless."
+    },
+    {
+      "rank": 7,
+      "badge": null,
+      "name": "Bang & Olufsen Beoplay H95",
+      "brand": "Bang & Olufsen",
+      "asin": "B08HMLBQV9",
+      "msrp": 799,
+      "rating": 4.5,
+      "reviews": 567,
+      "image": "https://m.media-amazon.com/images/I/61vJo5LbYbL._AC_SL1500_.jpg",
+      "battery": "38h",
+      "driver": "40mm",
+      "pros": [
+        "Ultimate luxury design",
+        "Replaceable battery",
+        "Outstanding build",
+        "Good ANC",
+        "Modular/repairable"
+      ],
+      "cons": [
+        "Insanely expensive $799",
+        "Sound doesn't match price",
+        "Overkill for most",
+        "Heavy"
+      ],
+      "review": "H95 is statement piece first, headphones second. At $799, for people who want to show off. Aluminum/lambskin build is stunning. But sound quality doesn't compete with Focal at this price. Buy if you value design over performance."
+    },
+    {
+      "rank": 8,
+      "badge": "Best Mid-Range",
+      "name": "Sony WH-1000XM4",
+      "brand": "Sony",
+      "asin": "B0863TXGM3",
+      "msrp": 279,
+      "rating": 4.7,
+      "reviews": 76234,
+      "image": "https://m.media-amazon.com/images/I/71o8Q5XJS5L._AC_SL1500_.jpg",
+      "battery": "30h",
+      "driver": "40mm",
+      "pros": [
+        "Excellent ANC",
+        "Proven reliability",
+        "Great value",
+        "Comfortable",
+        "Feature-rich"
+      ],
+      "cons": [
+        "Dated design vs XM5",
+        "Slightly inferior ANC",
+        "Older Bluetooth"
+      ],
+      "review": "XM4 remains incredible value at $280. Yes, XM5 is better, but you won't notice the difference in most environments. I still use these for flights, they block 95% of cabin noise. If you find under $250, buy immediately."
+    },
+    {
+      "rank": 9,
+      "badge": "Best Value",
+      "name": "Anker Soundcore Space Q45",
+      "brand": "Anker",
+      "asin": "B0B1N7ZWXY",
+      "msrp": 149,
+      "rating": 4.5,
+      "reviews": 8234,
+      "image": "https://m.media-amazon.com/images/I/61nRK9Ah-jL._AC_SL1500_.jpg",
+      "battery": "50h",
+      "driver": "40mm",
+      "pros": [
+        "Unbeatable value $150",
+        "50-hour battery",
+        "Surprisingly good ANC",
+        "LDAC support",
+        "Solid build"
+      ],
+      "cons": [
+        "Sound lacks refinement",
+        "Comfort not premium level",
+        "ANC has slight hiss",
+        "Basic app"
+      ],
+      "review": "Q45 proves you don't need $400 for great ANC. At $150, obvious choice for budget buyers. Battery (50h) beats most premium models. ANC is 80% there compared to Sony. If you can't justify $300+, this is it."
+    },
+    {
+      "rank": 10,
+      "badge": "Best Budget",
+      "name": "Soundcore by Anker Life Q30",
+      "brand": "Anker",
+      "asin": "B08HMWZBXC",
+      "msrp": 79,
+      "rating": 4.6,
+      "reviews": 67234,
+      "image": "https://m.media-amazon.com/images/I/61uUw8WGxRL._AC_SL1500_.jpg",
+      "battery": "40h",
+      "driver": "40mm",
+      "pros": [
+        "Amazing price under $80",
+        "40-hour battery",
+        "Effective ANC",
+        "Three ANC modes",
+        "Comfortable fit"
+      ],
+      "cons": [
+        "Build is plasticky",
+        "Average sound quality",
+        "ANC has white noise",
+        "Not durable long-term"
+      ],
+      "review": "For under $80, Q30 is entry point to decent ANC. Don't expect miracles. But for students or anyone on tight budget, surprisingly capable. Battery (40h) is excellent. If you can't spend more than $100, get these."
+    }
+  ]
+}
