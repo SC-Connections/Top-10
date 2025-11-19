@@ -11,7 +11,8 @@ const nicheFolders = entries
     e.name !== 'templates' &&
     e.name !== '.github' &&
     e.name !== 'scripts' &&
-    e.name !== 'node_modules'
+    e.name !== 'node_modules' &&
+    e.name !== 'data'  // Exclude data directory
   )
   .map(e => e.name);
 

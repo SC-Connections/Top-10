@@ -1,7 +1,10 @@
 name: Deploy to GitHub Pages
 
 on:
-  push:
+  workflow_run:
+    workflows: ["Build and Deploy Niche Sites"]
+    types:
+      - completed
     branches:
       - main
   workflow_dispatch:
@@ -18,6 +21,8 @@ concurrency:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    # Only deploy if the build workflow succeeded
+    if: ${{ github.event.workflow_run.conclusion == 'success' || github.event_name == 'workflow_dispatch' }}
     
     environment:
       name: github-pages
@@ -37,6 +42,51 @@ jobs:
       
       - name: Generate root index.html
         run: npm run generate-root-index
+      
+      - name: Validate niche folders exist
+        run: |
+          echo "🔍 Validating niche folders..."
+          
+          # Check if _niches_data.json exists
+          if [ ! -f "_niches_data.json" ]; then
+            echo "❌ ERROR: _niches_data.json not found!"
+            echo "❌ Niche sites have not been generated yet."
+            echo "❌ Run the 'Build and Deploy Niche Sites' workflow first."
+            exit 1
+          fi
+          
+          # Extract niche slugs and verify folders exist
+          missing_folders=0
+          while IFS= read -r slug; do
+            if [ -n "$slug" ]; then
+              if [ ! -d "$slug" ]; then
+                echo "❌ Missing niche folder: $slug/"
+                missing_folders=$((missing_folders + 1))
+              else
+                if [ ! -f "$slug/index.html" ]; then
+                  echo "❌ Missing index.html in: $slug/"
+                  missing_folders=$((missing_folders + 1))
+                else
+                  echo "✅ Found: $slug/index.html"
+                fi
+              fi
+            fi
+          done < <(node -e "const data = require('./_niches_data.json'); data.forEach(n => console.log(n.slug));")
+          
+          if [ $missing_folders -gt 0 ]; then
+            echo ""
+            echo "❌ ERROR: $missing_folders niche folder(s) are missing or incomplete!"
+            echo "❌ Niche sites must be generated before deployment."
+            echo "❌ This usually means the 'Build and Deploy Niche Sites' workflow failed or hasn't run yet."
+            echo ""
+            echo "To fix this:"
+            echo "1. Check the 'Build and Deploy Niche Sites' workflow logs"
+            echo "2. Ensure RAPIDAPI_KEY secret is set"
+            echo "3. Manually trigger the 'Build and Deploy Niche Sites' workflow"
+            exit 1
+          fi
+          
+          echo "✅ All niche folders validated successfully!"
       
       - name: Setup Pages
         uses: actions/configure-pages@v4
