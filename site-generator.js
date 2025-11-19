@@ -87,12 +87,10 @@ async function main() {
         }
     }
     
-    // Save generated niches data for index page generation
-    if (generatedNiches.length > 0) {
-        const dataFile = path.join(CONFIG.OUTPUT_DIR, '_niches_data.json');
-        fs.writeFileSync(dataFile, JSON.stringify(generatedNiches, null, 2));
-        console.log(`\n📝 Saved niche data to: ${dataFile}`);
-    }
+    // Save generated niches data for index page (always write file, may be empty)
+    const dataFile = path.join(CONFIG.OUTPUT_DIR, '_niches_data.json');
+    fs.writeFileSync(dataFile, JSON.stringify(generatedNiches, null, 2));
+    console.log(`\n📝 Saved niche data to: ${dataFile}`);
     
     // Report summary
     console.log('\n' + '='.repeat(60));
@@ -328,7 +326,8 @@ async function fetchProducts(niche) {
         
         if (gatheredProducts.length === 0) {
             console.error(`❌ ERROR: No products gathered for "${niche}"`);
-            throw new Error('No products found from any source');
+            // Return empty array so the caller will generate an empty-results page and continue
+            return [];
         }
         
         // Process and validate products, limit to top 10
@@ -605,7 +604,7 @@ async function fetchProducts(niche) {
             }
             
             // Rate limiting: Small delay between product_details API calls
-            if (i < Math.min(productList.length, 20) - 1) {
+            if (i < Math.min(gatheredProducts.length, 20) - 1) {
                 await new Promise(resolve => setTimeout(resolve, 500)); // 500ms delay
             }
         }
