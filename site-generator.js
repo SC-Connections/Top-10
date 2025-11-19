@@ -318,13 +318,55 @@ async function fetchProducts(niche) {
         console.log('🚀 Using intelligent data layer...');
         const gatheredProducts = await gatherTopProducts(niche);
         
+        //-------------------------------------------------------------
+        // NEW FILTER LAYER: RANK, DEDUPE, PREMIUM BRAND SCORING
+        //-------------------------------------------------------------
+        const PREMIUM_BRANDS = [
+          "Apple","Sony","Bose","Sennheiser","Bang & Olufsen",
+          "Shure","Razer","Logitech","Samsung","JBL","Beats","HP","Dell","Lenovo"
+        ];
+        
+        // 1. Remove duplicates by ASIN
+        const unique = [];
+        const seen = new Set();
+        for (const p of gatheredProducts) {
+          if (p.asin && !seen.has(p.asin)) {
+            seen.add(p.asin);
+            unique.push(p);
+          }
+        }
+        
+        // 2. Score products by BRAND + RATING + REVIEWS
+        const scored = unique.map(p => {
+          const title = (p.title || "").toLowerCase();
+          const isPremium = PREMIUM_BRANDS.some(b => title.includes(b.toLowerCase()));
+          const rating = parseFloat(p.rating) || 0;
+          const reviews = parseInt(p.reviews) || 0;
+        
+          let score = 0;
+          if (isPremium) score += 50;        // major boost if premium brand
+          score += rating * 10;              // rating weight
+          score += reviews / 500;            // review volume weight
+        
+          return { ...p, score };
+        });
+        
+        // 3. Sort by score descending (best → worst)
+        const rankedProducts = scored.sort((a, b) => b.score - a.score);
+        
+        // 4. Limit before fetchProductDetails() to save API calls
+        const filteredProducts = rankedProducts.slice(0, 12);
+        
+        console.log(`🔥 Premium-filtered products ready: ${filteredProducts.length}`);
+        //-------------------------------------------------------------
+        
         // Save gathered products to data directory
         fs.writeFileSync(dataFile, JSON.stringify(gatheredProducts, null, 2));
         console.log(`💾 Saved gathered products to: ${dataFile}`);
         
         console.log(`📦 Gathered ${gatheredProducts.length} products from multiple sources`);
         
-        if (gatheredProducts.length === 0) {
+        if (filteredProducts.length === 0) {
             console.error(`❌ ERROR: No products gathered for "${niche}"`);
             // Return empty array so the caller will generate an empty-results page and continue
             return [];
@@ -334,8 +376,8 @@ async function fetchProducts(niche) {
         const validProducts = [];
         let skippedCount = 0;
         
-        for (let i = 0; i < Math.min(gatheredProducts.length, 20); i++) {  // Check more products to get 10 valid ones
-            const product = gatheredProducts[i];
+        for (let i = 0; i < filteredProducts.length; i++) {
+            const product = filteredProducts[i];
             
             console.log(`\n📦 Processing product ${i + 1}...`);
             
@@ -604,7 +646,7 @@ async function fetchProducts(niche) {
             }
             
             // Rate limiting: Small delay between product_details API calls
-            if (i < Math.min(gatheredProducts.length, 20) - 1) {
+            if (i < filteredProducts.length - 1) {
                 await new Promise(resolve => setTimeout(resolve, 500)); // 500ms delay
             }
         }
