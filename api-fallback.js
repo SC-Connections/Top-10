@@ -12,7 +12,7 @@ const fetch = require('node-fetch');
  */
 async function rapidApiFallback(niche) {
   try {
-    const url = `https://amazon-real-time-api.p.rapidapi.com/search?q=${encodeURIComponent(niche)}&domain=com`;
+    const url = `https://amazon-real-time-api.p.rapidapi.com/search?q=${encodeURIComponent(niche)}&country=US`;
     const response = await fetch(url, {
       method: 'GET',
       headers: {
