@@ -2,6 +2,10 @@
 node_modules/
 package-lock.json
 
+# Puppeteer cache
+.cache/
+.local-chromium/
+
 # Build outputs - ignore API response data but keep config files
 data/*.json
 !data/prices.json
