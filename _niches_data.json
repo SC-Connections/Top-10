@@ -3,5 +3,15 @@
     "niche": "bluetooth headphones",
     "slug": "bluetooth-headphones",
     "url": "https://sc-connections.github.io/Top-10/bluetooth-headphones/"
+  },
+  {
+    "niche": "tablets",
+    "slug": "tablets",
+    "url": "https://sc-connections.github.io/Top-10/tablets/"
+  },
+  {
+    "niche": "smartwatch",
+    "slug": "smartwatch",
+    "url": "https://sc-connections.github.io/Top-10/smartwatch/"
   }
 ]
