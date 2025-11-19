@@ -9,6 +9,7 @@ const path = require('path');
 const axios = require('axios');
 const { generateIntroContent, generateBuyersGuide, generateFAQ, generateFAQStructuredData, generateCTA } = require('./generate-seo');
 const { generateBlogArticle } = require('./generate-blog');
+const { gatherTopProducts } = require('./data-sources');
 
 // Configuration
 const CONFIG = {
@@ -315,73 +316,31 @@ async function fetchProducts(niche) {
     const dataFile = path.join(CONFIG.DATA_DIR, `${slug}.json`);
     
     try {
-        // Configure API request with correct endpoint and parameters
-        const options = {
-            method: 'GET',
-            url: `https://${CONFIG.RAPIDAPI_HOST}/search`,
-            params: {
-                q: niche,
-                country: 'US',
-                sort_by: 'RELEVANCE'
-            },
-            headers: {
-                'X-RapidAPI-Key': CONFIG.RAPIDAPI_KEY,
-                'X-RapidAPI-Host': CONFIG.RAPIDAPI_HOST
-            },
-            timeout: 30000
-        };
+        // Use new intelligent data layer to gather products from multiple sources
+        console.log('🚀 Using intelligent data layer...');
+        const gatheredProducts = await gatherTopProducts(niche);
         
-        console.log(`🔗 API Request: ${options.url}`);
-        console.log(`📝 Query: ${niche}`);
-        console.log(`🌍 Country: US`);
-        console.log(`🔀 Sort By: RELEVANCE`);
+        // Save gathered products to data directory
+        fs.writeFileSync(dataFile, JSON.stringify(gatheredProducts, null, 2));
+        console.log(`💾 Saved gathered products to: ${dataFile}`);
         
-        const response = await axios.request(options);
+        console.log(`📦 Gathered ${gatheredProducts.length} products from multiple sources`);
         
-        // Save raw API response to data directory
-        fs.writeFileSync(dataFile, JSON.stringify(response.data, null, 2));
-        console.log(`💾 Saved raw API response to: ${dataFile}`);
-        
-        // Parse response - Amazon Real Time API returns products in data.results
-        let productList = [];
-        if (response.data && response.data.success && response.data.data && Array.isArray(response.data.data.results)) {
-            // New API structure: response.data.data.results
-            productList = response.data.data.results;
-        } else if (response.data && Array.isArray(response.data.results)) {
-            // Alternative structure: response.data.results
-            productList = response.data.results;
-        } else if (response.data && response.data.data && Array.isArray(response.data.data.products)) {
-            // Legacy structure: response.data.data.products
-            productList = response.data.data.products;
-        } else if (response.data && Array.isArray(response.data.products)) {
-            // Legacy structure: response.data.products
-            productList = response.data.products;
-        } else if (Array.isArray(response.data)) {
-            // Direct array
-            productList = response.data;
-        } else {
-            console.error('❌ ERROR: Unexpected API response structure');
-            console.error('❌ Response data:', JSON.stringify(response.data).substring(0, 500));
-            throw new Error('Invalid API response structure');
-        }
-        
-        console.log(`📦 API returned ${productList.length} products`);
-        
-        if (productList.length === 0) {
-            console.error(`❌ ERROR: API returned no products for "${niche}"`);
-            throw new Error('No products found in API response');
+        if (gatheredProducts.length === 0) {
+            console.error(`❌ ERROR: No products gathered for "${niche}"`);
+            throw new Error('No products found from any source');
         }
         
         // Process and validate products, limit to top 10
         const validProducts = [];
         let skippedCount = 0;
         
-        for (let i = 0; i < Math.min(productList.length, 20); i++) {  // Check more products to get 10 valid ones
-            const product = productList[i];
+        for (let i = 0; i < Math.min(gatheredProducts.length, 20); i++) {  // Check more products to get 10 valid ones
+            const product = gatheredProducts[i];
             
             console.log(`\n📦 Processing product ${i + 1}...`);
             
-            // Step 1: Extract ASIN from search results (REQUIRED)
+            // Step 1: Extract ASIN from gathered results (REQUIRED)
             const asin = product.asin || product.ASIN || null;
             
             if (!asin) {
