@@ -1,0 +1,122 @@
+[
+  {
+    "category": "sedan",
+    "rank": 1,
+    "brand": "Sony",
+    "model": "WH-1000XM5",
+    "normalizedTitle": "sony wh-1000xm5",
+    "asin": "B09XS7JWHH",
+    "price": 399,
+    "image": "https://m.media-amazon.com/images/I/51K7CQVP0bL._AC_SL1500_.jpg",
+    "amazonUrl": "https://www.amazon.com/dp/B09XS7JWHH",
+    "trendScore": 95
+  },
+  {
+    "category": "suv",
+    "rank": 2,
+    "brand": "Bose",
+    "model": "QuietComfort 45",
+    "normalizedTitle": "bose quietcomfort 45",
+    "asin": "B098FKXT8L",
+    "price": 329,
+    "image": "https://m.media-amazon.com/images/I/51JKGmFK9lL._AC_SL1500_.jpg",
+    "amazonUrl": "https://www.amazon.com/dp/B098FKXT8L",
+    "trendScore": 92
+  },
+  {
+    "category": "hatchback",
+    "rank": 3,
+    "brand": "Apple",
+    "model": "AirPods Max",
+    "normalizedTitle": "apple airpods max",
+    "asin": "B08PZHYWJS",
+    "price": 549,
+    "image": "https://m.media-amazon.com/images/I/81t2vwFjT0L._AC_SL1500_.jpg",
+    "amazonUrl": "https://www.amazon.com/dp/B08PZHYWJS",
+    "trendScore": 89
+  },
+  {
+    "category": "convertible",
+    "rank": 4,
+    "brand": "Sennheiser",
+    "model": "Momentum 4",
+    "normalizedTitle": "sennheiser momentum 4",
+    "asin": "B0B8BJXQJK",
+    "price": 379,
+    "image": "https://m.media-amazon.com/images/I/61tHFSXi-xL._AC_SL1500_.jpg",
+    "amazonUrl": "https://www.amazon.com/dp/B0B8BJXQJK",
+    "trendScore": 86
+  },
+  {
+    "category": "coupe",
+    "rank": 5,
+    "brand": "Bowers & Wilkins",
+    "model": "PX7 S2",
+    "normalizedTitle": "bowers & wilkins px7 s2",
+    "asin": "B0B1BJBRW7",
+    "price": 399,
+    "image": "https://m.media-amazon.com/images/I/61Z6yWVOjxL._AC_SL1500_.jpg",
+    "amazonUrl": "https://www.amazon.com/dp/B0B1BJBRW7",
+    "trendScore": 83
+  },
+  {
+    "category": "pickup",
+    "rank": 6,
+    "brand": "Beats",
+    "model": "Studio3 Wireless",
+    "normalizedTitle": "beats studio3 wireless",
+    "asin": "B074KDJVS2",
+    "price": 349,
+    "image": "https://m.media-amazon.com/images/I/51HNIh-gxeL._AC_SL1500_.jpg",
+    "amazonUrl": "https://www.amazon.com/dp/B074KDJVS2",
+    "trendScore": 80
+  },
+  {
+    "category": "minivan",
+    "rank": 7,
+    "brand": "Shure",
+    "model": "AONIC 50",
+    "normalizedTitle": "shure aonic 50",
+    "asin": "B086B82WRD",
+    "price": 299,
+    "image": "https://m.media-amazon.com/images/I/71qo4U2hXsL._AC_SL1500_.jpg",
+    "amazonUrl": "https://www.amazon.com/dp/B086B82WRD",
+    "trendScore": 77
+  },
+  {
+    "category": "wagon",
+    "rank": 8,
+    "brand": "Master & Dynamic",
+    "model": "MW65",
+    "normalizedTitle": "master & dynamic mw65",
+    "asin": "B07RWVDDC2",
+    "price": 499,
+    "image": "https://m.media-amazon.com/images/I/71YYDf7IIPL._AC_SL1500_.jpg",
+    "amazonUrl": "https://www.amazon.com/dp/B07RWVDDC2",
+    "trendScore": 74
+  },
+  {
+    "category": "ev",
+    "rank": 9,
+    "brand": "Bang & Olufsen",
+    "model": "Beoplay H95",
+    "normalizedTitle": "bang & olufsen beoplay h95",
+    "asin": "B08HMWZBXC",
+    "price": 799,
+    "image": "https://m.media-amazon.com/images/I/61J6WzXBMmL._AC_SL1500_.jpg",
+    "amazonUrl": "https://www.amazon.com/dp/B08HMWZBXC",
+    "trendScore": 71
+  },
+  {
+    "category": "luxury",
+    "rank": 10,
+    "brand": "Focal",
+    "model": "Bathys",
+    "normalizedTitle": "focal bathys",
+    "asin": "B0B5RHZ8JW",
+    "price": 699,
+    "image": "https://m.media-amazon.com/images/I/71xq7rCJEuL._AC_SL1500_.jpg",
+    "amazonUrl": "https://www.amazon.com/dp/B0B5RHZ8JW",
+    "trendScore": 68
+  }
+]
