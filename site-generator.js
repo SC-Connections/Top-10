@@ -305,6 +305,44 @@ async function fetchProductDetails(asin) {
 }
 
 /**
+ * Apply premium brand filters and deduplication
+ * @param {Array} products - Products array
+ * @returns {Array} Filtered products array
+ */
+function applyFilters(products) {
+  const PREMIUM_BRANDS = [
+    "Apple","Sony","Bose","Sennheiser","Bang & Olufsen",
+    "Shure","Razer","Logitech","Samsung","JBL","Beats","HP","Dell","Lenovo"
+  ];
+
+  const ALLOWED_RATING = 4.2;
+  const MIN_REVIEWS = 1500;
+
+  const seenAsins = new Set();
+  const final = [];
+
+  for (const p of products) {
+    const title = (p.title || "").toLowerCase();
+    const rating = parseFloat(p.rating) || 0;
+    const reviews = parseInt(p.reviews) || 0;
+    const asin = p.asin || null;
+
+    if (!asin || seenAsins.has(asin)) continue;
+    seenAsins.add(asin);
+
+    if (rating < ALLOWED_RATING) continue;
+    if (reviews < MIN_REVIEWS) continue;
+
+    const isPremium = PREMIUM_BRANDS.some(b => title.includes(b.toLowerCase()));
+    if (!isPremium) continue;
+
+    final.push(p);
+  }
+
+  return final.slice(0, 10);
+}
+
+/**
  * Fetch products from Amazon API
  * @param {string} niche - Niche name
  * @returns {Promise<Array>} Array of product objects
@@ -316,7 +354,9 @@ async function fetchProducts(niche) {
     try {
         // Use new intelligent data layer to gather products from multiple sources
         console.log('🚀 Using intelligent data layer...');
-        const gatheredProducts = await gatherTopProducts(niche);
+        let products = await gatherTopProducts(niche);
+        
+        products = applyFilters(products);
         
         //-------------------------------------------------------------
         // NEW FILTER LAYER: RANK, DEDUPE, PREMIUM BRAND SCORING
@@ -329,7 +369,7 @@ async function fetchProducts(niche) {
         // 1. Remove duplicates by ASIN
         const unique = [];
         const seen = new Set();
-        for (const p of gatheredProducts) {
+        for (const p of products) {
           if (p.asin && !seen.has(p.asin)) {
             seen.add(p.asin);
             unique.push(p);
@@ -361,10 +401,10 @@ async function fetchProducts(niche) {
         //-------------------------------------------------------------
         
         // Save gathered products to data directory
-        fs.writeFileSync(dataFile, JSON.stringify(gatheredProducts, null, 2));
+        fs.writeFileSync(dataFile, JSON.stringify(products, null, 2));
         console.log(`💾 Saved gathered products to: ${dataFile}`);
         
-        console.log(`📦 Gathered ${gatheredProducts.length} products from multiple sources`);
+        console.log(`📦 Gathered ${products.length} products from multiple sources`);
         
         if (filteredProducts.length === 0) {
             console.error(`❌ ERROR: No products gathered for "${niche}"`);
@@ -662,7 +702,10 @@ async function fetchProducts(niche) {
             return []; // Return empty array instead of throwing error
         }
         
-        return validProducts;
+        const finalProducts = applyFilters(validProducts);
+        console.log('✔ Premium brand enforcement + dedupe applied.');
+        
+        return finalProducts;
         
     } catch (error) {
         // Log error details and fail
