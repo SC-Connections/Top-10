@@ -6,7 +6,7 @@ This site provides comprehensive reviews and rankings of the best smartwatch ava
 
 ## Features
 
-- ✅ 0 carefully selected products
+- ✅ 8 carefully selected products
 - ✅ Detailed product reviews and comparisons
 - ✅ Real-time pricing and availability from Amazon
 - ✅ Expert buyer's guide
