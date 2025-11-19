@@ -290,22 +290,36 @@ Each niche site includes:
 
 ## 📈 GitHub Pages Deployment
 
-The workflow automatically:
-1. Generates all niche sites
-2. (Optional) Publishes each site to its own repository if `GH_PAT` is configured
-3. Creates a main index page listing all sites with their respective URLs
-4. Deploys the index to the main repository's GitHub Pages
-5. Updates daily with fresh Amazon data
+The deployment process uses two GitHub Actions workflows:
 
-### Deployment Options:
+### 1. Build and Deploy Niche Sites (`build-sites.yml`)
+This workflow:
+1. Generates all niche sites from `niches.csv`
+2. Creates niche folders in the repository root (e.g., `/bluetooth-headphones/`)
+3. Commits and pushes the generated folders to the repository
+4. Runs on push to main, workflow dispatch, or weekly schedule
 
-**With GH_PAT configured:**
-- Each niche site is published to: `https://sc-connections.github.io/<niche-slug>/`
-- Main index page at: `https://sc-connections.github.io/Top-10/`
+### 2. Deploy to GitHub Pages (`deploy-pages.yml`)
+This workflow:
+1. Runs AFTER the build workflow completes successfully
+2. Validates that all niche folders exist before deployment
+3. Generates the root index.html page
+4. Uploads and deploys all content to GitHub Pages
+5. Can also be manually triggered via workflow dispatch
 
-**Without GH_PAT:**
-- All sites are deployed under the main repository
-- Access sites at: `https://sc-connections.github.io/Top-10/sites/<niche-slug>/`
+**Important**: The deploy workflow will FAIL if niche folders are missing. This prevents deploying broken sites with 404 errors.
+
+### Site URLs:
+- Main index: `https://sc-connections.github.io/Top-10/`
+- Niche sites: `https://sc-connections.github.io/Top-10/<niche-slug>/`
+  - Example: `https://sc-connections.github.io/Top-10/bluetooth-headphones/`
+
+### First-Time Setup:
+1. Ensure `RAPIDAPI_KEY` secret is configured in repository settings
+2. Add at least one niche to `niches.csv`
+3. Manually trigger the "Build and Deploy Niche Sites" workflow
+4. Wait for it to complete and commit niche folders
+5. The deploy workflow will automatically run and deploy to GitHub Pages
 
 ## 🛠️ Development
 
