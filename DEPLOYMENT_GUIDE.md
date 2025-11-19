@@ -188,3 +188,60 @@ The fix ensures:
 - ✅ Root index only shows valid niche folders
 
 After merging and triggering the build workflow, the bluetooth-headphones site will be generated and deployed successfully!
+
+## Before vs After Comparison
+
+### BEFORE (Broken - Race Condition)
+```
+Push to main
+     │
+     ├─────────────────┬─────────────────┐
+     │                 │                 │
+     ▼                 ▼                 ▼
+Build Workflow    Deploy Workflow   (Simultaneous)
+Generating...     Deploying now!
+     │                 │
+     │                 └──► Deploy without folders ❌ 404
+     │
+     └──► Folders committed (too late)
+```
+
+### AFTER (Fixed - Sequential Execution)
+```
+Push to main
+     │
+     ▼
+Build Workflow
+  │
+  ├─ Generate folders
+  ├─ Verify folders created ✅
+  ├─ Commit & push
+  │
+  └─ SUCCESS ✅
+     │
+     │ (workflow_run trigger)
+     │
+     ▼
+Deploy Workflow
+  │
+  ├─ Validate folders exist ✅
+  ├─ Generate root index
+  ├─ Upload to GitHub Pages
+  │
+  └─ SUCCESS ✅
+     │
+     ▼
+   Site Live! ✅
+```
+
+## Key Differences
+
+| Aspect | Before | After |
+|--------|--------|-------|
+| **Trigger** | Both on `push` | Deploy on `workflow_run` |
+| **Timing** | Simultaneous | Sequential |
+| **Validation** | None | Both workflows validate |
+| **Error Handling** | Silent failures | Fail with clear errors |
+| **Race Condition** | Yes ❌ | No ✅ |
+| **Result** | 404 errors | Working sites ✅ |
+
