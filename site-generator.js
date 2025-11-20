@@ -317,7 +317,7 @@ function applyFilters(products) {
 
   // Lenient thresholds to ensure products pass through
   const MIN_RATING = 3.5;  // Lowered from 4.2
-  const MIN_REVIEWS = 10;  // Lowered from 1500
+  const MIN_REVIEWS = 10;  // Warning threshold (products with <10 reviews still pass but log warning)
 
   const seenAsins = new Set();
   const seenTitles = new Set();
