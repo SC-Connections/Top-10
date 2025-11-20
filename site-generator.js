@@ -317,7 +317,7 @@ function applyFilters(products) {
 
   // Lenient thresholds to ensure products pass through
   const MIN_RATING = 3.5;  // Lowered from 4.2
-  const MIN_REVIEWS = 10;  // Lowered from 1500
+  const MIN_REVIEWS = 10;  // Warning threshold (products with <10 reviews still pass but log warning)
 
   const seenAsins = new Set();
   const seenTitles = new Set();
@@ -370,9 +370,15 @@ function applyFilters(products) {
       continue;
     }
     
-    if (reviews < MIN_REVIEWS) {
-      console.log(`  ⚠️  Skipping "${title}" - reviews ${reviews} < ${MIN_REVIEWS}`);
+    // Allow products with 0 or more reviews, but log warning for low review counts
+    // Only skip if reviews are null/undefined or negative
+    if (reviews < 0) {
+      console.log(`  ⚠️  Skipping "${title}" - invalid review count: ${reviews}`);
       continue;
+    }
+    
+    if (reviews < MIN_REVIEWS) {
+      console.log(`  ⚠️  Warning: "${title}" has only ${reviews} reviews (below ${MIN_REVIEWS} threshold) - including anyway`);
     }
 
     // Premium brand check is now lenient - we score rather than filter
@@ -619,14 +625,18 @@ async function fetchProducts(niche) {
                 console.log(`  ℹ️  No review count found, using default: 0`);
             }
             
-            // Skip products with 0 reviews or 0 rating
+            // Skip products with 0 rating (invalid), but allow 0 reviews
             const ratingNum = parseFloat(rating);
             const reviewsNum = parseInt(reviews);
             
-            if (ratingNum === 0 || reviewsNum === 0) {
-                console.warn(`⚠️  Skipping product ${i + 1} "${title}": has 0 rating or 0 reviews (rating: ${rating}, reviews: ${reviews})`);
+            if (ratingNum === 0) {
+                console.warn(`⚠️  Skipping product ${i + 1} "${title}": has 0 rating (rating: ${rating})`);
                 skippedCount++;
                 continue;
+            }
+            
+            if (reviewsNum === 0) {
+                console.warn(`⚠️  Warning: product ${i + 1} "${title}" has 0 reviews - including anyway`);
             }
             
             // Skip products without a recognizable brand name (generic products)

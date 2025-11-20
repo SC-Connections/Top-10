@@ -46,7 +46,14 @@ function applyFilters(products) {
     seenTitles.add(normalizedTitle);
 
     if (rating < MIN_RATING) continue;
-    if (reviews < MIN_REVIEWS) continue;
+    
+    // Allow products with 0 or more reviews, but skip if negative
+    if (reviews < 0) continue;
+    
+    // Warning for low reviews (but still include the product)
+    if (reviews < MIN_REVIEWS) {
+      // In real code this would log, but we just continue to include the product
+    }
 
     // Premium brand check is now lenient - we score rather than filter
     const isPremium = PREMIUM_BRANDS.some(b => titleLower.includes(b.toLowerCase()));
@@ -116,21 +123,23 @@ function testRatingFilter() {
  * Test review count filter
  */
 function testReviewsFilter() {
-  console.log('\n📊 Testing reviews filter (>= 10)...');
+  console.log('\n📊 Testing reviews filter (allows 0+, skips negative)...');
   
   const products = [
     { asin: 'B001', title: 'Sony WH-1000XM5', rating: '4.5', reviews: '2000' },
-    { asin: 'B002', title: 'Apple AirPods Pro', rating: '4.5', reviews: '5' }, // too few reviews
-    { asin: 'B003', title: 'Bose QuietComfort 45', rating: '4.5', reviews: '10' } // exactly 10
+    { asin: 'B002', title: 'Apple AirPods Pro', rating: '4.5', reviews: '5' }, // low reviews, should pass
+    { asin: 'B003', title: 'Bose QuietComfort 45', rating: '4.5', reviews: '0' }, // 0 reviews, should pass
+    { asin: 'B004', title: 'JBL Headphones', rating: '4.5', reviews: '-1' } // negative, should be filtered
   ];
   
   const result = applyFilters(products);
   
-  if (result.length === 2 && result.every(p => parseInt(p.reviews) >= 10)) {
-    console.log('  ✓ Reviews filter works correctly (expected 2, got', result.length + ')');
+  // Should include all except negative review count
+  if (result.length === 3 && result.every(p => parseInt(p.reviews) >= 0)) {
+    console.log('  ✓ Reviews filter works correctly (expected 3, got', result.length + ')');
     return true;
   } else {
-    console.log('  ✗ Reviews filter failed (expected 2, got', result.length + ')');
+    console.log('  ✗ Reviews filter failed (expected 3, got', result.length + ')');
     return false;
   }
 }
@@ -258,6 +267,29 @@ function testTitleSimilarity() {
 }
 
 /**
+ * Test with 0 reviews (RapidAPI scenario)
+ */
+function testZeroReviews() {
+  console.log('\n🔢 Testing products with 0 reviews are included...');
+  
+  const products = [
+    { asin: 'B001', title: 'Sony WH-1000XM5', rating: '4.5', reviews: '0' },
+    { asin: 'B002', title: 'Apple AirPods Pro', rating: '4.5', reviews: '0' },
+    { asin: 'B003', title: 'Bose QuietComfort 45', rating: '4.5', reviews: '0' }
+  ];
+  
+  const result = applyFilters(products);
+  
+  if (result.length === 3) {
+    console.log('  ✓ Products with 0 reviews are included (expected 3, got', result.length + ')');
+    return true;
+  } else {
+    console.log('  ✗ Zero reviews test failed (expected 3, got', result.length + ')');
+    return false;
+  }
+}
+
+/**
  * Run all tests
  */
 function runTests() {
@@ -269,6 +301,7 @@ function runTests() {
     testDeduplication,
     testRatingFilter,
     testReviewsFilter,
+    testZeroReviews,
     testPremiumBrandFilter,
     testTop10Limit,
     testMissingAsin,
