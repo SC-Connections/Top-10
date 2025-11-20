@@ -5,13 +5,28 @@
     "url": "https://sc-connections.github.io/Top-10/bluetooth-headphones/"
   },
   {
-    "niche": "tablets",
-    "slug": "tablets",
-    "url": "https://sc-connections.github.io/Top-10/tablets/"
+    "niche": "laptops",
+    "slug": "laptops",
+    "url": "https://sc-connections.github.io/Top-10/laptops/"
   },
   {
     "niche": "smartwatch",
     "slug": "smartwatch",
     "url": "https://sc-connections.github.io/Top-10/smartwatch/"
+  },
+  {
+    "niche": "robot vacuum",
+    "slug": "robot-vacuum",
+    "url": "https://sc-connections.github.io/Top-10/robot-vacuum/"
+  },
+  {
+    "niche": "smart tv",
+    "slug": "smart-tv",
+    "url": "https://sc-connections.github.io/Top-10/smart-tv/"
+  },
+  {
+    "niche": "game console",
+    "slug": "game-console",
+    "url": "https://sc-connections.github.io/Top-10/game-console/"
   }
 ]
