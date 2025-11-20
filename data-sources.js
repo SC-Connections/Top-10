@@ -14,9 +14,9 @@ const PREMIUM_BRANDS = [
 
 /**
  * Gather top products from multiple data sources
- * Priority: Google Trends -> Amazon Best Sellers -> Premium Filter -> RapidAPI Fallback
+ * Priority: Google Trends -> Amazon Best Sellers -> RapidAPI Fallback if < 10 products
  * @param {string} niche - Niche name to search for
- * @returns {Promise<Array>} Top 10 premium products
+ * @returns {Promise<Array>} Products array (will be filtered to exactly 10 by applyFilters)
  */
 async function gatherTopProducts(niche) {
   let products = [];
@@ -43,17 +43,18 @@ async function gatherTopProducts(niche) {
 
   // 3. Don't pre-filter for premium brands - let applyFilters handle it
   // This ensures we have enough products to work with
-  console.log(`✓ Gathered products before filtering: ${products.length}`);
+  console.log(`✓ Gathered products before fallback: ${products.length}`);
 
-  // 4. If fewer than 8 results, use RapidAPI fallback
-  if (products.length < 8) {
-    console.log('⚠️  Less than 8 products gathered, using RapidAPI fallback...');
+  // 4. If fewer than 10 results, aggressively use RapidAPI fallback with pagination
+  if (products.length < 10) {
+    console.log(`⚠️  Only ${products.length} products gathered, using RapidAPI fallback to get more...`);
     const backup = await rapidApiFallback(niche);
     console.log(`✓ RapidAPI Fallback: ${backup.length} products`);
     products.push(...backup);
+    console.log(`✓ Total after fallback: ${products.length} products`);
   }
 
-  // 5. Return products (will be filtered by applyFilters in site-generator)
+  // 5. Return products (will be filtered and deduplicated by applyFilters in site-generator)
   return products;
 }
 

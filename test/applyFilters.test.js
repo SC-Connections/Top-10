@@ -11,7 +11,6 @@ function applyFilters(products) {
 
   // Lenient thresholds to ensure products pass through
   const MIN_RATING = 3.5;  // Lowered from 4.2
-  const MIN_REVIEWS = 10;  // Lowered from 1500
 
   const seenAsins = new Set();
   const seenTitles = new Set();
@@ -21,7 +20,6 @@ function applyFilters(products) {
     const title = (p.title || "").trim();
     const titleLower = title.toLowerCase();
     const rating = parseFloat(p.rating) || 0;
-    const reviews = parseInt(p.reviews) || 0;
     const asin = p.asin || null;
 
     // Skip products with empty/null titles
@@ -34,9 +32,9 @@ function applyFilters(products) {
     if (seenAsins.has(asin)) continue;
     
     // Deduplicate by title similarity (secondary)
+    // Strip parentheses but KEEP color names to allow color variants
     const normalizedTitle = titleLower
-      .replace(/\b(black|white|silver|gold|blue|red|green)\b/g, '')
-      .replace(/\b(small|medium|large|xl|xxl)\b/g, '')
+      .replace(/\([^)]*\)/g, '')  // Remove content in parentheses
       .replace(/\s+/g, ' ')
       .trim();
     
@@ -46,14 +44,6 @@ function applyFilters(products) {
     seenTitles.add(normalizedTitle);
 
     if (rating < MIN_RATING) continue;
-    
-    // Allow products with 0 or more reviews, but skip if negative
-    if (reviews < 0) continue;
-    
-    // Warning for low reviews (but still include the product)
-    if (reviews < MIN_REVIEWS) {
-      // In real code this would log, but we just continue to include the product
-    }
 
     // Premium brand check is now lenient - we score rather than filter
     const isPremium = PREMIUM_BRANDS.some(b => titleLower.includes(b.toLowerCase()));
@@ -120,26 +110,26 @@ function testRatingFilter() {
 }
 
 /**
- * Test review count filter
+ * Test review count is ignored (no filtering on reviews)
  */
 function testReviewsFilter() {
-  console.log('\n📊 Testing reviews filter (allows 0+, skips negative)...');
+  console.log('\n📊 Testing reviews are ignored (no review filtering)...');
   
   const products = [
     { asin: 'B001', title: 'Sony WH-1000XM5', rating: '4.5', reviews: '2000' },
     { asin: 'B002', title: 'Apple AirPods Pro', rating: '4.5', reviews: '5' }, // low reviews, should pass
     { asin: 'B003', title: 'Bose QuietComfort 45', rating: '4.5', reviews: '0' }, // 0 reviews, should pass
-    { asin: 'B004', title: 'JBL Headphones', rating: '4.5', reviews: '-1' } // negative, should be filtered
+    { asin: 'B004', title: 'JBL Headphones', rating: '4.5', reviews: '-1' } // negative, should still pass
   ];
   
   const result = applyFilters(products);
   
-  // Should include all except negative review count
-  if (result.length === 3 && result.every(p => parseInt(p.reviews) >= 0)) {
-    console.log('  ✓ Reviews filter works correctly (expected 3, got', result.length + ')');
+  // All products should pass (review count is completely ignored)
+  if (result.length === 4) {
+    console.log('  ✓ Reviews ignored correctly (expected 4, got', result.length + ')');
     return true;
   } else {
-    console.log('  ✗ Reviews filter failed (expected 3, got', result.length + ')');
+    console.log('  ✗ Reviews filter failed (expected 4, got', result.length + ')');
     return false;
   }
 }
@@ -244,24 +234,48 @@ function testEmptyTitles() {
 }
 
 /**
- * Test title similarity deduplication
+ * Test title similarity deduplication - color variants should NOT be deduplicated
  */
 function testTitleSimilarity() {
   console.log('\n🔄 Testing title similarity deduplication...');
   
   const products = [
     { asin: 'B001', title: 'Sony WH-1000XM5 Black', rating: '4.5', reviews: '2000' },
-    { asin: 'B002', title: 'Sony WH-1000XM5 Silver', rating: '4.5', reviews: '2000' }, // similar title (different color)
+    { asin: 'B002', title: 'Sony WH-1000XM5 Silver', rating: '4.5', reviews: '2000' }, // different color - should NOT be deduplicated
+    { asin: 'B003', title: 'Apple AirPods Pro', rating: '4.5', reviews: '3000' }
+  ];
+  
+  const result = applyFilters(products);
+  
+  // Color variants should NOT be treated as duplicates anymore
+  if (result.length === 3) {
+    console.log('  ✓ Color variants NOT deduplicated (expected 3, got', result.length + ')');
+    return true;
+  } else {
+    console.log('  ✗ Title similarity test failed (expected 3, got', result.length + ')');
+    return false;
+  }
+}
+
+/**
+ * Test that parentheses are stripped for deduplication
+ */
+function testParenthesesStripping() {
+  console.log('\n📝 Testing parentheses stripping for deduplication...');
+  
+  const products = [
+    { asin: 'B001', title: 'Sony WH-1000XM5 (Black)', rating: '4.5', reviews: '2000' },
+    { asin: 'B002', title: 'Sony WH-1000XM5', rating: '4.5', reviews: '2000' }, // same product without parentheses - should be deduplicated
     { asin: 'B003', title: 'Apple AirPods Pro', rating: '4.5', reviews: '3000' }
   ];
   
   const result = applyFilters(products);
   
   if (result.length === 2) {
-    console.log('  ✓ Similar titles deduplicated correctly (expected 2, got', result.length + ')');
+    console.log('  ✓ Parentheses stripped correctly for deduplication (expected 2, got', result.length + ')');
     return true;
   } else {
-    console.log('  ✗ Title similarity test failed (expected 2, got', result.length + ')');
+    console.log('  ✗ Parentheses stripping test failed (expected 2, got', result.length + ')');
     return false;
   }
 }
@@ -306,7 +320,8 @@ function runTests() {
     testTop10Limit,
     testMissingAsin,
     testEmptyTitles,
-    testTitleSimilarity
+    testTitleSimilarity,
+    testParenthesesStripping
   ];
   
   let passed = 0;

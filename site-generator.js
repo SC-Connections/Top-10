@@ -317,7 +317,6 @@ function applyFilters(products) {
 
   // Lenient thresholds to ensure products pass through
   const MIN_RATING = 3.5;  // Lowered from 4.2
-  const MIN_REVIEWS = 10;  // Warning threshold (products with <10 reviews still pass but log warning)
 
   const seenAsins = new Set();
   const seenTitles = new Set();
@@ -327,7 +326,6 @@ function applyFilters(products) {
     const title = (p.title || "").trim();
     const titleLower = title.toLowerCase();
     const rating = parseFloat(p.rating) || 0;
-    const reviews = parseInt(p.reviews) || 0;
     const asin = p.asin || null;
 
     // Skip products with empty/null titles
@@ -349,15 +347,16 @@ function applyFilters(products) {
     }
     
     // Deduplicate by title similarity (secondary)
-    // Normalize title for comparison (remove brand, color, size variations)
+    // Strip parentheses but KEEP color names to allow color variants
+    // Only truly identical titles will be deduplicated
     const normalizedTitle = titleLower
-      .replace(/\b(black|white|silver|gold|blue|red|green)\b/g, '')
-      .replace(/\b(small|medium|large|xl|xxl)\b/g, '')
+      .replace(/\([^)]*\)/g, '')  // Remove content in parentheses
       .replace(/\s+/g, ' ')
       .trim();
     
+    // Only skip if truly identical after normalization
     if (seenTitles.has(normalizedTitle)) {
-      console.log(`  ⚠️  Skipping similar title: "${title}"`);
+      console.log(`  ⚠️  Skipping duplicate: "${title}"`);
       continue;
     }
     
@@ -368,17 +367,6 @@ function applyFilters(products) {
     if (rating < MIN_RATING) {
       console.log(`  ⚠️  Skipping "${title}" - rating ${rating} < ${MIN_RATING}`);
       continue;
-    }
-    
-    // Allow products with 0 or more reviews, but log warning for low review counts
-    // Only skip if reviews are null/undefined or negative
-    if (reviews < 0) {
-      console.log(`  ⚠️  Skipping "${title}" - invalid review count: ${reviews}`);
-      continue;
-    }
-    
-    if (reviews < MIN_REVIEWS) {
-      console.log(`  ⚠️  Warning: "${title}" has only ${reviews} reviews (below ${MIN_REVIEWS} threshold) - including anyway`);
     }
 
     // Premium brand check is now lenient - we score rather than filter
@@ -635,10 +623,6 @@ async function fetchProducts(niche) {
                 continue;
             }
             
-            if (reviewsNum === 0) {
-                console.warn(`⚠️  Warning: product ${i + 1} "${title}" has 0 reviews - including anyway`);
-            }
-            
             // Skip products without a recognizable brand name (generic products)
             if (!hasBrandName(title)) {
                 console.warn(`⚠️  Skipping product ${i + 1} "${title}": no recognizable brand name (generic product)`);
@@ -732,8 +716,10 @@ async function fetchProducts(niche) {
             return []; // Return empty array instead of throwing error
         }
         
+        // Final log message
+        console.log(`\n✅ Final: ${validProducts.length}/10 valid unique products ready for site generation`);
+        
         // Return validated products (already filtered by applyFilters earlier)
-        console.log('✔ Returning validated products with complete data');
         return validProducts;
         
     } catch (error) {
