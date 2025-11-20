@@ -41,23 +41,20 @@ async function gatherTopProducts(niche) {
     console.log("Amazon Best Sellers failed:", e.message);
   }
 
-  // 3. Filter for premium brands
-  let premium = products.filter(p =>
-    PREMIUM_BRANDS.some(b => p.title?.toLowerCase().includes(b.toLowerCase()))
-  );
-  
-  console.log(`✓ Premium products after filtering: ${premium.length}`);
+  // 3. Don't pre-filter for premium brands - let applyFilters handle it
+  // This ensures we have enough products to work with
+  console.log(`✓ Gathered products before filtering: ${products.length}`);
 
   // 4. If fewer than 8 results, use RapidAPI fallback
-  if (premium.length < 8) {
-    console.log('⚠️  Less than 8 premium products, using RapidAPI fallback...');
+  if (products.length < 8) {
+    console.log('⚠️  Less than 8 products gathered, using RapidAPI fallback...');
     const backup = await rapidApiFallback(niche);
     console.log(`✓ RapidAPI Fallback: ${backup.length} products`);
-    premium.push(...backup);
+    products.push(...backup);
   }
 
-  // 5. Return only top 10 products
-  return premium.slice(0, 10);
+  // 5. Return products (will be filtered by applyFilters in site-generator)
+  return products;
 }
 
 module.exports = { gatherTopProducts };
