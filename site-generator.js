@@ -305,7 +305,7 @@ async function fetchProductDetails(asin) {
 }
 
 /**
- * Apply premium brand filters and deduplication
+ * Apply lenient quality filters and deduplication
  * @param {Array} products - Products array
  * @returns {Array} Filtered products array
  */
@@ -315,29 +315,85 @@ function applyFilters(products) {
     "Shure","Razer","Logitech","Samsung","JBL","Beats","HP","Dell","Lenovo"
   ];
 
-  const ALLOWED_RATING = 4.2;
-  const MIN_REVIEWS = 1500;
+  // Lenient thresholds to ensure products pass through
+  const MIN_RATING = 3.5;  // Lowered from 4.2
+  const MIN_REVIEWS = 10;  // Lowered from 1500
 
   const seenAsins = new Set();
+  const seenTitles = new Set();
   const final = [];
 
   for (const p of products) {
-    const title = (p.title || "").toLowerCase();
+    const title = (p.title || "").trim();
+    const titleLower = title.toLowerCase();
     const rating = parseFloat(p.rating) || 0;
     const reviews = parseInt(p.reviews) || 0;
     const asin = p.asin || null;
 
-    if (!asin || seenAsins.has(asin)) continue;
+    // Skip products with empty/null titles
+    if (!title || title.length === 0) {
+      console.log('  ⚠️  Skipping product with empty title');
+      continue;
+    }
+
+    // Skip products without ASIN
+    if (!asin) {
+      console.log(`  ⚠️  Skipping product "${title}" - no ASIN`);
+      continue;
+    }
+
+    // Deduplicate by ASIN (primary)
+    if (seenAsins.has(asin)) {
+      console.log(`  ⚠️  Skipping duplicate ASIN: ${asin}`);
+      continue;
+    }
+    
+    // Deduplicate by title similarity (secondary)
+    // Normalize title for comparison (remove brand, color, size variations)
+    const normalizedTitle = titleLower
+      .replace(/\b(black|white|silver|gold|blue|red|green)\b/g, '')
+      .replace(/\b(small|medium|large|xl|xxl)\b/g, '')
+      .replace(/\s+/g, ' ')
+      .trim();
+    
+    if (seenTitles.has(normalizedTitle)) {
+      console.log(`  ⚠️  Skipping similar title: "${title}"`);
+      continue;
+    }
+    
     seenAsins.add(asin);
+    seenTitles.add(normalizedTitle);
 
-    if (rating < ALLOWED_RATING) continue;
-    if (reviews < MIN_REVIEWS) continue;
+    // Apply lenient quality filters
+    if (rating < MIN_RATING) {
+      console.log(`  ⚠️  Skipping "${title}" - rating ${rating} < ${MIN_RATING}`);
+      continue;
+    }
+    
+    if (reviews < MIN_REVIEWS) {
+      console.log(`  ⚠️  Skipping "${title}" - reviews ${reviews} < ${MIN_REVIEWS}`);
+      continue;
+    }
 
-    const isPremium = PREMIUM_BRANDS.some(b => title.includes(b.toLowerCase()));
-    if (!isPremium) continue;
-
-    final.push(p);
+    // Premium brand check is now lenient - we score rather than filter
+    // Products without premium brands can still pass through
+    const isPremium = PREMIUM_BRANDS.some(b => titleLower.includes(b.toLowerCase()));
+    
+    // Add to results with premium flag for scoring
+    final.push({ ...p, isPremium });
   }
+
+  // Sort by premium status first, then by rating, then by review count
+  final.sort((a, b) => {
+    // Premium brands first
+    if (a.isPremium !== b.isPremium) return b.isPremium ? 1 : -1;
+    // Then by rating
+    const ratingA = parseFloat(a.rating) || 0;
+    const ratingB = parseFloat(b.rating) || 0;
+    if (Math.abs(ratingA - ratingB) > 0.1) return ratingB - ratingA;
+    // Then by review count
+    return (parseInt(b.reviews) || 0) - (parseInt(a.reviews) || 0);
+  });
 
   return final.slice(0, 10);
 }
@@ -356,49 +412,13 @@ async function fetchProducts(niche) {
         console.log('🚀 Using intelligent data layer...');
         let products = await gatherTopProducts(niche);
         
+        // Apply filtering with lenient thresholds and deduplication
         products = applyFilters(products);
         
-        //-------------------------------------------------------------
-        // NEW FILTER LAYER: RANK, DEDUPE, PREMIUM BRAND SCORING
-        //-------------------------------------------------------------
-        const PREMIUM_BRANDS = [
-          "Apple","Sony","Bose","Sennheiser","Bang & Olufsen",
-          "Shure","Razer","Logitech","Samsung","JBL","Beats","HP","Dell","Lenovo"
-        ];
+        console.log(`🔥 Filtered products ready: ${products.length}`);
         
-        // 1. Remove duplicates by ASIN
-        const unique = [];
-        const seen = new Set();
-        for (const p of products) {
-          if (p.asin && !seen.has(p.asin)) {
-            seen.add(p.asin);
-            unique.push(p);
-          }
-        }
-        
-        // 2. Score products by BRAND + RATING + REVIEWS
-        const scored = unique.map(p => {
-          const title = (p.title || "").toLowerCase();
-          const isPremium = PREMIUM_BRANDS.some(b => title.includes(b.toLowerCase()));
-          const rating = parseFloat(p.rating) || 0;
-          const reviews = parseInt(p.reviews) || 0;
-        
-          let score = 0;
-          if (isPremium) score += 50;        // major boost if premium brand
-          score += rating * 10;              // rating weight
-          score += reviews / 500;            // review volume weight
-        
-          return { ...p, score };
-        });
-        
-        // 3. Sort by score descending (best → worst)
-        const rankedProducts = scored.sort((a, b) => b.score - a.score);
-        
-        // 4. Limit before fetchProductDetails() to save API calls
-        const filteredProducts = rankedProducts.slice(0, 12);
-        
-        console.log(`🔥 Premium-filtered products ready: ${filteredProducts.length}`);
-        //-------------------------------------------------------------
+        // Limit to top 12 for API detail fetching (allows some to fail and still get 10)
+        const filteredProducts = products.slice(0, 12);
         
         // Save gathered products to data directory
         fs.writeFileSync(dataFile, JSON.stringify(products, null, 2));
@@ -702,10 +722,9 @@ async function fetchProducts(niche) {
             return []; // Return empty array instead of throwing error
         }
         
-        const finalProducts = applyFilters(validProducts);
-        console.log('✔ Premium brand enforcement + dedupe applied.');
-        
-        return finalProducts;
+        // Return validated products (already filtered by applyFilters earlier)
+        console.log('✔ Returning validated products with complete data');
+        return validProducts;
         
     } catch (error) {
         // Log error details and fail
