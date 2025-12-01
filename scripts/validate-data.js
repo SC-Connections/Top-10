@@ -6,8 +6,16 @@
 const fs = require('fs');
 const path = require('path');
 
+// ============================================
+// CONFIGURATION CONSTANTS
+// ============================================
+
 // Required fields for a valid product
 const REQUIRED_FIELDS = ['asin', 'title', 'price', 'reviews', 'rating', 'image', 'description', 'url'];
+
+// Validation thresholds
+const MIN_RATING = 3.5;
+const ASIN_PATTERN = /^[A-Z0-9]{10}$/;
 
 // Generic product names that should be rejected
 const GENERIC_NAMES = [
@@ -172,8 +180,8 @@ function validateProduct(product) {
     }
   }
   
-  // Validate ASIN format
-  if (!/^[A-Z0-9]{10}$/.test(product.asin)) {
+  // Validate ASIN format using named constant
+  if (!ASIN_PATTERN.test(product.asin)) {
     return { valid: false, reason: `Invalid ASIN format: ${product.asin}` };
   }
   
@@ -187,10 +195,10 @@ function validateProduct(product) {
     return { valid: false, reason: 'No premium brand detected' };
   }
   
-  // Validate rating
+  // Validate rating against threshold
   const rating = parseFloat(product.rating);
-  if (isNaN(rating) || rating < 3.5) {
-    return { valid: false, reason: `Rating too low: ${product.rating}` };
+  if (isNaN(rating) || rating < MIN_RATING) {
+    return { valid: false, reason: `Rating too low: ${product.rating} (min: ${MIN_RATING})` };
   }
   
   // Validate image URL
@@ -390,7 +398,9 @@ module.exports = {
   REQUIRED_FIELDS,
   GENERIC_NAMES,
   PREMIUM_BRANDS,
-  COLOR_WORDS
+  COLOR_WORDS,
+  MIN_RATING,
+  ASIN_PATTERN
 };
 
 // Run if called directly

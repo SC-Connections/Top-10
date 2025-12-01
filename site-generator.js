@@ -22,7 +22,11 @@ const CONFIG = {
     TEMPLATES_DIR: path.join(__dirname, 'templates'),
     OUTPUT_DIR: __dirname,
     DATA_DIR: path.join(__dirname, 'data'),
-    MAX_FEATURE_LENGTH: 150  // Maximum length for generated feature from description
+    MAX_FEATURE_LENGTH: 150,  // Maximum length for generated feature from description
+    // Product fetching configuration
+    MAX_RETRIES: 3,           // Number of retry attempts when products < MIN_PRODUCTS
+    MIN_PRODUCTS: 10,         // Minimum number of products required before retrying
+    RETRY_DELAY_MS: 2000      // Delay between retry attempts in milliseconds
 };
 
 /**
@@ -441,20 +445,18 @@ function applyFilters(products) {
 async function fetchProducts(niche) {
     const slug = createSlug(niche);
     const dataFile = path.join(CONFIG.DATA_DIR, `${slug}.json`);
-    const MAX_RETRIES = 3;
-    const MIN_PRODUCTS = 10;
     
     try {
         // Use new intelligent data layer to gather products from multiple sources
-        // Retry up to 3 times if we get fewer than 10 products
+        // Retry up to MAX_RETRIES times if we get fewer than MIN_PRODUCTS products
         let products = [];
         let filteredProducts = [];
         
-        for (let retry = 0; retry < MAX_RETRIES; retry++) {
+        for (let retry = 0; retry < CONFIG.MAX_RETRIES; retry++) {
             if (retry > 0) {
-                console.log(`\n🔄 Retry ${retry}/${MAX_RETRIES - 1}: Re-querying for more products...`);
+                console.log(`\n🔄 Retry ${retry}/${CONFIG.MAX_RETRIES - 1}: Re-querying for more products...`);
                 // Add delay between retries
-                await new Promise(resolve => setTimeout(resolve, 2000));
+                await new Promise(resolve => setTimeout(resolve, CONFIG.RETRY_DELAY_MS));
             }
             
             console.log('🚀 Using intelligent data layer...');
@@ -471,12 +473,12 @@ async function fetchProducts(niche) {
             console.log(`🔥 Filtered products ready: ${filteredProducts.length}`);
             
             // If we have enough products, break out of retry loop
-            if (filteredProducts.length >= MIN_PRODUCTS) {
-                console.log(`✅ Got ${filteredProducts.length} products (target: ${MIN_PRODUCTS})`);
+            if (filteredProducts.length >= CONFIG.MIN_PRODUCTS) {
+                console.log(`✅ Got ${filteredProducts.length} products (target: ${CONFIG.MIN_PRODUCTS})`);
                 break;
             }
             
-            if (retry < MAX_RETRIES - 1) {
+            if (retry < CONFIG.MAX_RETRIES - 1) {
                 console.log(`⚠️  Only ${filteredProducts.length} products found, will retry...`);
             }
         }
