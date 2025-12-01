@@ -258,12 +258,14 @@ function generateBlogContent(product, niche, rank) {
   // User situations
   const situationsSection = generateUserSituations(product, niche);
 
-  // Verdict
+  // Verdict - extract ranking message for readability
+  const rankingMessage = rank === 1
+    ? 'As our top-ranked pick, it offers the best overall combination of features and value.'
+    : `While ranked #${rank}, it offers specific strengths that may make it the ideal choice for your needs.`;
+
   const verdict = `
         <h2>Final Verdict</h2>
-        <p>The ${productName} delivers solid performance for its price point. 
-        ${rank === 1 ? 'As our top-ranked pick, it offers the best overall combination of features and value.' : 
-    `While ranked #${rank}, it offers specific strengths that may make it the ideal choice for your needs.`}</p>
+        <p>The ${productName} delivers solid performance for its price point. ${rankingMessage}</p>
         <p>We recommend this product for anyone seeking quality ${nicheLower} without overpaying. 
         The positive customer reviews and competitive pricing make it a smart purchase.</p>
     `;

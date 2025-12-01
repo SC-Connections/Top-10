@@ -65,6 +65,12 @@ function getSeededItem(arr, seed) {
 }
 
 /**
+ * Default rating values used when parsing fails
+ */
+const DEFAULT_FALLBACK_RATING = 4.0;
+const DEFAULT_AVERAGE_RATING = '4.5';
+
+/**
  * Generate a unique SEO intro paragraph
  * @param {string} niche - The niche category
  * @param {Array} products - Array of product objects
@@ -73,8 +79,8 @@ function getSeededItem(arr, seed) {
 function generateIntro(niche, products) {
   const year = new Date().getFullYear();
   const avgRating = products.length > 0
-    ? (products.reduce((sum, p) => sum + (parseFloat(p.rating) || 4.0), 0) / products.length).toFixed(1)
-    : '4.5';
+    ? (products.reduce((sum, p) => sum + (parseFloat(p.rating) || DEFAULT_FALLBACK_RATING), 0) / products.length).toFixed(1)
+    : DEFAULT_AVERAGE_RATING;
 
   // Use timestamp and product count as seed for variation
   const seed = Date.now() + products.length + niche.length;

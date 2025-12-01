@@ -7,8 +7,7 @@ require('dotenv').config();
 const fs = require('fs');
 const path = require('path');
 const axios = require('axios');
-const { generateSEOContent: generateSEOContentFromWriters, generateBlogArticle: generateBlogArticleFromWriters } = require('./writers/generate-seo');
-// Keep original imports for backward compatibility
+// Original SEO functions kept for backward compatibility with other modules
 const { generateIntroContent, generateBuyersGuide, generateFAQ, generateFAQStructuredData, generateCTA } = require('./generate-seo');
 const { generateBlogArticle } = require('./generate-blog');
 const { gatherTopProducts } = require('./data-sources');

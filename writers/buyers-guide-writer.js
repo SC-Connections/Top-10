@@ -3,6 +3,8 @@
  * Generates 300-500 word comprehensive buying guides with H2/H3 headings
  */
 
+const { calculateAveragePrice } = require('./utils');
+
 /**
  * Budget ranges for different product categories
  */
@@ -114,15 +116,7 @@ function generateBuyersGuide(niche, products) {
   const year = new Date().getFullYear();
 
   // Calculate average price from products if available
-  let avgPrice = 100;
-  if (products && products.length > 0) {
-    const prices = products
-      .map(p => parseFloat((p.price || '').replace(/[^0-9.]/g, '')))
-      .filter(p => !isNaN(p) && p > 0);
-    if (prices.length > 0) {
-      avgPrice = Math.round(prices.reduce((a, b) => a + b, 0) / prices.length);
-    }
-  }
+  const avgPrice = calculateAveragePrice(products);
 
   const content = `
         <h2>Complete Buyer's Guide for ${niche}</h2>

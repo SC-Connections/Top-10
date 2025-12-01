@@ -3,6 +3,8 @@
  * Generates 5 FAQ pairs (questions + answers) with HTML and JSON-LD schema
  */
 
+const { calculateAveragePrice, getTopBrand } = require('./utils');
+
 /**
  * Generate FAQ questions and answers based on niche and products
  * @param {string} niche - The niche category
@@ -14,20 +16,10 @@ function generateFAQPairs(niche, products = []) {
   const nicheLower = niche.toLowerCase();
 
   // Calculate average price from products if available
-  let avgPrice = 100;
-  if (products && products.length > 0) {
-    const prices = products
-      .map(p => parseFloat((p.price || '').replace(/[^0-9.]/g, '')))
-      .filter(p => !isNaN(p) && p > 0);
-    if (prices.length > 0) {
-      avgPrice = Math.round(prices.reduce((a, b) => a + b, 0) / prices.length);
-    }
-  }
+  const avgPrice = calculateAveragePrice(products);
 
   // Get top brand from products
-  const topBrand = products.length > 0 && products[0].title
-    ? products[0].title.split(' ')[0]
-    : 'leading';
+  const topBrand = getTopBrand(products);
 
   return [
     {
