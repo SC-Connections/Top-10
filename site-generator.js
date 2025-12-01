@@ -305,6 +305,47 @@ async function fetchProductDetails(asin) {
 }
 
 /**
+ * Normalize product model name for deduplication
+ * Removes color variants, size indicators, edition markers
+ * @param {string} title - Product title
+ * @returns {string} Normalized model name
+ */
+function normalizeModelName(title) {
+  // Color variants to remove
+  const colorWords = [
+    'black', 'white', 'silver', 'gold', 'rose gold', 'space gray', 'space grey',
+    'midnight', 'starlight', 'blue', 'red', 'green', 'pink', 'purple', 'orange',
+    'navy', 'gray', 'grey', 'bronze', 'copper', 'champagne', 'graphite',
+    'slate blue', 'cloud pink', 'sand gray', 'twilight blue', 'jet black',
+    'sky blue', 'cream', 'beige', 'brown', 'yellow', 'teal', 'coral'
+  ];
+  
+  // Edition markers to remove
+  const editionWords = ['limited edition', 'special edition', 'amazon exclusive'];
+  
+  let normalized = title.toLowerCase();
+  
+  // Remove content in parentheses
+  normalized = normalized.replace(/\([^)]*\)/g, '');
+  
+  // Remove content after " - " or " – " (often contains color/variant info)
+  normalized = normalized.replace(/\s[-–]\s.*$/, '');
+  
+  // Remove color words using a single regex with alternation for better performance
+  const colorPattern = new RegExp(`\\b(${colorWords.join('|')})\\b`, 'gi');
+  normalized = normalized.replace(colorPattern, '');
+  
+  // Remove edition markers using a single regex
+  const editionPattern = new RegExp(`(${editionWords.join('|')})`, 'gi');
+  normalized = normalized.replace(editionPattern, '');
+  
+  // Clean up extra whitespace
+  normalized = normalized.replace(/\s+/g, ' ').trim();
+  
+  return normalized;
+}
+
+/**
  * Apply lenient quality filters and deduplication
  * @param {Array} products - Products array
  * @returns {Array} Filtered products array
@@ -312,14 +353,18 @@ async function fetchProductDetails(asin) {
 function applyFilters(products) {
   const PREMIUM_BRANDS = [
     "Apple","Sony","Bose","Sennheiser","Bang & Olufsen",
-    "Shure","Razer","Logitech","Samsung","JBL","Beats","HP","Dell","Lenovo"
+    "Shure","Razer","Logitech","Samsung","JBL","Beats","HP","Dell","Lenovo",
+    "Garmin","Fitbit","Fossil","Skullcandy","Audio-Technica","Anker","Microsoft",
+    "LG","Asus","Acer","MSI","Alienware","Corsair","SteelSeries","HyperX",
+    "Jabra","Plantronics","Philips","Panasonic","TCL","Hisense","Vizio",
+    "Nintendo","PlayStation","Xbox","Oculus","Meta","Google","Amazon","Kindle"
   ];
 
   // Lenient thresholds to ensure products pass through
   const MIN_RATING = 3.5;  // Lowered from 4.2
 
   const seenAsins = new Set();
-  const seenTitles = new Set();
+  const seenModels = new Set();  // Track normalized model names for deduplication
   const final = [];
 
   for (const p of products) {
@@ -346,22 +391,17 @@ function applyFilters(products) {
       continue;
     }
     
-    // Deduplicate by title similarity (secondary)
-    // Strip parentheses but KEEP color names to allow color variants
-    // Only truly identical titles will be deduplicated
-    const normalizedTitle = titleLower
-      .replace(/\([^)]*\)/g, '')  // Remove content in parentheses
-      .replace(/\s+/g, ' ')
-      .trim();
+    // Deduplicate by normalized model name (removes color variants)
+    // This ensures we don't list the same product in different colors
+    const normalizedModel = normalizeModelName(title);
     
-    // Only skip if truly identical after normalization
-    if (seenTitles.has(normalizedTitle)) {
-      console.log(`  ⚠️  Skipping duplicate: "${title}"`);
+    if (seenModels.has(normalizedModel)) {
+      console.log(`  ⚠️  Skipping color variant: "${title}" (same model as previous)`);
       continue;
     }
     
     seenAsins.add(asin);
-    seenTitles.add(normalizedTitle);
+    seenModels.add(normalizedModel);
 
     // Apply lenient quality filters
     if (rating < MIN_RATING) {
@@ -369,12 +409,11 @@ function applyFilters(products) {
       continue;
     }
 
-    // Premium brand check is now lenient - we score rather than filter
-    // Products without premium brands can still pass through
-    const isPremium = PREMIUM_BRANDS.some(b => titleLower.includes(b.toLowerCase()));
+    // Check if product has a recognizable brand name (not generic)
+    const hasBrand = PREMIUM_BRANDS.some(b => titleLower.includes(b.toLowerCase()));
     
     // Add to results with premium flag for scoring
-    final.push({ ...p, isPremium });
+    final.push({ ...p, isPremium: hasBrand });
   }
 
   // Sort by premium status first, then by rating, then by review count
@@ -1080,6 +1119,49 @@ function truncate(text, length) {
  * @returns {boolean} True if has brand name, false if generic
  */
 function hasBrandName(title) {
+    // List of known premium/recognized brands (deduplicated)
+    const KNOWN_BRANDS = [
+        "Apple", "Sony", "Bose", "Sennheiser", "Bang & Olufsen", "B&O",
+        "Shure", "Razer", "Logitech", "Samsung", "JBL", "Beats", "HP", "Dell", "Lenovo",
+        "Garmin", "Fitbit", "Fossil", "Skullcandy", "Audio-Technica", "Anker", "Microsoft",
+        "LG", "Asus", "Acer", "MSI", "Alienware", "Corsair", "SteelSeries", "HyperX",
+        "Jabra", "Plantronics", "Philips", "Panasonic", "TCL", "Hisense", "Vizio",
+        "Nintendo", "PlayStation", "Xbox", "Oculus", "Meta", "Google", "Amazon", "Kindle",
+        "Bowers & Wilkins", "Master & Dynamic", "Focal", "AKG", "Beyerdynamic",
+        "Marshall", "Denon", "Harman Kardon", "KEF", "Klipsch",
+        "Soundcore", "1MORE", "Jaybird", "Mpow", "Tozo", "Tribit", "EarFun",
+        "Xiaomi", "OnePlus", "Huawei", "Oppo", "Realme", "Nothing", "Motorola",
+        "Amazfit", "Withings", "Polar", "Suunto", "Coros", "Mobvoi", "TicWatch",
+        "ROG", "Republic of Gamers", "Turtle Beach", "Astro", "EPOS",
+        "Dyson", "Roomba", "iRobot", "Ecovacs", "Roborock", "Shark", "Eufy",
+        "Canon", "Nikon", "Fujifilm", "GoPro", "DJI", "Insta360", "Olympus"
+    ];
+    
+    // Generic product names that should be rejected (starts with these)
+    const GENERIC_NAMES = [
+        "Smart Watch", "Smartwatch", "Smart Watches",
+        "Wireless Earbuds", "Wireless Headphones", "Bluetooth Headphones",
+        "Bluetooth Earbuds", "Earbuds", "Headphones", "Earphones",
+        "Fitness Tracker", "Activity Tracker", "Sport Watch",
+        "Gaming Headset", "Headset", "TWS",
+        "Tablet", "Laptop", "Computer", "PC",
+        "TV", "Television", "Monitor", "Display",
+        "Camera", "Webcam", "Speaker", "Soundbar",
+        "Robot Vacuum", "Vacuum Cleaner", "Smart Home",
+        "Watch for Men", "Watch for Women", "Watches for Men", "Watches for Women"
+    ];
+    
+    const titleLower = title.toLowerCase().trim();
+    const titleOriginal = title.trim();
+    
+    // Check if title starts with a generic product name (no brand)
+    for (const generic of GENERIC_NAMES) {
+        if (titleLower.startsWith(generic.toLowerCase())) {
+            console.log(`    📛 Rejecting generic name: "${title}" (starts with "${generic}")`);
+            return false;
+        }
+    }
+    
     // Common generic starting patterns that indicate no brand
     const genericPatterns = [
         /^[0-9]+ Pack/i,
@@ -1090,22 +1172,42 @@ function hasBrandName(title) {
         /^Universal /i,
         /^Compatible /i,
         /^Replacement /i,
-        /^[0-9]{3,}/  // Starting with numbers like "100 Pack"
+        /^[0-9]{3,}/,  // Starting with numbers like "100 Pack"
+        /^New /i,
+        /^Latest /i,
+        /^Upgraded /i,
+        /^2024 /i,
+        /^2025 /i
     ];
     
     // Check if title starts with generic patterns
     for (const pattern of genericPatterns) {
-        if (pattern.test(title)) {
+        if (pattern.test(titleOriginal)) {
             return false;
+        }
+    }
+    
+    // Check if title contains a known brand name
+    for (const brand of KNOWN_BRANDS) {
+        if (titleLower.includes(brand.toLowerCase())) {
+            return true;  // Has a recognized brand
         }
     }
     
     // Check if first word is capitalized and looks like a brand name
     // Brand names typically start with capital letters and are at the beginning
-    const firstWord = title.trim().split(/[\s-]/)[0];
+    const firstWord = titleOriginal.split(/[\s-]/)[0];
     
     // If starts with lowercase, likely generic description
     if (firstWord.length > 0 && firstWord[0] === firstWord[0].toLowerCase()) {
+        return false;
+    }
+    
+    // If no known brand found and first word is generic, reject
+    const firstWordLower = firstWord.toLowerCase();
+    const genericFirstWords = ['smart', 'wireless', 'bluetooth', 'fitness', 'digital', 'portable', 'mini', 'premium'];
+    if (genericFirstWords.includes(firstWordLower)) {
+        console.log(`    📛 Rejecting generic name: "${title}" (starts with generic word "${firstWord}")`);
         return false;
     }
     
