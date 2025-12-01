@@ -8,6 +8,8 @@
     <meta name="keywords" content="{{META_KEYWORDS}}">
     <meta name="robots" content="index, follow">
     <meta name="author" content="SC Connections">
+    <meta name="last-modified" content="{{LAST_UPDATED}}">
+    <meta name="update-frequency" content="weekly">
     <link rel="canonical" href="{{PAGE_URL}}">
     
     <!-- Open Graph / Facebook -->
@@ -17,6 +19,7 @@
     <meta property="og:description" content="{{META_DESCRIPTION}}">
     <meta property="og:site_name" content="SC Connections Top 10">
     <meta property="og:locale" content="en_US">
+    <meta property="article:modified_time" content="{{LAST_UPDATED}}">
     
     <!-- Twitter Card -->
     <meta name="twitter:card" content="summary_large_image">
@@ -83,8 +86,15 @@
                     <li><a href="#products">Products</a></li>
                     <li><a href="#guide">Buyer's Guide</a></li>
                     <li><a href="#faq">FAQ</a></li>
+                    <li><a href="how-we-pick-products.html">How We Pick</a></li>
                 </ul>
             </nav>
+            <!-- Internal Links - SEO Boost -->
+            <div class="internal-links">
+                <a href="../sleep-earbuds/">Sleep Earbuds</a>
+                <a href="../gaming-headphones/">Gaming Headphones</a>
+                <a href="../workout-earbuds/">Workout Earbuds</a>
+            </div>
         </div>
     </header>
 
@@ -122,6 +132,18 @@
         <section id="products" class="products-section">
             <div class="container">
                 <h2>{{PRODUCTS_SECTION_TITLE}}</h2>
+                
+                <!-- Category Filter Tabs -->
+                <div class="category-filters">
+                    <button class="filter-btn active" data-category="all">All</button>
+                    <button class="filter-btn" data-category="premium">Premium</button>
+                    <button class="filter-btn" data-category="budget">Budget</button>
+                    <button class="filter-btn" data-category="gym">Gym</button>
+                    <button class="filter-btn" data-category="travel">Travel</button>
+                    <button class="filter-btn" data-category="work">Work</button>
+                    <button class="filter-btn" data-category="gaming">Gaming</button>
+                </div>
+                
                 <div class="products-grid">
                     {{PRODUCTS_LIST}}
                 </div>
@@ -163,7 +185,68 @@
             <p>&copy; 2025 SC Connections. Product data sourced from Amazon.</p>
             <time id="last-updated">{{LAST_UPDATED}}</time>
             <div class="affiliate-disclosure">As an Amazon Associate I earn from qualifying purchases.</div>
+            <!-- Footer Internal Links -->
+            <div class="footer-links">
+                <a href="../sleep-earbuds/">Sleep Earbuds</a>
+                <a href="../gaming-headphones/">Gaming Headphones</a>
+                <a href="../workout-earbuds/">Workout Earbuds</a>
+                <a href="how-we-pick-products.html">How We Pick Products</a>
+            </div>
         </div>
     </footer>
+    
+    <!-- Sticky CTA Button -->
+    <a href="{{TOP_PRODUCT_LINK}}" class="sticky-cta" target="_blank" rel="nofollow noopener" id="sticky-cta">
+        <span class="cta-icon">🔍</span>
+        <span>See Price on Amazon</span>
+    </a>
+    
+    <!-- Category Filter Script -->
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const filterBtns = document.querySelectorAll('.filter-btn');
+        const productCards = document.querySelectorAll('.product-card');
+        
+        filterBtns.forEach(btn => {
+            btn.addEventListener('click', function() {
+                const category = this.dataset.category;
+                
+                // Update active button
+                filterBtns.forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+                
+                // Filter products
+                productCards.forEach(card => {
+                    if (category === 'all') {
+                        card.classList.remove('hidden');
+                    } else {
+                        const cardCategories = card.dataset.categories || '';
+                        if (cardCategories.includes(category)) {
+                            card.classList.remove('hidden');
+                        } else {
+                            card.classList.add('hidden');
+                        }
+                    }
+                });
+            });
+        });
+        
+        // Update sticky CTA link based on first visible product
+        function updateStickyCTA() {
+            const visibleCard = document.querySelector('.product-card:not(.hidden)');
+            const stickyCta = document.getElementById('sticky-cta');
+            if (visibleCard && stickyCta) {
+                const affiliateLink = visibleCard.querySelector('.btn-primary');
+                if (affiliateLink) {
+                    stickyCta.href = affiliateLink.href;
+                }
+            }
+        }
+        
+        filterBtns.forEach(btn => {
+            btn.addEventListener('click', updateStickyCTA);
+        });
+    });
+    </script>
 </body>
 </html>
