@@ -7,6 +7,7 @@ require('dotenv').config();
 const fs = require('fs');
 const path = require('path');
 const axios = require('axios');
+// Original SEO functions kept for backward compatibility with other modules
 const { generateIntroContent, generateBuyersGuide, generateFAQ, generateFAQStructuredData, generateCTA } = require('./generate-seo');
 const { generateBlogArticle } = require('./generate-blog');
 const { gatherTopProducts } = require('./data-sources');
@@ -876,20 +877,29 @@ function loadTemplates() {
 }
 
 /**
- * Generate SEO content
+ * Generate SEO content using the new writers module
  * @param {string} niche - Niche name
  * @param {Array} products - Products array
  * @returns {object} SEO content object
  */
 function generateSEOContent(niche, products) {
+    // Use new writers module for intro and buyers guide (with product data)
+    const { generateIntro } = require('./writers/intro-writer');
+    const { generateBuyersGuide: writeBuyersGuide } = require('./writers/buyers-guide-writer');
+    const { generateFAQ: writeFAQ } = require('./writers/faq-writer');
+    const { generateCTA: writeCTA } = require('./writers/cta-writer');
+    
+    const faqResult = writeFAQ(niche, products);
+    
     return {
-        intro: generateIntroContent(niche, products),
-        buyersGuide: generateBuyersGuide(niche),
-        faq: generateFAQ(niche, products),
-        faqStructuredData: generateFAQStructuredData(niche, products),
-        cta: generateCTA(niche)
+        intro: generateIntro(niche, products),
+        buyersGuide: writeBuyersGuide(niche, products),
+        faq: faqResult.html,
+        faqStructuredData: faqResult.schema,
+        cta: writeCTA(niche)
     };
 }
+
 
 /**
  * Generate products HTML
@@ -1075,7 +1085,9 @@ function generateStructuredData(niche, slug, products) {
  * @returns {string} Blog HTML
  */
 function generateBlogHTML(product, niche, rank, templates) {
-    const blog = generateBlogArticle(product, niche, rank);
+    // Use new blog writer module
+    const { writeBlogContent } = require('./writers/blog-writer');
+    const blog = writeBlogContent(product, niche, rank);
     const publishDate = new Date().toLocaleDateString('en-US', { 
         year: 'numeric', 
         month: 'long', 
