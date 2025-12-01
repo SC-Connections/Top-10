@@ -96,7 +96,9 @@ The generator will create sites in individual folders (e.g., `bluetooth-earbuds/
 
 ## 📝 Adding New Niches
 
-Simply add new product categories to `niches.csv`:
+### Quick Start
+
+Simply add new product categories to `niches.csv`, one niche per line:
 
 ```csv
 Bluetooth Earbuds
@@ -107,7 +109,63 @@ Student Laptops
 Your New Niche Here
 ```
 
-Each line should be a product category that people search for on Amazon.
+### Step-by-Step Guide
+
+1. **Open `niches.csv`** in the repository root
+2. **Add your niche** on a new line
+3. **Commit the change** to the `main` branch
+4. **The generator will automatically**:
+   - Create a folder at `/<niche-slug>/` (e.g., `/bluetooth-earbuds/`)
+   - Generate `index.html` with SEO-optimized content
+   - Create individual blog posts for each product
+   - Add the niche to the main index page
+
+### Niche Naming Guidelines
+
+- Use **title case** for readability (e.g., "Bluetooth Headphones" not "bluetooth headphones")
+- Be **specific** for better product matching (e.g., "Gaming Wireless Earbuds" instead of just "Earbuds")
+- Use **product-focused names** that people search for on Amazon
+- Avoid overly **generic terms** (e.g., "Electronics" or "Accessories")
+
+### Examples of Good Niches
+
+| Niche Name | Generated Folder | Why It Works |
+|------------|------------------|--------------|
+| Bluetooth Headphones | `/bluetooth-headphones/` | Specific product category |
+| Robot Vacuum | `/robot-vacuum/` | Clear product type |
+| Smart TV | `/smart-tv/` | Popular search term |
+| Gaming Microphones | `/gaming-microphones/` | Targeted audience |
+| Wireless Earbuds | `/wireless-earbuds/` | High-volume search term |
+
+### What Happens After Adding a Niche
+
+1. **On Push**: The build workflow triggers automatically
+2. **Data Gathering**: The system fetches products from:
+   - Google Trends (trending products)
+   - Amazon Best Sellers (popular products)
+   - RapidAPI fallback (if needed)
+3. **Premium Filtering**: Only products from premium brands (Apple, Sony, Bose, etc.) are selected
+4. **Deduplication**: Color variants and duplicates are removed
+5. **Site Generation**: HTML pages with SEO content are created
+6. **Auto-Deploy**: The site is deployed to GitHub Pages
+
+### Validation
+
+Products are validated against 8 required fields:
+- ASIN
+- Title
+- Price
+- Reviews count
+- Rating
+- Image URL
+- Description
+- Affiliate URL
+
+Products missing any required field are logged and skipped.
+
+### Affiliate Links
+
+All generated URLs automatically include the affiliate tracking tag: `scconnec0d-20`
 
 ## 🔧 Configuration
 
@@ -127,7 +185,7 @@ For the GitHub Actions workflow to fetch real Amazon data and generate sites, co
 The workflow runs:
 - On push to `main` branch
 - On manual trigger (workflow_dispatch)
-- Daily at 6 AM UTC (scheduled)
+- Weekly on Monday at 6 AM UTC (scheduled)
 
 ### Repository Architecture
 

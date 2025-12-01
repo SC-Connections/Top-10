@@ -7,15 +7,31 @@
     <meta name="description" content="{{META_DESCRIPTION}}">
     <meta name="keywords" content="{{META_KEYWORDS}}">
     <meta name="robots" content="index, follow">
+    <meta name="author" content="SC Connections">
+    <link rel="canonical" href="{{PAGE_URL}}">
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="{{PAGE_URL}}">
     <meta property="og:title" content="{{TITLE}}">
     <meta property="og:description" content="{{META_DESCRIPTION}}">
-    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="SC Connections Top 10">
+    <meta property="og:locale" content="en_US">
+    
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="{{TITLE}}">
+    <meta name="twitter:description" content="{{META_DESCRIPTION}}">
+    
     <link rel="stylesheet" href="styles.css">
     
-    <!-- JSON-LD Structured Data -->
+    <!-- JSON-LD Structured Data for ItemList -->
     <script type="application/ld+json">
     {{STRUCTURED_DATA}}
     </script>
+    
+    <!-- FAQ Schema -->
+    {{FAQ_STRUCTURED_DATA}}
     
     <!-- Breadcrumb Schema -->
     <script type="application/ld+json">
@@ -36,6 +52,22 @@
           "item": "{{PAGE_URL}}"
         }
       ]
+    }
+    </script>
+    
+    <!-- WebPage Schema -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebPage",
+      "name": "{{TITLE}}",
+      "description": "{{META_DESCRIPTION}}",
+      "url": "{{PAGE_URL}}",
+      "dateModified": "{{LAST_UPDATED}}",
+      "publisher": {
+        "@type": "Organization",
+        "name": "SC Connections"
+      }
     }
     </script>
 </head>

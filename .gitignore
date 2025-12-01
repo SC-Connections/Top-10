@@ -20,6 +20,7 @@ data/*.json
 .env.local
 
 # Logs
+logs/
 *.log
 npm-debug.log*
 

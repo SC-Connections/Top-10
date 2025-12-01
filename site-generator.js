@@ -22,7 +22,11 @@ const CONFIG = {
     TEMPLATES_DIR: path.join(__dirname, 'templates'),
     OUTPUT_DIR: __dirname,
     DATA_DIR: path.join(__dirname, 'data'),
-    MAX_FEATURE_LENGTH: 150  // Maximum length for generated feature from description
+    MAX_FEATURE_LENGTH: 150,  // Maximum length for generated feature from description
+    // Product fetching configuration
+    MAX_RETRIES: 3,           // Number of retry attempts when products < MIN_PRODUCTS
+    MIN_PRODUCTS: 10,         // Minimum number of products required before retrying
+    RETRY_DELAY_MS: 2000      // Delay between retry attempts in milliseconds
 };
 
 /**
@@ -225,12 +229,14 @@ function generateEmptyResultsPage(siteDir, niche, slug, templates) {
     html = html.replace(/{{HERO_TITLE}}/g, `Top 10 ${niche} (${new Date().getFullYear()})`);
     html = html.replace(/{{INTRO_TITLE}}/g, `About ${niche}`);
     html = html.replace(/{{INTRO_PARAGRAPH}}/g, `<p>We're currently updating our list of the best ${niche.toLowerCase()}. Please check back soon for comprehensive reviews and recommendations.</p>`);
+    html = html.replace(/{{COMPARISON_TABLE}}/g, '');
     html = html.replace(/{{PRODUCTS_SECTION_TITLE}}/g, `No Products Available`);
     html = html.replace(/{{PRODUCTS_LIST}}/g, `<div class="empty-results"><p>⚠️ No products with complete information are currently available for this category. We're working on updating our database. Please check back soon!</p></div>`);
     html = html.replace(/{{BUYERS_GUIDE_TITLE}}/g, `Buyer's Guide - Coming Soon`);
     html = html.replace(/{{BUYERS_GUIDE_CONTENT}}/g, `<p>Our comprehensive buyer's guide will be available once we have product data to analyze.</p>`);
     html = html.replace(/{{FAQ_TITLE}}/g, `FAQ - Coming Soon`);
     html = html.replace(/{{FAQ_CONTENT}}/g, `<p>Frequently asked questions will be added once product reviews are available.</p>`);
+    html = html.replace(/{{FAQ_STRUCTURED_DATA}}/g, '<!-- FAQ schema will be added when products are available -->');
     html = html.replace(/{{CTA_CONTENT}}/g, `<p>Check back soon for updated product recommendations!</p>`);
     html = html.replace(/{{LAST_UPDATED}}/g, lastUpdated);
     html = html.replace(/{{STRUCTURED_DATA}}/g, '{}');
@@ -442,16 +448,43 @@ async function fetchProducts(niche) {
     
     try {
         // Use new intelligent data layer to gather products from multiple sources
-        console.log('🚀 Using intelligent data layer...');
-        let products = await gatherTopProducts(niche);
+        // Retry up to MAX_RETRIES times if we get fewer than MIN_PRODUCTS products
+        let products = [];
+        let filteredProducts = [];
         
-        // Apply filtering with lenient thresholds and deduplication
-        products = applyFilters(products);
-        
-        console.log(`🔥 Filtered products ready: ${products.length}`);
+        for (let retry = 0; retry < CONFIG.MAX_RETRIES; retry++) {
+            if (retry > 0) {
+                console.log(`\n🔄 Retry ${retry}/${CONFIG.MAX_RETRIES - 1}: Re-querying for more products...`);
+                // Add delay between retries
+                await new Promise(resolve => setTimeout(resolve, CONFIG.RETRY_DELAY_MS));
+            }
+            
+            console.log('🚀 Using intelligent data layer...');
+            const gatheredProducts = await gatherTopProducts(niche);
+            
+            // Merge with existing products (avoiding duplicates by ASIN)
+            const existingAsins = new Set(products.map(p => p.asin));
+            const newProducts = gatheredProducts.filter(p => !existingAsins.has(p.asin));
+            products.push(...newProducts);
+            
+            // Apply filtering with lenient thresholds and deduplication
+            filteredProducts = applyFilters(products);
+            
+            console.log(`🔥 Filtered products ready: ${filteredProducts.length}`);
+            
+            // If we have enough products, break out of retry loop
+            if (filteredProducts.length >= CONFIG.MIN_PRODUCTS) {
+                console.log(`✅ Got ${filteredProducts.length} products (target: ${CONFIG.MIN_PRODUCTS})`);
+                break;
+            }
+            
+            if (retry < CONFIG.MAX_RETRIES - 1) {
+                console.log(`⚠️  Only ${filteredProducts.length} products found, will retry...`);
+            }
+        }
         
         // Limit to top 12 for API detail fetching (allows some to fail and still get 10)
-        const filteredProducts = products.slice(0, 12);
+        filteredProducts = filteredProducts.slice(0, 12);
         
         // Save gathered products to data directory
         fs.writeFileSync(dataFile, JSON.stringify(products, null, 2));
@@ -963,6 +996,11 @@ function generateIndexHTML(niche, slug, templates, seoContent, productsHTML, pro
     // Generate comparison table
     const comparisonTable = generateComparisonTable(products);
     
+    // Generate FAQ structured data as script tag
+    const faqStructuredDataScript = `<script type="application/ld+json">
+    ${JSON.stringify(seoContent.faqStructuredData, null, 2)}
+    </script>`;
+    
     let html = templates.mainTemplate;
     
     // Replace all placeholders
@@ -980,6 +1018,7 @@ function generateIndexHTML(niche, slug, templates, seoContent, productsHTML, pro
     html = html.replace(/{{BUYERS_GUIDE_CONTENT}}/g, seoContent.buyersGuide);
     html = html.replace(/{{FAQ_TITLE}}/g, templateData.sections.faq_title.replace(/{{NICHE}}/g, niche));
     html = html.replace(/{{FAQ_CONTENT}}/g, seoContent.faq);
+    html = html.replace(/{{FAQ_STRUCTURED_DATA}}/g, faqStructuredDataScript);
     html = html.replace(/{{CTA_CONTENT}}/g, seoContent.cta);
     html = html.replace(/{{LAST_UPDATED}}/g, lastUpdated);
     html = html.replace(/{{STRUCTURED_DATA}}/g, JSON.stringify(structuredData, null, 2));

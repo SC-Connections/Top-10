@@ -1,0 +1,207 @@
+name: Weekly Niche Site Update
+
+on:
+  schedule:
+    # Run weekly on Monday at 6 AM UTC
+    - cron: '0 6 * * 1'
+  workflow_dispatch:
+    inputs:
+      niche:
+        description: 'Specific niche to update (leave empty for all)'
+        required: false
+        default: ''
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  weekly-update:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+      
+      - name: Install dependencies
+        run: npm install
+      
+      - name: Install Puppeteer dependencies
+        run: |
+          echo "📦 Installing Puppeteer system dependencies..."
+          sudo apt-get update -qq
+
+          sudo apt-get install -y \
+            libx11-xcb1 \
+            libxtst6 \
+            libxcomposite1 \
+            libxi6 \
+            libxrender1 \
+            libxrandr2 \
+            libnss3 \
+            libatk1.0-0 \
+            libatk-bridge2.0-0 \
+            libcups2 \
+            libxss1 \
+            libxdamage1 \
+            libgbm1 || echo "⚠️  Some Puppeteer dependencies failed to install (non-fatal)"
+
+          if sudo apt-get install -y libasound2; then
+            echo "✅ Installed libasound2"
+          elif sudo apt-get install -y libasound2t64; then
+            echo "✅ Installed libasound2t64"
+          else
+            echo "⚠️  Neither libasound2 nor libasound2t64 could be installed."
+          fi
+      
+      - name: Set timestamp and branch name
+        run: |
+          WEEK_NUM=$(date '+%Y-W%V')
+          echo "UPDATE_TIMESTAMP=$(date '+%B %d, %Y')" >> $GITHUB_ENV
+          echo "WEEK_NUM=$WEEK_NUM" >> $GITHUB_ENV
+          echo "BRANCH_NAME=weekly-update-$WEEK_NUM" >> $GITHUB_ENV
+      
+      - name: Create update branch
+        run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+          git checkout -b ${{ env.BRANCH_NAME }}
+      
+      - name: Generate niche sites
+        env:
+          RAPIDAPI_KEY: ${{ secrets.RAPIDAPI_KEY }}
+          AMAZON_AFFILIATE_ID: ${{ secrets.AMAZON_AFFILIATE_ID }}
+          UPDATE_TIMESTAMP: ${{ env.UPDATE_TIMESTAMP }}
+          SKIP_PUPPETEER: 'false'
+        run: |
+          echo "🚀 Generating niche sites for weekly update..."
+          node site-generator.js
+          echo "✅ Site generation complete!"
+      
+      - name: Run data validation
+        run: |
+          echo "🔍 Running data validation..."
+          
+          # Validate each generated data file
+          for datafile in data/*.json; do
+            if [ -f "$datafile" ]; then
+              echo "Validating: $datafile"
+              node scripts/validate-data.js "$datafile" --log-dir ./logs || true
+            fi
+          done
+      
+      - name: Verify niche folders
+        run: |
+          echo "🔍 Verifying generated niche folders..."
+
+          if [ ! -f "_niches_data.json" ]; then
+            echo "[]" > _niches_data.json
+          fi
+
+          missing_count=0
+          total_niches=0
+          updated_niches=""
+          
+          while IFS= read -r line; do
+            slug=$(echo "$line" | jq -r '.slug // empty')
+            niche=$(echo "$line" | jq -r '.niche // empty')
+            if [ -n "$slug" ]; then
+              total_niches=$((total_niches + 1))
+              if [ -d "$slug" ] && [ -f "$slug/index.html" ]; then
+                echo "✅ Verified: $slug/"
+                updated_niches="$updated_niches\n- $niche"
+              else
+                echo "❌ Missing: $slug/"
+                missing_count=$((missing_count + 1))
+              fi
+            fi
+          done < <(jq -c '.[]' _niches_data.json)
+
+          echo "TOTAL_NICHES=$total_niches" >> $GITHUB_ENV
+          echo "MISSING_COUNT=$missing_count" >> $GITHUB_ENV
+          echo -e "UPDATED_NICHES=$updated_niches" >> $GITHUB_ENV
+      
+      - name: Generate root index.html
+        run: npm run generate-root-index
+      
+      - name: Check for changes
+        id: check_changes
+        run: |
+          git add .
+          if git diff --staged --quiet; then
+            echo "has_changes=false" >> $GITHUB_OUTPUT
+            echo "ℹ️  No changes detected"
+          else
+            echo "has_changes=true" >> $GITHUB_OUTPUT
+            echo "✅ Changes detected, will create PR"
+          fi
+      
+      - name: Commit changes
+        if: steps.check_changes.outputs.has_changes == 'true'
+        run: |
+          git commit -m "Weekly Update - ${{ env.WEEK_NUM }}: Updated niche sites with fresh product data"
+      
+      - name: Push branch
+        if: steps.check_changes.outputs.has_changes == 'true'
+        run: |
+          git push -u origin ${{ env.BRANCH_NAME }}
+      
+      - name: Create Pull Request
+        if: steps.check_changes.outputs.has_changes == 'true'
+        uses: peter-evans/create-pull-request@v5
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          branch: ${{ env.BRANCH_NAME }}
+          base: main
+          title: "Weekly Update for ${{ env.WEEK_NUM }}"
+          body: |
+            ## 📊 Weekly Niche Site Update
+            
+            **Week:** ${{ env.WEEK_NUM }}
+            **Generated:** ${{ env.UPDATE_TIMESTAMP }}
+            
+            ### Summary
+            - **Total niches processed:** ${{ env.TOTAL_NICHES }}
+            - **Successfully updated:** ${{ env.TOTAL_NICHES - env.MISSING_COUNT }}
+            - **Failed:** ${{ env.MISSING_COUNT }}
+            
+            ### Updated Sites
+            ${{ env.UPDATED_NICHES }}
+            
+            ### What's Changed
+            - Fresh product data from Amazon
+            - Updated prices, ratings, and reviews
+            - New products may have been added if better options were found
+            
+            ### Review Checklist
+            - [ ] Verify product data accuracy
+            - [ ] Check affiliate links are working
+            - [ ] Review any validation logs in `/logs`
+            
+            ---
+            *This PR was automatically generated by the Weekly Update workflow.*
+          labels: |
+            weekly-update
+            automated
+          draft: false
+      
+      - name: Summary
+        run: |
+          echo "## Weekly Update Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Week:** ${{ env.WEEK_NUM }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Date:** ${{ env.UPDATE_TIMESTAMP }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          if [ "${{ steps.check_changes.outputs.has_changes }}" == "true" ]; then
+            echo "✅ Changes detected and PR created" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "ℹ️  No changes detected this week" >> $GITHUB_STEP_SUMMARY
+          fi
