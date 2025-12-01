@@ -185,6 +185,10 @@ async function generateSiteForNiche(niche) {
     const indexHTML = generateIndexHTML(niche, slug, templates, seoContent, productsHTML, products);
     fs.writeFileSync(path.join(siteDir, 'index.html'), indexHTML);
     
+    // Generate how-we-pick-products.html page
+    console.log('📄 Creating how-we-pick-products.html...');
+    generateHowWePickPage(siteDir, niche, slug);
+    
     // Generate blog articles for each product
     console.log('📰 Generating blog articles...');
     for (let i = 0; i < products.length; i++) {
@@ -206,6 +210,30 @@ async function generateSiteForNiche(niche) {
     fs.writeFileSync(path.join(siteDir, 'README.md'), readme);
     
     console.log(`✓ Site generated at: /${slug}/`);
+}
+
+/**
+ * Generate how-we-pick-products.html page
+ * @param {string} siteDir - Site directory
+ * @param {string} niche - Niche name
+ * @param {string} slug - URL slug
+ */
+function generateHowWePickPage(siteDir, niche, slug) {
+    const templatePath = path.join(CONFIG.TEMPLATES_DIR, 'how-we-pick-products.html');
+    
+    // Check if template exists
+    if (!fs.existsSync(templatePath)) {
+        console.warn('⚠️  how-we-pick-products.html template not found, skipping');
+        return;
+    }
+    
+    let html = fs.readFileSync(templatePath, 'utf-8');
+    
+    // Replace placeholders
+    html = html.replace(/{{NICHE}}/g, niche);
+    html = html.replace(/{{PAGE_URL}}/g, `${CONFIG.BASE_URL}/${slug}/`);
+    
+    fs.writeFileSync(path.join(siteDir, 'how-we-pick-products.html'), html);
 }
 
 /**
@@ -932,22 +960,183 @@ function generateProductsHTML(products, template, niche) {
         // Extract short product name for display
         const shortName = extractShortProductName(product.title);
         
+        // Detect product categories
+        const categories = detectProductCategories(product, niche);
+        
+        // Generate product highlights
+        const highlights = generateProductHighlights(product, niche);
+        
         let html = template;
         html = html.replace(/{{RANK}}/g, rank);
         html = html.replace(/{{BADGE}}/g, badge);
+        html = html.replace(/{{CATEGORIES}}/g, categories.join(' '));
         html = html.replace(/{{IMAGE_URL}}/g, product.image);
         html = html.replace(/{{PRODUCT_TITLE}}/g, escapeHtml(shortName));
         html = html.replace(/{{RATING_STARS}}/g, generateStars(parseFloat(product.rating)));
         html = html.replace(/{{RATING}}/g, product.rating);
         html = html.replace(/{{REVIEW_COUNT}}/g, product.reviews);
         html = html.replace(/{{PRICE}}/g, product.price);
-        html = html.replace(/{{SHORT_DESCRIPTION}}/g, truncate(product.description, 200));
-        html = html.replace(/{{FEATURES_LIST}}/g, generateListItems(product.features));
+        html = html.replace(/{{HIGHLIGHTS}}/g, highlights);
+        const features = Array.isArray(product.features) ? product.features : [];
+        html = html.replace(/{{FEATURES_LIST}}/g, generateListItems(features.slice(0, 5)));
         html = html.replace(/{{AFFILIATE_LINK}}/g, generateAffiliateLink(product));
         html = html.replace(/{{ASIN}}/g, product.asin);
         
         return html;
     }).join('\n\n');
+}
+
+/**
+ * Detect product categories based on title, description, and features
+ * @param {object} product - Product object
+ * @param {string} niche - Niche name
+ * @returns {Array} Array of category strings
+ */
+function detectProductCategories(product, niche) {
+    const categories = [];
+    const text = `${product.title} ${product.description} ${product.features.join(' ')}`.toLowerCase();
+    const price = parseFloat(product.price.replace(/[^0-9.]/g, '')) || 0;
+    
+    // Premium category (high-end brands or price > $100)
+    const premiumBrands = ['sony', 'bose', 'apple', 'sennheiser', 'bang & olufsen', 'beats studio'];
+    if (price > 100 || premiumBrands.some(brand => text.includes(brand))) {
+        categories.push('premium');
+    }
+    
+    // Budget category (price < $50)
+    if (price < 50) {
+        categories.push('budget');
+    }
+    
+    // Gym/Workout category
+    const gymKeywords = ['gym', 'workout', 'sport', 'sweat', 'water-resistant', 'waterproof', 'ipx', 'fitness', 'running', 'exercise'];
+    if (gymKeywords.some(kw => text.includes(kw))) {
+        categories.push('gym');
+    }
+    
+    // Travel category
+    const travelKeywords = ['travel', 'airplane', 'flight', 'portable', 'foldable', 'compact', 'carrying case'];
+    if (travelKeywords.some(kw => text.includes(kw))) {
+        categories.push('travel');
+    }
+    
+    // Work category
+    const workKeywords = ['office', 'work', 'calls', 'microphone', 'conference', 'zoom', 'teams', 'business', 'professional'];
+    if (workKeywords.some(kw => text.includes(kw))) {
+        categories.push('work');
+    }
+    
+    // Gaming category
+    const gamingKeywords = ['gaming', 'game', 'gamer', 'low latency', 'surround sound', 'rgb', 'playstation', 'xbox'];
+    if (gamingKeywords.some(kw => text.includes(kw))) {
+        categories.push('gaming');
+    }
+    
+    return categories;
+}
+
+/**
+ * Generate product highlights HTML
+ * @param {object} product - Product object
+ * @param {string} niche - Niche name
+ * @returns {string} Highlights HTML
+ */
+function generateProductHighlights(product, niche) {
+    const highlights = [];
+    const features = Array.isArray(product.features) ? product.features : [];
+    const text = `${product.title} ${product.description} ${features.join(' ')}`.toLowerCase();
+    const specs = extractProductSpecs(product);
+    
+    // Price - always show
+    highlights.push({
+        icon: '💰',
+        label: 'Price',
+        value: product.price
+    });
+    
+    // Best For - detect use case
+    const bestFor = detectBestFor(text);
+    if (bestFor) {
+        highlights.push({
+            icon: '✔',
+            label: 'Best For',
+            value: bestFor
+        });
+    }
+    
+    // Battery - if available
+    if (specs.battery) {
+        highlights.push({
+            icon: '🔋',
+            label: 'Battery',
+            value: specs.battery
+        });
+    }
+    
+    // ANC - check for noise cancellation
+    if (text.includes('noise cancel') || text.includes('anc') || text.includes('active noise')) {
+        highlights.push({
+            icon: '🔇',
+            label: 'ANC',
+            value: 'Yes'
+        });
+    }
+    
+    // Driver Size - if available
+    if (specs.driver) {
+        highlights.push({
+            icon: '🔊',
+            label: 'Driver Size',
+            value: specs.driver
+        });
+    }
+    
+    // Weight - if available
+    if (specs.weight) {
+        highlights.push({
+            icon: '⚖️',
+            label: 'Weight',
+            value: specs.weight
+        });
+    }
+    
+    // Generate HTML for highlights
+    return highlights.map(h => `
+            <div class="highlight-item">
+                <span class="highlight-icon">${h.icon}</span>
+                <span class="highlight-label">${h.label}</span>
+                <span class="highlight-value">${escapeHtml(h.value)}</span>
+            </div>`).join('');
+}
+
+/**
+ * Detect best use case for product
+ * @param {string} text - Combined product text
+ * @returns {string|null} Best use case or null
+ */
+function detectBestFor(text) {
+    if (text.includes('gym') || text.includes('workout') || text.includes('sport') || text.includes('running')) {
+        return 'Workouts';
+    }
+    if (text.includes('travel') || text.includes('airplane') || text.includes('flight')) {
+        return 'Travel';
+    }
+    if (text.includes('gaming') || text.includes('game')) {
+        return 'Gaming';
+    }
+    if (text.includes('office') || text.includes('work') || text.includes('calls') || text.includes('conference')) {
+        return 'Work/Calls';
+    }
+    if (text.includes('bass') || text.includes('audiophile') || text.includes('hi-res') || text.includes('lossless')) {
+        return 'Music Lovers';
+    }
+    if (text.includes('comfort') || text.includes('all-day') || text.includes('lightweight')) {
+        return 'All-Day Use';
+    }
+    if (text.includes('budget') || text.includes('affordable') || text.includes('value')) {
+        return 'Budget-Friendly';
+    }
+    return null;
 }
 
 /**
@@ -1011,6 +1200,9 @@ function generateIndexHTML(niche, slug, templates, seoContent, productsHTML, pro
     ${JSON.stringify(seoContent.faqStructuredData, null, 2)}
     </script>`;
     
+    // Get top product link for sticky CTA
+    const topProductLink = products.length > 0 ? generateAffiliateLink(products[0]) : '#';
+    
     let html = templates.mainTemplate;
     
     // Replace all placeholders
@@ -1034,6 +1226,7 @@ function generateIndexHTML(niche, slug, templates, seoContent, productsHTML, pro
     html = html.replace(/{{STRUCTURED_DATA}}/g, JSON.stringify(structuredData, null, 2));
     html = html.replace(/{{BASE_URL}}/g, CONFIG.BASE_URL);
     html = html.replace(/{{PAGE_URL}}/g, `${CONFIG.BASE_URL}/${slug}/`);
+    html = html.replace(/{{TOP_PRODUCT_LINK}}/g, topProductLink);
     
     return html;
 }

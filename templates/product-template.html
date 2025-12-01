@@ -1,4 +1,4 @@
-<div class="product-card" data-rank="{{RANK}}" id="product-{{RANK}}">
+<div class="product-card" data-rank="{{RANK}}" data-categories="{{CATEGORIES}}" id="product-{{RANK}}">
     <div class="product-badge">
         <span class="rank-badge">#{{RANK}}</span>
         {{BADGE}}
@@ -17,13 +17,9 @@
             <span class="review-count">({{REVIEW_COUNT}} reviews)</span>
         </div>
         
-        <div class="product-price">
-            <span class="price-label">Price:</span>
-            <span class="price-value">{{PRICE}}</span>
-        </div>
-        
-        <div class="product-description">
-            {{SHORT_DESCRIPTION}}
+        <!-- Product Highlight Grid -->
+        <div class="product-highlights">
+            {{HIGHLIGHTS}}
         </div>
         
         <div class="product-features">
@@ -35,7 +31,7 @@
         
         <div class="product-actions">
             <a href="{{AFFILIATE_LINK}}" class="btn-primary" target="_blank" rel="nofollow noopener">
-                View on Amazon
+                🛒 See Price on Amazon
             </a>
             <a href="blog/{{ASIN}}.html" class="btn-secondary">
                 Read Full Review
