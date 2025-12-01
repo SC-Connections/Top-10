@@ -320,8 +320,7 @@ function normalizeModelName(title) {
     'sky blue', 'cream', 'beige', 'brown', 'yellow', 'teal', 'coral'
   ];
   
-  // Size/edition markers to remove
-  const sizeWords = ['xl', 'xxl', 'xs', 'small', 'medium', 'large', 'mini', 'max', 'pro', 'plus'];
+  // Edition markers to remove
   const editionWords = ['limited edition', 'special edition', 'amazon exclusive'];
   
   let normalized = title.toLowerCase();
@@ -332,17 +331,13 @@ function normalizeModelName(title) {
   // Remove content after " - " or " – " (often contains color/variant info)
   normalized = normalized.replace(/\s[-–]\s.*$/, '');
   
-  // Remove color words
-  for (const color of colorWords) {
-    // Use word boundary to avoid partial matches
-    const regex = new RegExp(`\\b${color}\\b`, 'gi');
-    normalized = normalized.replace(regex, '');
-  }
+  // Remove color words using a single regex with alternation for better performance
+  const colorPattern = new RegExp(`\\b(${colorWords.join('|')})\\b`, 'gi');
+  normalized = normalized.replace(colorPattern, '');
   
-  // Remove edition markers
-  for (const edition of editionWords) {
-    normalized = normalized.replace(new RegExp(edition, 'gi'), '');
-  }
+  // Remove edition markers using a single regex
+  const editionPattern = new RegExp(`(${editionWords.join('|')})`, 'gi');
+  normalized = normalized.replace(editionPattern, '');
   
   // Clean up extra whitespace
   normalized = normalized.replace(/\s+/g, ' ').trim();
@@ -1124,7 +1119,7 @@ function truncate(text, length) {
  * @returns {boolean} True if has brand name, false if generic
  */
 function hasBrandName(title) {
-    // List of known premium/recognized brands
+    // List of known premium/recognized brands (deduplicated)
     const KNOWN_BRANDS = [
         "Apple", "Sony", "Bose", "Sennheiser", "Bang & Olufsen", "B&O",
         "Shure", "Razer", "Logitech", "Samsung", "JBL", "Beats", "HP", "Dell", "Lenovo",
@@ -1133,11 +1128,11 @@ function hasBrandName(title) {
         "Jabra", "Plantronics", "Philips", "Panasonic", "TCL", "Hisense", "Vizio",
         "Nintendo", "PlayStation", "Xbox", "Oculus", "Meta", "Google", "Amazon", "Kindle",
         "Bowers & Wilkins", "Master & Dynamic", "Focal", "AKG", "Beyerdynamic",
-        "Marshall", "Bang&Olufsen", "Denon", "Harman Kardon", "KEF", "Klipsch",
+        "Marshall", "Denon", "Harman Kardon", "KEF", "Klipsch",
         "Soundcore", "1MORE", "Jaybird", "Mpow", "Tozo", "Tribit", "EarFun",
         "Xiaomi", "OnePlus", "Huawei", "Oppo", "Realme", "Nothing", "Motorola",
         "Amazfit", "Withings", "Polar", "Suunto", "Coros", "Mobvoi", "TicWatch",
-        "ROG", "Republic of Gamers", "Turtle Beach", "Astro", "EPOS", "Sennheiser",
+        "ROG", "Republic of Gamers", "Turtle Beach", "Astro", "EPOS",
         "Dyson", "Roomba", "iRobot", "Ecovacs", "Roborock", "Shark", "Eufy",
         "Canon", "Nikon", "Fujifilm", "GoPro", "DJI", "Insta360", "Olympus"
     ];
