@@ -228,6 +228,9 @@
                         }
                     }
                 });
+                
+                // Update sticky CTA after filtering
+                updateStickyCTA();
             });
         });
         
@@ -243,9 +246,8 @@
             }
         }
         
-        filterBtns.forEach(btn => {
-            btn.addEventListener('click', updateStickyCTA);
-        });
+        // Initialize sticky CTA on page load
+        updateStickyCTA();
     });
     </script>
 </body>

@@ -977,7 +977,8 @@ function generateProductsHTML(products, template, niche) {
         html = html.replace(/{{REVIEW_COUNT}}/g, product.reviews);
         html = html.replace(/{{PRICE}}/g, product.price);
         html = html.replace(/{{HIGHLIGHTS}}/g, highlights);
-        html = html.replace(/{{FEATURES_LIST}}/g, generateListItems(product.features.slice(0, 5)));
+        const features = Array.isArray(product.features) ? product.features : [];
+        html = html.replace(/{{FEATURES_LIST}}/g, generateListItems(features.slice(0, 5)));
         html = html.replace(/{{AFFILIATE_LINK}}/g, generateAffiliateLink(product));
         html = html.replace(/{{ASIN}}/g, product.asin);
         
@@ -1042,7 +1043,8 @@ function detectProductCategories(product, niche) {
  */
 function generateProductHighlights(product, niche) {
     const highlights = [];
-    const text = `${product.title} ${product.description} ${product.features.join(' ')}`.toLowerCase();
+    const features = Array.isArray(product.features) ? product.features : [];
+    const text = `${product.title} ${product.description} ${features.join(' ')}`.toLowerCase();
     const specs = extractProductSpecs(product);
     
     // Price - always show
