@@ -1,7 +1,7 @@
 {
   "name": "top-10-niche-generator",
   "version": "1.0.0",
-  "type": "module",
+    "type": "commonjs",
   "description": "Automated niche-site generator for top 10 product review sites",
   "main": "site-generator.js",
   "scripts": {
