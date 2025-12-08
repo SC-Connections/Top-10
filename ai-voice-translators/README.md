@@ -1,8 +1,8 @@
-# Top 10 ai voice translators (2025)
+# Best ai-voice-translators (2025)
 
 ## Overview
 
-This site provides comprehensive reviews and rankings of the best ai voice translators available in 2025.
+This site provides comprehensive reviews and rankings of the best ai-voice-translators available in 2025.
 
 ## Features
 

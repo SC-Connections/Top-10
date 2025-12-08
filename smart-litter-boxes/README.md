@@ -1,8 +1,8 @@
-# Top 10 smart litter boxes (2025)
+# Best smart-litter-boxes (2025)
 
 ## Overview
 
-This site provides comprehensive reviews and rankings of the best smart litter boxes available in 2025.
+This site provides comprehensive reviews and rankings of the best smart-litter-boxes available in 2025.
 
 ## Features
 

@@ -1,8 +1,8 @@
-# Top 10 under-desk treadmills (2025)
+# Best under-desk-treadmills (2025)
 
 ## Overview
 
-This site provides comprehensive reviews and rankings of the best under-desk treadmills available in 2025.
+This site provides comprehensive reviews and rankings of the best under-desk-treadmills available in 2025.
 
 ## Features
 

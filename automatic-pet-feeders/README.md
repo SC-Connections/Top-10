@@ -1,8 +1,8 @@
-# Top 10 automatic pet feeders (2025)
+# Best automatic-pet-feeders (2025)
 
 ## Overview
 
-This site provides comprehensive reviews and rankings of the best automatic pet feeders available in 2025.
+This site provides comprehensive reviews and rankings of the best automatic-pet-feeders available in 2025.
 
 ## Features
 

@@ -1,12 +1,12 @@
-# Top 10 instant photo printers (2025)
+# Best instant-photo-printers (2025)
 
 ## Overview
 
-This site provides comprehensive reviews and rankings of the best instant photo printers available in 2025.
+This site provides comprehensive reviews and rankings of the best instant-photo-printers available in 2025.
 
 ## Features
 
-- ✅ 9 carefully selected products
+- ✅ 10 carefully selected products
 - ✅ Detailed product reviews and comparisons
 - ✅ Real-time pricing and availability from Amazon
 - ✅ Expert buyer's guide

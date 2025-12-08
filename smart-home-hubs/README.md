@@ -1,8 +1,8 @@
-# Top 10 smart home hubs (2025)
+# Best smart-home-hubs (2025)
 
 ## Overview
 
-This site provides comprehensive reviews and rankings of the best smart home hubs available in 2025.
+This site provides comprehensive reviews and rankings of the best smart-home-hubs available in 2025.
 
 ## Features
 

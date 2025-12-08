@@ -1,8 +1,8 @@
-# Top 10 pet cameras (2025)
+# Best pet-cameras (2025)
 
 ## Overview
 
-This site provides comprehensive reviews and rankings of the best pet cameras available in 2025.
+This site provides comprehensive reviews and rankings of the best pet-cameras available in 2025.
 
 ## Features
 

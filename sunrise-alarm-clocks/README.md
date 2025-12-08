@@ -1,8 +1,8 @@
-# Top 10 sunrise alarm clocks (2025)
+# Best sunrise-alarm-clocks (2025)
 
 ## Overview
 
-This site provides comprehensive reviews and rankings of the best sunrise alarm clocks available in 2025.
+This site provides comprehensive reviews and rankings of the best sunrise-alarm-clocks available in 2025.
 
 ## Features
 

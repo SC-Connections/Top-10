@@ -1,8 +1,8 @@
-# Top 10 car sunshades (2025)
+# Best car-sunshades (2025)
 
 ## Overview
 
-This site provides comprehensive reviews and rankings of the best car sunshades available in 2025.
+This site provides comprehensive reviews and rankings of the best car-sunshades available in 2025.
 
 ## Features
 

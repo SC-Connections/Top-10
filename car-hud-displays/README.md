@@ -1,12 +1,12 @@
-# Top 10 car hud displays (2025)
+# Best car-hud-displays (2025)
 
 ## Overview
 
-This site provides comprehensive reviews and rankings of the best car hud displays available in 2025.
+This site provides comprehensive reviews and rankings of the best car-hud-displays available in 2025.
 
 ## Features
 
-- ✅ 9 carefully selected products
+- ✅ 8 carefully selected products
 - ✅ Detailed product reviews and comparisons
 - ✅ Real-time pricing and availability from Amazon
 - ✅ Expert buyer's guide

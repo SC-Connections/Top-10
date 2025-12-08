@@ -1,8 +1,8 @@
-# Top 10 usb microphones (2025)
+# Best usb-microphones (2025)
 
 ## Overview
 
-This site provides comprehensive reviews and rankings of the best usb microphones available in 2025.
+This site provides comprehensive reviews and rankings of the best usb-microphones available in 2025.
 
 ## Features
 

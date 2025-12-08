@@ -1,12 +1,12 @@
-# Top 10 massage guns (2025)
+# Best massage-guns (2025)
 
 ## Overview
 
-This site provides comprehensive reviews and rankings of the best massage guns available in 2025.
+This site provides comprehensive reviews and rankings of the best massage-guns available in 2025.
 
 ## Features
 
-- ✅ 9 carefully selected products
+- ✅ 8 carefully selected products
 - ✅ Detailed product reviews and comparisons
 - ✅ Real-time pricing and availability from Amazon
 - ✅ Expert buyer's guide

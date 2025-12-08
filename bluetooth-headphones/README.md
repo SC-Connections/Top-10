@@ -1,8 +1,8 @@
-# Best bluetooth headphones (2025)
+# Best bluetooth-headphones (2025)
 
 ## Overview
 
-This site provides comprehensive reviews and rankings of the best bluetooth headphones available in 2025.
+This site provides comprehensive reviews and rankings of the best bluetooth-headphones available in 2025.
 
 ## Features
 

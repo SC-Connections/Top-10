@@ -1,12 +1,12 @@
-# Top 10 blue light glasses (2025)
+# Best blue-light-glasses (2025)
 
 ## Overview
 
-This site provides comprehensive reviews and rankings of the best blue light glasses available in 2025.
+This site provides comprehensive reviews and rankings of the best blue-light-glasses available in 2025.
 
 ## Features
 
-- ✅ 3 carefully selected products
+- ✅ 6 carefully selected products
 - ✅ Detailed product reviews and comparisons
 - ✅ Real-time pricing and availability from Amazon
 - ✅ Expert buyer's guide

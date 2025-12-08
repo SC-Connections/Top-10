@@ -1,4 +1,4 @@
-# Top 10 greenscreens (2025)
+# Best greenscreens (2025)
 
 ## Overview
 

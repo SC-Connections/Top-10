@@ -1,12 +1,12 @@
-# Top 10 smart pens (2025)
+# Best smart-pens (2025)
 
 ## Overview
 
-This site provides comprehensive reviews and rankings of the best smart pens available in 2025.
+This site provides comprehensive reviews and rankings of the best smart-pens available in 2025.
 
 ## Features
 
-- ✅ 6 carefully selected products
+- ✅ 8 carefully selected products
 - ✅ Detailed product reviews and comparisons
 - ✅ Real-time pricing and availability from Amazon
 - ✅ Expert buyer's guide

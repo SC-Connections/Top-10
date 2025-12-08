@@ -1,4 +1,4 @@
-# Top 10 teleprompters (2025)
+# Best teleprompters (2025)
 
 ## Overview
 

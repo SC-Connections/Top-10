@@ -1,8 +1,8 @@
-# Top 10 posture correctors (2025)
+# Best posture-correctors (2025)
 
 ## Overview
 
-This site provides comprehensive reviews and rankings of the best posture correctors available in 2025.
+This site provides comprehensive reviews and rankings of the best posture-correctors available in 2025.
 
 ## Features
 

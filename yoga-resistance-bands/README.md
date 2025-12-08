@@ -1,8 +1,8 @@
-# Top 10 yoga resistance bands (2025)
+# Best yoga-resistance-bands (2025)
 
 ## Overview
 
-This site provides comprehensive reviews and rankings of the best yoga resistance bands available in 2025.
+This site provides comprehensive reviews and rankings of the best yoga-resistance-bands available in 2025.
 
 ## Features
 

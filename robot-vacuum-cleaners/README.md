@@ -1,12 +1,12 @@
-# Top 10 robot vacuum cleaners (2025)
+# Best robot-vacuum-cleaners (2025)
 
 ## Overview
 
-This site provides comprehensive reviews and rankings of the best robot vacuum cleaners available in 2025.
+This site provides comprehensive reviews and rankings of the best robot-vacuum-cleaners available in 2025.
 
 ## Features
 
-- ✅ 4 carefully selected products
+- ✅ 3 carefully selected products
 - ✅ Detailed product reviews and comparisons
 - ✅ Real-time pricing and availability from Amazon
 - ✅ Expert buyer's guide

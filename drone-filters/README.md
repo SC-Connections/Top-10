@@ -1,8 +1,8 @@
-# Top 10 drone filters (2025)
+# Best drone-filters (2025)
 
 ## Overview
 
-This site provides comprehensive reviews and rankings of the best drone filters available in 2025.
+This site provides comprehensive reviews and rankings of the best drone-filters available in 2025.
 
 ## Features
 

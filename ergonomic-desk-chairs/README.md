@@ -1,8 +1,8 @@
-# Top 10 ergonomic desk chairs (2025)
+# Best ergonomic-desk-chairs (2025)
 
 ## Overview
 
-This site provides comprehensive reviews and rankings of the best ergonomic desk chairs available in 2025.
+This site provides comprehensive reviews and rankings of the best ergonomic-desk-chairs available in 2025.
 
 ## Features
 

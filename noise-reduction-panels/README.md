@@ -1,8 +1,8 @@
-# Top 10 noise reduction panels (2025)
+# Best noise-reduction-panels (2025)
 
 ## Overview
 
-This site provides comprehensive reviews and rankings of the best noise reduction panels available in 2025.
+This site provides comprehensive reviews and rankings of the best noise-reduction-panels available in 2025.
 
 ## Features
 

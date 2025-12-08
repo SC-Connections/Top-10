@@ -1,12 +1,12 @@
-# Top 10 mini projectors (2025)
+# Best mini-projectors (2025)
 
 ## Overview
 
-This site provides comprehensive reviews and rankings of the best mini projectors available in 2025.
+This site provides comprehensive reviews and rankings of the best mini-projectors available in 2025.
 
 ## Features
 
-- ✅ 2 carefully selected products
+- ✅ 1 carefully selected products
 - ✅ Detailed product reviews and comparisons
 - ✅ Real-time pricing and availability from Amazon
 - ✅ Expert buyer's guide

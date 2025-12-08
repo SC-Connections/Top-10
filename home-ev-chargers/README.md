@@ -1,8 +1,8 @@
-# Top 10 home ev chargers (2025)
+# Best home-ev-chargers (2025)
 
 ## Overview
 
-This site provides comprehensive reviews and rankings of the best home ev chargers available in 2025.
+This site provides comprehensive reviews and rankings of the best home-ev-chargers available in 2025.
 
 ## Features
 

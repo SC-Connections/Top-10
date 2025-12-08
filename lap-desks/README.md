@@ -1,8 +1,8 @@
-# Top 10 lap desks (2025)
+# Best lap-desks (2025)
 
 ## Overview
 
-This site provides comprehensive reviews and rankings of the best lap desks available in 2025.
+This site provides comprehensive reviews and rankings of the best lap-desks available in 2025.
 
 ## Features
 

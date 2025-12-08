@@ -1,8 +1,8 @@
-# Top 10 gaming headsets (2025)
+# Best gaming-headsets (2025)
 
 ## Overview
 
-This site provides comprehensive reviews and rankings of the best gaming headsets available in 2025.
+This site provides comprehensive reviews and rankings of the best gaming-headsets available in 2025.
 
 ## Features
 

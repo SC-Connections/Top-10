@@ -1,8 +1,8 @@
-# Top 10 fitness trackers (2025)
+# Best fitness-trackers (2025)
 
 ## Overview
 
-This site provides comprehensive reviews and rankings of the best fitness trackers available in 2025.
+This site provides comprehensive reviews and rankings of the best fitness-trackers available in 2025.
 
 ## Features
 

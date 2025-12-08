@@ -1,8 +1,8 @@
-# Top 10 smart air purifiers (2025)
+# Best smart-air-purifiers (2025)
 
 ## Overview
 
-This site provides comprehensive reviews and rankings of the best smart air purifiers available in 2025.
+This site provides comprehensive reviews and rankings of the best smart-air-purifiers available in 2025.
 
 ## Features
 

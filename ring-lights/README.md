@@ -1,12 +1,12 @@
-# Top 10 ring lights (2025)
+# Best ring-lights (2025)
 
 ## Overview
 
-This site provides comprehensive reviews and rankings of the best ring lights available in 2025.
+This site provides comprehensive reviews and rankings of the best ring-lights available in 2025.
 
 ## Features
 
-- ✅ 8 carefully selected products
+- ✅ 7 carefully selected products
 - ✅ Detailed product reviews and comparisons
 - ✅ Real-time pricing and availability from Amazon
 - ✅ Expert buyer's guide

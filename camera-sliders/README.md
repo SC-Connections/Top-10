@@ -1,8 +1,8 @@
-# Top 10 camera sliders (2025)
+# Best camera-sliders (2025)
 
 ## Overview
 
-This site provides comprehensive reviews and rankings of the best camera sliders available in 2025.
+This site provides comprehensive reviews and rankings of the best camera-sliders available in 2025.
 
 ## Features
 

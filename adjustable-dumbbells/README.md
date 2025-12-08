@@ -1,8 +1,8 @@
-# Top 10 adjustable dumbbells (2025)
+# Best adjustable-dumbbells (2025)
 
 ## Overview
 
-This site provides comprehensive reviews and rankings of the best adjustable dumbbells available in 2025.
+This site provides comprehensive reviews and rankings of the best adjustable-dumbbells available in 2025.
 
 ## Features
 

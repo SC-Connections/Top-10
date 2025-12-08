@@ -1,8 +1,8 @@
-# Top 10 water hydrogenators (2025)
+# Best water-hydrogenators (2025)
 
 ## Overview
 
-This site provides comprehensive reviews and rankings of the best water hydrogenators available in 2025.
+This site provides comprehensive reviews and rankings of the best water-hydrogenators available in 2025.
 
 ## Features
 

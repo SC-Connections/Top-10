@@ -1,8 +1,8 @@
-# Top 10 camera straps (2025)
+# Best camera-straps (2025)
 
 ## Overview
 
-This site provides comprehensive reviews and rankings of the best camera straps available in 2025.
+This site provides comprehensive reviews and rankings of the best camera-straps available in 2025.
 
 ## Features
 

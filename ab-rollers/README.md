@@ -1,8 +1,8 @@
-# Top 10 ab rollers (2025)
+# Best ab-rollers (2025)
 
 ## Overview
 
-This site provides comprehensive reviews and rankings of the best ab rollers available in 2025.
+This site provides comprehensive reviews and rankings of the best ab-rollers available in 2025.
 
 ## Features
 

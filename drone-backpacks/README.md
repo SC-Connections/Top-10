@@ -1,8 +1,8 @@
-# Top 10 drone backpacks (2025)
+# Best drone-backpacks (2025)
 
 ## Overview
 
-This site provides comprehensive reviews and rankings of the best drone backpacks available in 2025.
+This site provides comprehensive reviews and rankings of the best drone-backpacks available in 2025.
 
 ## Features
 

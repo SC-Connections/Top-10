@@ -1,8 +1,8 @@
-# Top 10 4k webcams (2025)
+# Best 4k-webcams (2025)
 
 ## Overview
 
-This site provides comprehensive reviews and rankings of the best 4k webcams available in 2025.
+This site provides comprehensive reviews and rankings of the best 4k-webcams available in 2025.
 
 ## Features
 
