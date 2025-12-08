@@ -1,11 +1,13 @@
 {
   "name": "top-10-niche-generator",
   "version": "1.0.0",
+  "type": "module",
   "description": "Automated niche-site generator for top 10 product review sites",
   "main": "site-generator.js",
   "scripts": {
     "generate": "node site-generator.js",
     "generate-root-index": "node scripts/generate-root-index.js",
+    "generate:sitemap": "node scripts/generate-sitemap.mjs",
     "validate": "node validate-sites.js",
     "validate-data": "node scripts/validate-data.js",
     "test": "npm run generate && npm run validate",

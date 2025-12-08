@@ -1,0 +1,81 @@
+name: Generate Sitemap
+
+# This workflow automatically generates and updates the sitemap.xml file
+# whenever changes are pushed to the main branch, on a weekly schedule,
+# or when manually triggered. This ensures Google always has an up-to-date
+# list of all pages for indexing.
+
+on:
+  # Run whenever code is pushed to main
+  push:
+    branches:
+      - main
+  
+  # Run every Monday at 06:00 UTC
+  schedule:
+    - cron: '0 6 * * 1'
+  
+  # Allow manual triggering from GitHub Actions UI
+  workflow_dispatch:
+
+# Set permissions for GITHUB_TOKEN
+permissions:
+  contents: write
+
+jobs:
+  generate-sitemap:
+    runs-on: ubuntu-latest
+    
+    steps:
+      # Checkout the repository
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      
+      # Setup Node.js environment
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      
+      # Install dependencies (if needed in the future)
+      - name: Install dependencies
+        run: npm install --production || true
+      
+      # Generate the sitemap
+      - name: Generate sitemap
+        run: npm run generate:sitemap
+      
+      # Check if sitemap.xml changed
+      - name: Check for changes
+        id: check_changes
+        run: |
+          if git diff --quiet sitemap.xml; then
+            echo "changed=false" >> $GITHUB_OUTPUT
+            echo "No changes to sitemap.xml"
+          else
+            echo "changed=true" >> $GITHUB_OUTPUT
+            echo "Sitemap.xml has been updated"
+          fi
+      
+      # Commit and push if there are changes
+      - name: Commit and push sitemap
+        if: steps.check_changes.outputs.changed == 'true'
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git add sitemap.xml
+          git commit -m "Auto-update sitemap.xml [skip ci]"
+          git push
+      
+      # Summary
+      - name: Workflow summary
+        run: |
+          if [ "${{ steps.check_changes.outputs.changed }}" == "true" ]; then
+            echo "✓ Sitemap updated and pushed successfully" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "✓ Sitemap is already up-to-date" >> $GITHUB_STEP_SUMMARY
+          fi
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Sitemap URL: https://sc-connections.github.io/Top-10/sitemap.xml" >> $GITHUB_STEP_SUMMARY
