@@ -1,15 +1,15 @@
 {
-  "title": "Best {{NICHE}} ({{YEAR}}) – Updated Weekly",
-  "meta_description": "Compare the best {{NICHE}} for {{YEAR}}. Updated weekly using real Amazon data. Reviews, ratings, and buying guide.",
+  "title": "Best {{NICHE}} – Top Products for {{YEAR}}",
+  "meta_description": "Find the best {{NICHE}} for {{YEAR}}. Expert picks based on real reviews, ratings, and performance. Updated weekly with current Amazon data.",
   "meta_keywords": "{{NICHE}}, best {{NICHE}}, top {{NICHE}}, {{NICHE}} reviews, {{NICHE}} {{YEAR}}",
   "sections": {
-    "hero_title": "Best {{NICHE}} ({{YEAR}})",
-    "intro_title": "Top-Rated {{NICHE}} for {{YEAR}}",
+    "hero_title": "Best {{NICHE}} – Top Products for {{YEAR}}",
+    "intro_title": "Why Trust Our {{NICHE}} Picks?",
     "intro_paragraph": "{{INTRO_CONTENT}}",
-    "products_section_title": "Best {{NICHE}} Comparison",
-    "buyers_guide_title": "Buyer's Guide: How to Choose the Best {{NICHE}}",
+    "products_section_title": "Top {{NICHE}} Picks",
+    "buyers_guide_title": "Buyer's Guide: Choosing the Right {{NICHE}}",
     "buyers_guide_content": "{{BUYERS_GUIDE_CONTENT}}",
-    "faq_title": "Frequently Asked Questions About {{NICHE}}",
+    "faq_title": "Common Questions About {{NICHE}}",
     "faq_content": "{{FAQ_CONTENT}}",
     "cta_text": "{{CTA_CONTENT}}"
   },
@@ -17,7 +17,7 @@
   "blog_template_file": "blog-template.html",
   "structured_data": {
     "type": "ItemList",
-    "name": "Best {{NICHE}} ({{YEAR}})",
-    "description": "The best {{NICHE}} available in {{YEAR}}, ranked and reviewed"
+    "name": "Best {{NICHE}} – Top Products for {{YEAR}}",
+    "description": "The best {{NICHE}} available in {{YEAR}}, ranked and reviewed based on real customer feedback"
   }
 }
