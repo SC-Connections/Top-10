@@ -298,6 +298,64 @@ function createSlug(niche) {
 }
 
 /**
+ * Properly capitalize niche names for display
+ * Handles special cases like "bluetooth" -> "Bluetooth"
+ * @param {string} niche - Niche name
+ * @returns {string} Properly capitalized niche name
+ */
+function formatNicheName(niche) {
+    // Special cases for technology terms and proper nouns
+    const specialCases = {
+        'bluetooth': 'Bluetooth',
+        'wifi': 'Wi-Fi',
+        'wi-fi': 'Wi-Fi',
+        'usb': 'USB',
+        'hdmi': 'HDMI',
+        'rgb': 'RGB',
+        'led': 'LED',
+        'oled': 'OLED',
+        'lcd': 'LCD',
+        '4k': '4K',
+        '8k': '8K',
+        'hd': 'HD',
+        'ai': 'AI',
+        'gopro': 'GoPro',
+        'iphone': 'iPhone',
+        'ipad': 'iPad',
+        'xbox': 'Xbox',
+        'playstation': 'PlayStation',
+        'anc': 'ANC',
+        'ev': 'EV',
+        'gps': 'GPS',
+        'rfid': 'RFID',
+        'obd2': 'OBD2',
+        'adhd': 'ADHD',
+        'hud': 'HUD'
+    };
+    
+    // Split by spaces and hyphens but keep hyphens for reconstruction
+    const words = niche.toLowerCase().split(/(\s+|-)/);
+    
+    const capitalizedWords = words.map(word => {
+        // Preserve spaces and hyphens
+        if (word.match(/^\s+$/) || word === '-') {
+            return word;
+        }
+        
+        // Check special cases first
+        const lowerWord = word.toLowerCase();
+        if (specialCases[lowerWord]) {
+            return specialCases[lowerWord];
+        }
+        
+        // Regular title case
+        return word.charAt(0).toUpperCase() + word.slice(1);
+    });
+    
+    return capitalizedWords.join('');
+}
+
+/**
  * Fetch product details from /product_details/ endpoint
  * @param {string} asin - Product ASIN
  * @returns {Promise<object|null>} Product details or null if failed
@@ -929,6 +987,63 @@ function generateSEOContent(niche, products) {
     };
 }
 
+/**
+ * Generate a human-sounding mini-review for a product
+ * @param {object} product - Product object
+ * @param {number} rank - Product rank
+ * @param {string} niche - Niche name
+ * @returns {string} Mini-review text
+ */
+function generateMiniReview(product, rank, niche) {
+    const text = `${product.title} ${product.description} ${Array.isArray(product.features) ? product.features.join(' ') : ''}`.toLowerCase();
+    const price = parseFloat(product.price.replace(/[^0-9.]/g, '')) || 0;
+    const rating = parseFloat(product.rating) || 0;
+    
+    // Generate contextual mini-reviews based on product characteristics
+    const reviews = {
+        bestOverall: [
+            "An outstanding all-around choice that excels in performance, features, and value.",
+            "The top pick for most people, combining excellent quality with practical features.",
+            "A standout performer that delivers on all fronts with consistently high ratings."
+        ],
+        premium: [
+            "Premium quality for those who want the best performance and features available.",
+            "High-end option with advanced features and superior build quality.",
+            "Professional-grade choice for serious enthusiasts who demand the best."
+        ],
+        budget: [
+            "Excellent value for money without compromising on essential features.",
+            "Budget-friendly pick that delivers solid performance at an affordable price.",
+            "Great entry-level option that punches above its price point."
+        ],
+        highRating: [
+            "Consistently praised by thousands of users for reliability and performance.",
+            "Customer favorite with exceptional reviews from real-world users.",
+            "Highly rated by buyers who appreciate its quality and value."
+        ]
+    };
+    
+    // Determine which type of review to use
+    if (rank === 1) {
+        return reviews.bestOverall[Math.floor(Math.random() * reviews.bestOverall.length)];
+    } else if (price > 150) {
+        return reviews.premium[Math.floor(Math.random() * reviews.premium.length)];
+    } else if (price < 50) {
+        return reviews.budget[Math.floor(Math.random() * reviews.budget.length)];
+    } else if (rating >= 4.5) {
+        return reviews.highRating[Math.floor(Math.random() * reviews.highRating.length)];
+    }
+    
+    // Default reviews for mid-range products
+    const defaultReviews = [
+        "Solid all-around performer with features that meet most users' needs.",
+        "Well-balanced option offering good performance at a reasonable price.",
+        "Popular choice among buyers looking for reliable everyday performance."
+    ];
+    
+    return defaultReviews[Math.floor(Math.random() * defaultReviews.length)];
+}
+
 
 /**
  * Generate products HTML
@@ -967,12 +1082,16 @@ function generateProductsHTML(products, template, niche) {
         // Generate product highlights
         const highlights = generateProductHighlights(product, niche);
         
+        // Generate mini-review summary
+        const miniReview = generateMiniReview(product, rank, niche);
+        
         let html = template;
         html = html.replace(/{{RANK}}/g, rank);
         html = html.replace(/{{BADGE}}/g, badge);
         html = html.replace(/{{CATEGORIES}}/g, categories.join(' '));
         html = html.replace(/{{IMAGE_URL}}/g, product.image);
         html = html.replace(/{{PRODUCT_TITLE}}/g, escapeHtml(shortName));
+        html = html.replace(/{{MINI_REVIEW}}/g, miniReview);
         html = html.replace(/{{RATING_STARS}}/g, generateStars(parseFloat(product.rating)));
         html = html.replace(/{{RATING}}/g, product.rating);
         html = html.replace(/{{REVIEW_COUNT}}/g, product.reviews);
@@ -1192,8 +1311,11 @@ function generateIndexHTML(niche, slug, templates, seoContent, productsHTML, pro
     // Get current year dynamically
     const currentYear = new Date().getFullYear();
     
+    // Format niche name with proper capitalization
+    const formattedNiche = formatNicheName(niche);
+    
     // Generate structured data
-    const structuredData = generateStructuredData(niche, slug, products);
+    const structuredData = generateStructuredData(formattedNiche, slug, products);
     
     // Generate comparison table
     const comparisonTable = generateComparisonTable(products);
@@ -1209,19 +1331,19 @@ function generateIndexHTML(niche, slug, templates, seoContent, productsHTML, pro
     let html = templates.mainTemplate;
     
     // Replace all placeholders - process YEAR and NICHE in template data first
-    html = html.replace(/{{TITLE}}/g, templateData.title.replace(/{{NICHE}}/g, niche).replace(/{{YEAR}}/g, currentYear));
-    html = html.replace(/{{META_DESCRIPTION}}/g, templateData.meta_description.replace(/{{NICHE}}/g, niche).replace(/{{YEAR}}/g, currentYear));
-    html = html.replace(/{{META_KEYWORDS}}/g, templateData.meta_keywords.replace(/{{NICHE}}/g, niche).replace(/{{YEAR}}/g, currentYear));
-    html = html.replace(/{{NICHE}}/g, niche);
-    html = html.replace(/{{HERO_TITLE}}/g, templateData.sections.hero_title.replace(/{{NICHE}}/g, niche).replace(/{{YEAR}}/g, currentYear));
-    html = html.replace(/{{INTRO_TITLE}}/g, templateData.sections.intro_title.replace(/{{NICHE}}/g, niche).replace(/{{YEAR}}/g, currentYear));
+    html = html.replace(/{{TITLE}}/g, templateData.title.replace(/{{NICHE}}/g, formattedNiche).replace(/{{YEAR}}/g, currentYear));
+    html = html.replace(/{{META_DESCRIPTION}}/g, templateData.meta_description.replace(/{{NICHE}}/g, formattedNiche).replace(/{{YEAR}}/g, currentYear));
+    html = html.replace(/{{META_KEYWORDS}}/g, templateData.meta_keywords.replace(/{{NICHE}}/g, niche.toLowerCase()).replace(/{{YEAR}}/g, currentYear));
+    html = html.replace(/{{NICHE}}/g, formattedNiche);
+    html = html.replace(/{{HERO_TITLE}}/g, templateData.sections.hero_title.replace(/{{NICHE}}/g, formattedNiche).replace(/{{YEAR}}/g, currentYear));
+    html = html.replace(/{{INTRO_TITLE}}/g, templateData.sections.intro_title.replace(/{{NICHE}}/g, formattedNiche).replace(/{{YEAR}}/g, currentYear));
     html = html.replace(/{{INTRO_PARAGRAPH}}/g, seoContent.intro);
     html = html.replace(/{{COMPARISON_TABLE}}/g, comparisonTable);
-    html = html.replace(/{{PRODUCTS_SECTION_TITLE}}/g, templateData.sections.products_section_title.replace(/{{NICHE}}/g, niche).replace(/{{YEAR}}/g, currentYear));
+    html = html.replace(/{{PRODUCTS_SECTION_TITLE}}/g, templateData.sections.products_section_title.replace(/{{NICHE}}/g, formattedNiche).replace(/{{YEAR}}/g, currentYear));
     html = html.replace(/{{PRODUCTS_LIST}}/g, productsHTML);
-    html = html.replace(/{{BUYERS_GUIDE_TITLE}}/g, templateData.sections.buyers_guide_title.replace(/{{NICHE}}/g, niche).replace(/{{YEAR}}/g, currentYear));
+    html = html.replace(/{{BUYERS_GUIDE_TITLE}}/g, templateData.sections.buyers_guide_title.replace(/{{NICHE}}/g, formattedNiche).replace(/{{YEAR}}/g, currentYear));
     html = html.replace(/{{BUYERS_GUIDE_CONTENT}}/g, seoContent.buyersGuide);
-    html = html.replace(/{{FAQ_TITLE}}/g, templateData.sections.faq_title.replace(/{{NICHE}}/g, niche).replace(/{{YEAR}}/g, currentYear));
+    html = html.replace(/{{FAQ_TITLE}}/g, templateData.sections.faq_title.replace(/{{NICHE}}/g, formattedNiche).replace(/{{YEAR}}/g, currentYear));
     html = html.replace(/{{FAQ_CONTENT}}/g, seoContent.faq);
     html = html.replace(/{{FAQ_STRUCTURED_DATA}}/g, faqStructuredDataScript);
     html = html.replace(/{{CTA_CONTENT}}/g, seoContent.cta);

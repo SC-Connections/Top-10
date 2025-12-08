@@ -77,23 +77,23 @@
 <body>
     <header class="site-header">
         <div class="container">
-            <nav class="main-nav">
-                <div class="logo">
-                    <h1>SC Connections</h1>
-                </div>
-                <ul class="nav-links">
-                    <li><a href="/">Home</a></li>
-                    <li><a href="#products">Top Products</a></li>
-                    <li><a href="#guide">Buyer's Guide</a></li>
-                    <li><a href="#faq">FAQ</a></li>
-                    <li><a href="how-we-pick-products.html">How We Pick</a></li>
-                </ul>
-            </nav>
-            <!-- Internal Links - SEO Boost -->
-            <div class="internal-links">
-                <a href="../sleep-earbuds/">Sleep Earbuds</a>
-                <a href="../gaming-headphones/">Gaming Headphones</a>
-                <a href="../workout-earbuds/">Workout Earbuds</a>
+            <div class="header-main">
+                <a href="/Top-10/" class="logo-link">
+                    <img src="/Top-10/assets/sc-connections-logo.svg" alt="SC Connections Logo" class="logo-image">
+                    <div class="logo-text">
+                        <h1>SC Connections</h1>
+                        <span class="tagline">Top Products Guides</span>
+                    </div>
+                </a>
+                <nav class="main-nav">
+                    <ul class="nav-links">
+                        <li><a href="/Top-10/">Home</a></li>
+                        <li><a href="#products">Products</a></li>
+                        <li><a href="#guide">Buyer's Guide</a></li>
+                        <li><a href="#faq">FAQ</a></li>
+                        <li><a href="how-we-pick-products.html">How We Pick</a></li>
+                    </ul>
+                </nav>
             </div>
         </div>
     </header>
@@ -103,7 +103,7 @@
         <section class="hero">
             <div class="container">
                 <h1 class="hero-title">{{HERO_TITLE}}</h1>
-                <p class="hero-subtitle">Expert-curated list updated weekly with real Amazon data</p>
+                <p class="hero-subtitle">Expert picks based on real reviews, ratings, and performance data</p>
                 <div class="last-updated">Updated weekly — Last update: {{LAST_UPDATED}}</div>
             </div>
         </section>
@@ -182,14 +182,17 @@
 
     <footer class="site-footer">
         <div class="container">
-            <p>&copy; 2025 SC Connections. Product data sourced from Amazon.</p>
-            <time id="last-updated">{{LAST_UPDATED}}</time>
-            <div class="affiliate-disclosure">As an Amazon Associate I earn from qualifying purchases.</div>
+            <p>&copy; <span class="js-current-year">2025</span> SC Connections. All rights reserved.</p>
+            <div class="affiliate-disclosure">
+                <strong>Amazon Associate Disclosure:</strong> As an Amazon Associate I earn from qualifying purchases. 
+                Product data sourced from Amazon and updated regularly.
+            </div>
             <!-- Footer Internal Links -->
             <div class="footer-links">
+                <h4>Popular Guides:</h4>
                 <a href="../sleep-earbuds/">Sleep Earbuds</a>
-                <a href="../gaming-headphones/">Gaming Headphones</a>
-                <a href="../workout-earbuds/">Workout Earbuds</a>
+                <a href="../gaming-headsets/">Gaming Headsets</a>
+                <a href="../bluetooth-headphones/">Bluetooth Headphones</a>
                 <a href="how-we-pick-products.html">How We Pick Products</a>
             </div>
         </div>
@@ -204,6 +207,13 @@
     <!-- Category Filter Script -->
     <script>
     document.addEventListener('DOMContentLoaded', function() {
+        // Dynamic year insertion
+        const currentYear = new Date().getFullYear();
+        document.querySelectorAll('.js-current-year').forEach(function(el) {
+            el.textContent = currentYear;
+        });
+        
+        // Category filters
         const filterBtns = document.querySelectorAll('.filter-btn');
         const productCards = document.querySelectorAll('.product-card');
         
