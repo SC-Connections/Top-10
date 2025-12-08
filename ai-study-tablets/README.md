@@ -6,7 +6,7 @@ This site provides comprehensive reviews and rankings of the best ai study table
 
 ## Features
 
-- ✅ 8 carefully selected products
+- ✅ 9 carefully selected products
 - ✅ Detailed product reviews and comparisons
 - ✅ Real-time pricing and availability from Amazon
 - ✅ Expert buyer's guide
@@ -39,4 +39,4 @@ This site contains affiliate links. We may earn a commission from qualifying pur
 
 ---
 
-*Last updated: December 1, 2025*
+*Last updated: December 8, 2025*

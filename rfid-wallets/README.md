@@ -39,4 +39,4 @@ This site contains affiliate links. We may earn a commission from qualifying pur
 
 ---
 
-*Last updated: December 1, 2025*
+*Last updated: December 8, 2025*
