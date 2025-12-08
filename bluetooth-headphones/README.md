@@ -1,4 +1,4 @@
-# Top 10 bluetooth headphones (2025)
+# Best bluetooth headphones (2025)
 
 ## Overview
 
