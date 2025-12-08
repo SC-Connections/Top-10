@@ -247,15 +247,16 @@ function generateEmptyResultsPage(siteDir, niche, slug, templates) {
     const templateData = templates.templateJSON;
     // Use ISO date format for consistency
     const lastUpdated = process.env.UPDATE_TIMESTAMP || new Date().toISOString().split('T')[0];
+    const currentYear = new Date().getFullYear();
     
     let html = templates.mainTemplate;
     
     // Replace all placeholders with empty state content
     html = html.replace(/{{TITLE}}/g, `${niche} - No Results Available`);
     html = html.replace(/{{META_DESCRIPTION}}/g, `Currently no products available for ${niche}. Check back soon for updated results.`);
-    html = html.replace(/{{META_KEYWORDS}}/g, templateData.meta_keywords.replace(/{{NICHE}}/g, niche));
+    html = html.replace(/{{META_KEYWORDS}}/g, templateData.meta_keywords.replace(/{{NICHE}}/g, niche).replace(/{{YEAR}}/g, currentYear));
     html = html.replace(/{{NICHE}}/g, niche);
-    html = html.replace(/{{HERO_TITLE}}/g, `Top 10 ${niche} (${new Date().getFullYear()})`);
+    html = html.replace(/{{HERO_TITLE}}/g, `Best ${niche} (${currentYear})`);
     html = html.replace(/{{INTRO_TITLE}}/g, `About ${niche}`);
     html = html.replace(/{{INTRO_PARAGRAPH}}/g, `<p>We're currently updating our list of the best ${niche.toLowerCase()}. Please check back soon for comprehensive reviews and recommendations.</p>`);
     html = html.replace(/{{COMPARISON_TABLE}}/g, '');
@@ -1188,6 +1189,8 @@ function generateIndexHTML(niche, slug, templates, seoContent, productsHTML, pro
     const templateData = templates.templateJSON;
     // Tier 2.6: Use ISO date format for last-updated timestamp
     const lastUpdated = process.env.UPDATE_TIMESTAMP || new Date().toISOString().split('T')[0];
+    // Get current year dynamically
+    const currentYear = new Date().getFullYear();
     
     // Generate structured data
     const structuredData = generateStructuredData(niche, slug, products);
@@ -1205,20 +1208,20 @@ function generateIndexHTML(niche, slug, templates, seoContent, productsHTML, pro
     
     let html = templates.mainTemplate;
     
-    // Replace all placeholders
-    html = html.replace(/{{TITLE}}/g, templateData.title.replace(/{{NICHE}}/g, niche));
-    html = html.replace(/{{META_DESCRIPTION}}/g, templateData.meta_description.replace(/{{NICHE}}/g, niche));
-    html = html.replace(/{{META_KEYWORDS}}/g, templateData.meta_keywords.replace(/{{NICHE}}/g, niche));
+    // Replace all placeholders - process YEAR and NICHE in template data first
+    html = html.replace(/{{TITLE}}/g, templateData.title.replace(/{{NICHE}}/g, niche).replace(/{{YEAR}}/g, currentYear));
+    html = html.replace(/{{META_DESCRIPTION}}/g, templateData.meta_description.replace(/{{NICHE}}/g, niche).replace(/{{YEAR}}/g, currentYear));
+    html = html.replace(/{{META_KEYWORDS}}/g, templateData.meta_keywords.replace(/{{NICHE}}/g, niche).replace(/{{YEAR}}/g, currentYear));
     html = html.replace(/{{NICHE}}/g, niche);
-    html = html.replace(/{{HERO_TITLE}}/g, templateData.sections.hero_title.replace(/{{NICHE}}/g, niche));
-    html = html.replace(/{{INTRO_TITLE}}/g, templateData.sections.intro_title.replace(/{{NICHE}}/g, niche));
+    html = html.replace(/{{HERO_TITLE}}/g, templateData.sections.hero_title.replace(/{{NICHE}}/g, niche).replace(/{{YEAR}}/g, currentYear));
+    html = html.replace(/{{INTRO_TITLE}}/g, templateData.sections.intro_title.replace(/{{NICHE}}/g, niche).replace(/{{YEAR}}/g, currentYear));
     html = html.replace(/{{INTRO_PARAGRAPH}}/g, seoContent.intro);
     html = html.replace(/{{COMPARISON_TABLE}}/g, comparisonTable);
-    html = html.replace(/{{PRODUCTS_SECTION_TITLE}}/g, templateData.sections.products_section_title.replace(/{{NICHE}}/g, niche));
+    html = html.replace(/{{PRODUCTS_SECTION_TITLE}}/g, templateData.sections.products_section_title.replace(/{{NICHE}}/g, niche).replace(/{{YEAR}}/g, currentYear));
     html = html.replace(/{{PRODUCTS_LIST}}/g, productsHTML);
-    html = html.replace(/{{BUYERS_GUIDE_TITLE}}/g, templateData.sections.buyers_guide_title.replace(/{{NICHE}}/g, niche));
+    html = html.replace(/{{BUYERS_GUIDE_TITLE}}/g, templateData.sections.buyers_guide_title.replace(/{{NICHE}}/g, niche).replace(/{{YEAR}}/g, currentYear));
     html = html.replace(/{{BUYERS_GUIDE_CONTENT}}/g, seoContent.buyersGuide);
-    html = html.replace(/{{FAQ_TITLE}}/g, templateData.sections.faq_title.replace(/{{NICHE}}/g, niche));
+    html = html.replace(/{{FAQ_TITLE}}/g, templateData.sections.faq_title.replace(/{{NICHE}}/g, niche).replace(/{{YEAR}}/g, currentYear));
     html = html.replace(/{{FAQ_CONTENT}}/g, seoContent.faq);
     html = html.replace(/{{FAQ_STRUCTURED_DATA}}/g, faqStructuredDataScript);
     html = html.replace(/{{CTA_CONTENT}}/g, seoContent.cta);
@@ -1239,11 +1242,12 @@ function generateIndexHTML(niche, slug, templates, seoContent, productsHTML, pro
  * @returns {object} Structured data object
  */
 function generateStructuredData(niche, slug, products) {
+    const currentYear = new Date().getFullYear();
     return {
         "@context": "https://schema.org",
         "@type": "ItemList",
-        "name": `Top 10 ${niche} (${new Date().getFullYear()})`,
-        "description": `The best ${niche.toLowerCase()} available in ${new Date().getFullYear()}, ranked and reviewed`,
+        "name": `Best ${niche} (${currentYear})`,
+        "description": `The best ${niche.toLowerCase()} available in ${currentYear}, ranked and reviewed`,
         "itemListElement": products.map((product, index) => ({
             "@type": "ListItem",
             "position": index + 1,
@@ -1642,7 +1646,7 @@ function extractProductSpecs(product) {
  */
 function generateReadme(niche, slug, productCount) {
     const year = new Date().getFullYear();
-    return `# Top 10 ${niche} (${year})
+    return `# Best ${niche} (${year})
 
 ## Overview
 
