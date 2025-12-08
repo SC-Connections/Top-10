@@ -39,11 +39,7 @@ jobs:
         with:
           node-version: '22'
       
-      # Install dependencies (if needed in the future)
-      - name: Install dependencies
-        run: npm install --production || true
-      
-      # Generate the sitemap
+      # Generate the sitemap (no dependencies needed - uses Node.js built-ins only)
       - name: Generate sitemap
         run: npm run generate:sitemap
       
