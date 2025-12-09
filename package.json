@@ -6,6 +6,8 @@
   "main": "site-generator.js",
   "scripts": {
     "generate": "node site-generator.js",
+    "generate:incremental": "node site-generator.js --mode=incremental",
+    "generate:refresh": "node site-generator.js --mode=refresh",
     "generate-root-index": "node scripts/generate-root-index.js",
     "generate:sitemap": "node scripts/generate-sitemap.mjs",
     "validate": "node validate-sites.js",
