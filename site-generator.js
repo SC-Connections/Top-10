@@ -11,6 +11,13 @@ const axios = require('axios');
 const { generateIntroContent, generateBuyersGuide, generateFAQ, generateFAQStructuredData, generateCTA } = require('./generate-seo');
 const { generateBlogArticle } = require('./generate-blog');
 const { gatherTopProducts } = require('./data-sources');
+// Niche state management for incremental builds
+const { 
+    loadNicheState, 
+    saveNicheState, 
+    getNichesToBuildIncremental, 
+    getNichesToBuildRefresh 
+} = require('./niche-state-manager');
 
 // Configuration
 const CONFIG = {
@@ -36,6 +43,20 @@ const CONFIG = {
 async function main() {
     console.log('🚀 Starting niche site generator...\n');
     
+    // Parse command line arguments
+    const args = process.argv.slice(2);
+    const modeArg = args.find(arg => arg.startsWith('--mode='));
+    const mode = modeArg ? modeArg.split('=')[1] : 'incremental';
+    
+    if (!['incremental', 'refresh'].includes(mode)) {
+        console.error(`❌ ERROR: Invalid mode "${mode}". Must be "incremental" or "refresh"`);
+        process.exit(1);
+    }
+    
+    console.log(`🔧 Mode: ${mode}`);
+    console.log(`   - incremental: Only build new or changed niches`);
+    console.log(`   - refresh: Only build niches older than 7 days\n`);
+    
     // Validate API credentials
     if (!CONFIG.RAPIDAPI_KEY || CONFIG.RAPIDAPI_KEY === '') {
         console.error('❌ ERROR: RAPIDAPI_KEY is not set');
@@ -55,22 +76,40 @@ async function main() {
     }
     
     // Read niches from CSV
-    const niches = readNiches();
-    console.log(`📋 Found ${niches.length} niches to process\n`);
+    const allNiches = readNiches();
+    console.log(`📋 Found ${allNiches.length} niches in CSV\n`);
+    
+    // Load state and determine which niches to build
+    const state = loadNicheState();
+    
+    let nichesToBuild;
+    if (mode === 'refresh') {
+        nichesToBuild = getNichesToBuildRefresh(allNiches, state, 7);
+    } else {
+        nichesToBuild = getNichesToBuildIncremental(allNiches, state);
+    }
+    
+    console.log(`\n🧱 Mode: ${mode}, niches to build: ${nichesToBuild.length}/${allNiches.length}\n`);
+    
+    if (nichesToBuild.length === 0) {
+        console.log('✅ No niches need to be built. All niches are up to date!');
+        console.log('🎉 Site generation complete!');
+        return;
+    }
     
     // Track generated niche URLs for index page
     const generatedNiches = [];
     const failedNiches = [];
     
-    // Process each niche
-    for (let i = 0; i < niches.length; i++) {
-        const niche = niches[i];
+    // Process each niche that needs building
+    for (let i = 0; i < nichesToBuild.length; i++) {
+        const { niche, slug, hash } = nichesToBuild[i];
+        
         try {
             console.log(`\n${'='.repeat(60)}`);
-            console.log(`📦 Processing: ${niche}`);
+            console.log(`📦 Processing (${i + 1}/${nichesToBuild.length}): ${niche}`);
             console.log('='.repeat(60));
             
-            const slug = createSlug(niche);
             await generateSiteForNiche(niche);
             
             // All sites are kept in this repository at /{slug}/
@@ -79,8 +118,14 @@ async function main() {
             generatedNiches.push({ niche, slug, url: publicUrl });
             console.log(`✅ Successfully generated site for: ${niche}\n`);
             
+            // Update state after successful build
+            state[slug] = {
+                hash,
+                lastBuild: new Date().toISOString()
+            };
+            
             // Rate limiting: Add delay between niches to avoid hitting API rate limits
-            if (i < niches.length - 1) {
+            if (i < nichesToBuild.length - 1) {
                 const delaySeconds = 3;
                 console.log(`⏳ Waiting ${delaySeconds} seconds before processing next niche (rate limiting)...`);
                 await new Promise(resolve => setTimeout(resolve, delaySeconds * 1000));
@@ -91,6 +136,9 @@ async function main() {
             // Continue with other niches instead of stopping completely
         }
     }
+    
+    // Save updated state
+    saveNicheState(state);
     
     // Save generated niches data for index page (always write file, may be empty)
     const dataFile = path.join(CONFIG.OUTPUT_DIR, '_niches_data.json');
@@ -103,6 +151,7 @@ async function main() {
     console.log('='.repeat(60));
     console.log(`✅ Successfully generated: ${generatedNiches.length} sites`);
     console.log(`❌ Failed: ${failedNiches.length} sites`);
+    console.log(`⏭️  Skipped (up to date): ${allNiches.length - nichesToBuild.length} sites`);
     
     if (generatedNiches.length > 0) {
         console.log('\n✅ Generated Sites:');

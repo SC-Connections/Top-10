@@ -4,6 +4,8 @@ on:
   push:
     branches:
       - main
+    paths:
+      - 'niches.csv'
   workflow_dispatch:
   schedule:
     # Run weekly on Monday at 6 AM UTC to update product data
@@ -61,15 +63,30 @@ jobs:
       - name: Set timestamp
         run: echo "UPDATE_TIMESTAMP=$(date '+%B %d, %Y')" >> $GITHUB_ENV
       
-      - name: Generate niche sites
+      # Incremental mode on push (new/changed niches only)
+      - name: Generate niche sites (incremental)
+        if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
         env:
           RAPIDAPI_KEY: ${{ secrets.RAPIDAPI_KEY }}
           AMAZON_AFFILIATE_ID: ${{ secrets.AMAZON_AFFILIATE_ID }}
           UPDATE_TIMESTAMP: ${{ env.UPDATE_TIMESTAMP }}
           SKIP_PUPPETEER: 'false'  # Try to use Puppeteer, but will fallback if it fails
         run: |
-          echo "🚀 Generating niche sites..."
-          node site-generator.js
+          echo "🚀 Generating niche sites (incremental mode)..."
+          node site-generator.js --mode=incremental
+          echo "✅ Site generation complete!"
+      
+      # Refresh mode on schedule (age-based refresh)
+      - name: Generate niche sites (weekly refresh)
+        if: github.event_name == 'schedule'
+        env:
+          RAPIDAPI_KEY: ${{ secrets.RAPIDAPI_KEY }}
+          AMAZON_AFFILIATE_ID: ${{ secrets.AMAZON_AFFILIATE_ID }}
+          UPDATE_TIMESTAMP: ${{ env.UPDATE_TIMESTAMP }}
+          SKIP_PUPPETEER: 'false'  # Try to use Puppeteer, but will fallback if it fails
+        run: |
+          echo "🚀 Generating niche sites (refresh mode)..."
+          node site-generator.js --mode=refresh
           echo "✅ Site generation complete!"
       
       - name: Verify niche folders were generated
@@ -111,11 +128,22 @@ jobs:
         run: |
           git config user.name "github-actions"
           git config user.email "github-actions@github.com"
+          
           git add .
-          git commit -m "Auto-generate niche sites" || echo "No changes to commit"
-            git pull --rebase
-           
-          git push
+          
+          if git diff --cached --quiet; then
+            echo "No changes to commit."
+            exit 0
+          fi
+          
+          git commit -m "Auto-generate niche sites [$(date '+%Y-%m-%d %H:%M')]"
+          
+          # Make sure we integrate any remote changes before pushing
+          # Note: If rebase fails due to conflicts, the workflow will fail
+          # and require manual intervention to resolve conflicts
+          git pull --rebase origin main
+          
+          git push origin main
       
       - name: Summary
         run: |
