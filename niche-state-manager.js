@@ -59,7 +59,10 @@ function hashNicheRow(niche) {
 }
 
 /**
- * Create URL-friendly slug from niche name (duplicated from site-generator for consistency)
+ * Create URL-friendly slug from niche name
+ * NOTE: This function is intentionally duplicated from site-generator.js
+ * to avoid circular dependencies. The state manager must remain independent
+ * of the main generator to enable testing and future modularity.
  * @param {string} niche - Niche name
  * @returns {string} Slug
  */

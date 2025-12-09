@@ -139,10 +139,9 @@ jobs:
           git commit -m "Auto-generate niche sites [$(date '+%Y-%m-%d %H:%M')]"
           
           # Make sure we integrate any remote changes before pushing
-          git pull --rebase origin main || {
-            echo "⚠️  Rebase failed, attempting to continue anyway"
-            git rebase --abort || true
-          }
+          # Note: If rebase fails due to conflicts, the workflow will fail
+          # and require manual intervention to resolve conflicts
+          git pull --rebase origin main
           
           git push origin main
       
