@@ -34,7 +34,9 @@ const CONFIG = {
     // Product fetching configuration
     MAX_RETRIES: 3,           // Number of retry attempts when products < MIN_PRODUCTS
     MIN_PRODUCTS: 10,         // Minimum number of products required before retrying
-    RETRY_DELAY_MS: 2000      // Delay between retry attempts in milliseconds
+    RETRY_DELAY_MS: 2000,     // Delay between retry attempts in milliseconds
+    TARGET_COUNT: 10,         // Target number of products per niche
+    MIN_ACCEPTABLE: 6         // Minimum acceptable number of products (graceful degradation)
 };
 
 /**
@@ -489,11 +491,16 @@ function normalizeModelName(title) {
 }
 
 /**
- * Apply lenient quality filters and deduplication
+ * Apply multi-tier quality filters and deduplication
  * @param {Array} products - Products array
- * @returns {Array} Filtered products array
+ * @param {object} options - Options including TARGET_COUNT and MIN_ACCEPTABLE
+ * @returns {object} Filtered products and stats
  */
-function applyFilters(products) {
+function applyFilters(products, options = {}) {
+  const TARGET_COUNT = options.TARGET_COUNT || 10;
+  const MIN_ACCEPTABLE = options.MIN_ACCEPTABLE || 6;
+  
+  // Tier A: Premium brands (highest quality)
   const PREMIUM_BRANDS = [
     "Apple","Sony","Bose","Sennheiser","Bang & Olufsen",
     "Shure","Razer","Logitech","Samsung","JBL","Beats","HP","Dell","Lenovo",
@@ -503,12 +510,45 @@ function applyFilters(products) {
     "Nintendo","PlayStation","Xbox","Oculus","Meta","Google","Amazon","Kindle"
   ];
 
-  // Lenient thresholds to ensure products pass through
-  const MIN_RATING = 3.5;  // Lowered from 4.2
+  // Tier B: Reputable brands (expanded list)
+  const REPUTABLE_BRANDS = [
+    ...PREMIUM_BRANDS,
+    "Mpow","Tozo","Tribit","EarFun","Soundcore","1MORE","Jaybird",
+    "Xiaomi","OnePlus","Huawei","Oppo","Realme","Nothing","Motorola",
+    "Amazfit","Withings","Polar","Suunto","Coros","Mobvoi","TicWatch",
+    "ROG","Republic of Gamers","Turtle Beach","Astro","EPOS",
+    "Dyson","Roomba","iRobot","Ecovacs","Roborock","Shark","Eufy",
+    "Canon","Nikon","Fujifilm","GoPro","DJI","Insta360","Olympus",
+    "Bowers & Wilkins","Master & Dynamic","Focal","AKG","Beyerdynamic",
+    "Marshall","Denon","Harman Kardon","KEF","Klipsch",
+    "TP-Link","Netgear","Linksys","Arlo","Ring","Wyze","Nest",
+    "Kasa","Tapo","Meross","Wemo","Lutron","Leviton","GE",
+    "Black+Decker","Stanley","DeWalt","Craftsman","Kobalt","Milwaukee",
+    "Instant Pot","Ninja","Cuisinart","KitchenAid","Breville","Oster",
+    "Cosori","Gourmia","Chefman","Dash","Hamilton Beach","Proctor Silex"
+  ];
 
+  // Tier C: Generic blocklist (reject these patterns)
+  const GENERIC_BLOCKLIST = [
+    "generic", "replacement", "compatible with", "compatible for",
+    " for ", " case", " cover", " skin", " adapter", " cable",
+    " strap", " mount", " stand", " holder", " charger cable",
+    " charging cable", " usb cable", " power cord", " wall charger",
+    " car charger", " screen protector", " tempered glass"
+  ];
+
+  // Track skip reasons for logging
+  const skipReasons = {};
+  function recordSkip(reason) {
+    skipReasons[reason] = (skipReasons[reason] || 0) + 1;
+  }
+
+  // Normalize and deduplicate candidates
   const seenAsins = new Set();
-  const seenModels = new Set();  // Track normalized model names for deduplication
-  const final = [];
+  const seenModels = new Set();
+  const candidates = [];
+
+  console.log(`\n🔍 Starting multi-tier filtering with ${products.length} products...`);
 
   for (const p of products) {
     const title = (p.title || "").trim();
@@ -518,60 +558,139 @@ function applyFilters(products) {
 
     // Skip products with empty/null titles
     if (!title || title.length === 0) {
-      console.log('  ⚠️  Skipping product with empty title');
+      recordSkip('empty_title');
       continue;
     }
 
     // Skip products without ASIN
     if (!asin) {
-      console.log(`  ⚠️  Skipping product "${title}" - no ASIN`);
+      recordSkip('missing_asin');
       continue;
     }
 
     // Deduplicate by ASIN (primary)
     if (seenAsins.has(asin)) {
-      console.log(`  ⚠️  Skipping duplicate ASIN: ${asin}`);
+      recordSkip('duplicate_asin');
       continue;
     }
     
     // Deduplicate by normalized model name (removes color variants)
-    // This ensures we don't list the same product in different colors
     const normalizedModel = normalizeModelName(title);
     
     if (seenModels.has(normalizedModel)) {
-      console.log(`  ⚠️  Skipping color variant: "${title}" (same model as previous)`);
+      recordSkip('duplicate_model');
       continue;
     }
     
     seenAsins.add(asin);
     seenModels.add(normalizedModel);
 
-    // Apply lenient quality filters
-    if (rating < MIN_RATING) {
-      console.log(`  ⚠️  Skipping "${title}" - rating ${rating} < ${MIN_RATING}`);
-      continue;
-    }
-
-    // Check if product has a recognizable brand name (not generic)
-    const hasBrand = PREMIUM_BRANDS.some(b => titleLower.includes(b.toLowerCase()));
-    
-    // Add to results with premium flag for scoring
-    final.push({ ...p, isPremium: hasBrand });
+    // Store as candidate
+    candidates.push({ ...p, title, titleLower, rating });
   }
 
-  // Sort by premium status first, then by rating, then by review count
-  final.sort((a, b) => {
+  console.log(`✓ After deduplication: ${candidates.length} unique products`);
+
+  // Multi-pass selection algorithm
+  let selected = [];
+  
+  // Pass 1: Tier A - Premium brands
+  const tierA = candidates.filter(p => {
+    return PREMIUM_BRANDS.some(brand => p.titleLower.includes(brand.toLowerCase()));
+  });
+  selected.push(...tierA);
+  console.log(`✓ Tier A (Premium brands): ${tierA.length} products`);
+
+  // Pass 2: Tier B - Reputable brands (if needed)
+  if (selected.length < TARGET_COUNT) {
+    const tierB = candidates.filter(p => {
+      // Exclude already selected
+      if (selected.some(s => s.asin === p.asin)) return false;
+      // Check reputable brands
+      return REPUTABLE_BRANDS.some(brand => p.titleLower.includes(brand.toLowerCase()));
+    });
+    selected.push(...tierB);
+    console.log(`✓ Tier B (Reputable brands): ${tierB.length} products added`);
+  }
+
+  // Pass 3: Tier C - Generic blocklist filter (if still needed)
+  if (selected.length < TARGET_COUNT) {
+    const tierC = candidates.filter(p => {
+      // Exclude already selected
+      if (selected.some(s => s.asin === p.asin)) return false;
+      
+      // Apply generic blocklist
+      for (const term of GENERIC_BLOCKLIST) {
+        if (p.titleLower.includes(term)) {
+          recordSkip('generic_term');
+          return false;
+        }
+      }
+      
+      // Check for accessory-only patterns
+      const accessoryPatterns = [
+        /^\d+\s*(pack|pcs|piece|set)/i,
+        /^(universal|generic|replacement|compatible)/i,
+        /case for|cover for|skin for|mount for|holder for/i
+      ];
+      
+      for (const pattern of accessoryPatterns) {
+        if (pattern.test(p.title)) {
+          recordSkip('accessory_pattern');
+          return false;
+        }
+      }
+      
+      return true;
+    });
+    selected.push(...tierC);
+    console.log(`✓ Tier C (Generic filter): ${tierC.length} products added`);
+  }
+
+  // Sort by quality: premium first, then rating, then reviews
+  selected.sort((a, b) => {
     // Premium brands first
-    if (a.isPremium !== b.isPremium) return b.isPremium ? 1 : -1;
+    const aIsPremium = PREMIUM_BRANDS.some(brand => a.titleLower.includes(brand.toLowerCase()));
+    const bIsPremium = PREMIUM_BRANDS.some(brand => b.titleLower.includes(brand.toLowerCase()));
+    if (aIsPremium !== bIsPremium) return bIsPremium ? 1 : -1;
+    
     // Then by rating
-    const ratingA = parseFloat(a.rating) || 0;
-    const ratingB = parseFloat(b.rating) || 0;
-    if (Math.abs(ratingA - ratingB) > 0.1) return ratingB - ratingA;
+    if (Math.abs(a.rating - b.rating) > 0.1) return b.rating - a.rating;
+    
     // Then by review count
     return (parseInt(b.reviews) || 0) - (parseInt(a.reviews) || 0);
   });
 
-  return final.slice(0, 10);
+  // Limit to TARGET_COUNT
+  const final = selected.slice(0, TARGET_COUNT);
+  
+  console.log(`✓ Final selection: ${final.length} products`);
+  
+  // Log top skip reasons
+  const topSkipReasons = Object.entries(skipReasons)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 5);
+  
+  if (topSkipReasons.length > 0) {
+    console.log(`\n📊 Top skip reasons:`);
+    topSkipReasons.forEach(([reason, count]) => {
+      console.log(`   - ${reason}: ${count}`);
+    });
+  }
+
+  // Return results with stats
+  return {
+    products: final,
+    stats: {
+      gathered: products.length,
+      validated: candidates.length,
+      tierA: tierA.length,
+      tierB: tierA.length + (selected.length > tierA.length ? selected.length - tierA.length : 0),
+      tierC: selected.length,
+      final: final.length,
+      skipReasons: topSkipReasons
+    }
+  };
 }
 
 /**
@@ -604,10 +723,15 @@ async function fetchProducts(niche) {
             const newProducts = gatheredProducts.filter(p => !existingAsins.has(p.asin));
             products.push(...newProducts);
             
-            // Apply filtering with lenient thresholds and deduplication
-            filteredProducts = applyFilters(products);
+            // Apply filtering with multi-tier selection and deduplication
+            const filterResult = applyFilters(products, {
+                TARGET_COUNT: CONFIG.TARGET_COUNT,
+                MIN_ACCEPTABLE: CONFIG.MIN_ACCEPTABLE
+            });
+            filteredProducts = filterResult.products;
             
             console.log(`🔥 Filtered products ready: ${filteredProducts.length}`);
+            console.log(`📊 Stats: gathered=${filterResult.stats.gathered}, validated=${filterResult.stats.validated}, tierA=${filterResult.stats.tierA}, final=${filterResult.stats.final}`);
             
             // If we have enough products, break out of retry loop
             if (filteredProducts.length >= CONFIG.MIN_PRODUCTS) {
@@ -704,7 +828,7 @@ async function fetchProducts(niche) {
                 continue;
             }
             
-            // Price - REQUIRED (prefer details, fallback to search)
+            // Price - SOFT FIELD (prefer details, fallback to search, allow null)
             let price = null;
             
             // Try details first
@@ -727,13 +851,12 @@ async function fetchProducts(niche) {
                 }
             }
             
+            // Allow null price - template will show "See price on Amazon"
             if (!price) {
-                console.warn(`⚠️  Skipping product ${i + 1} "${title}": missing price for ASIN ${asin}`);
-                skippedCount++;
-                continue;
+                console.log(`  ℹ️  No price found, will show "See price on Amazon"`);
             }
             
-            // Description - REQUIRED (prefer details, fallback to short_description or features)
+            // Description - SOFT FIELD (prefer details, fallback to short_description or features, allow empty string)
             let description = details.description || details.product_description || 
                             details.short_description || null;
             
@@ -754,13 +877,13 @@ async function fetchProducts(niche) {
                 }
             }
             
+            // Allow empty description as safe default
             if (!description) {
-                console.warn(`⚠️  Skipping product ${i + 1} "${title}": missing description for ASIN ${asin}`);
-                skippedCount++;
-                continue;
+                description = "";
+                console.log(`  ℹ️  No description found, using empty string`);
             }
             
-            // Rating - OPTIONAL (default to null if missing)
+            // Rating - SOFT FIELD (default to null if missing)
             let rating = null;
             
             // Try details first
@@ -785,11 +908,11 @@ async function fetchProducts(niche) {
             
             // Default to null if still missing (per requirements)
             if (!rating) {
-                rating = '0';  // Default rating
-                console.log(`  ℹ️  No rating found, using default: 0`);
+                rating = null;
+                console.log(`  ℹ️  No rating found, using null`);
             }
             
-            // Review Count - OPTIONAL (default to 0 if missing)
+            // Review Count - SOFT FIELD (default to null if missing)
             let reviews = null;
             
             // Try details first
@@ -816,20 +939,10 @@ async function fetchProducts(niche) {
                 }
             }
             
-            // Default to 0 if still missing (per requirements)
+            // Default to null if still missing (per requirements)
             if (!reviews) {
-                reviews = '0';
-                console.log(`  ℹ️  No review count found, using default: 0`);
-            }
-            
-            // Skip products with 0 rating (invalid), but allow 0 reviews
-            const ratingNum = parseFloat(rating);
-            const reviewsNum = parseInt(reviews);
-            
-            if (ratingNum === 0) {
-                console.warn(`⚠️  Skipping product ${i + 1} "${title}": has 0 rating (rating: ${rating})`);
-                skippedCount++;
-                continue;
+                reviews = null;
+                console.log(`  ℹ️  No review count found, using null`);
             }
             
             // Skip products without a recognizable brand name (generic products)
@@ -917,6 +1030,202 @@ async function fetchProducts(niche) {
         console.log(`✅ Successfully validated ${validProducts.length} products with real API data`);
         if (skippedCount > 0) {
             console.log(`⚠️  Skipped ${skippedCount} products due to missing fields`);
+        }
+        
+        // Check if we need RapidAPI fallback (based on post-validation count)
+        if (validProducts.length < CONFIG.MIN_ACCEPTABLE) {
+            console.log(`\n🔄 Post-validation count (${validProducts.length}) < MIN_ACCEPTABLE (${CONFIG.MIN_ACCEPTABLE})`);
+            console.log(`🔄 Triggering RapidAPI fallback to get more products...`);
+            
+            try {
+                const { rapidApiFallback } = require('./api-fallback');
+                const backupProducts = await rapidApiFallback(niche);
+                console.log(`✓ RapidAPI Fallback: ${backupProducts.length} products retrieved`);
+                
+                if (backupProducts.length > 0) {
+                    // Merge with existing products
+                    const existingAsins = new Set(products.map(p => p.asin));
+                    const newBackupProducts = backupProducts.filter(p => !existingAsins.has(p.asin));
+                    products.push(...newBackupProducts);
+                    
+                    // Re-run filtering with merged data
+                    const reFilterResult = applyFilters(products, {
+                        TARGET_COUNT: CONFIG.TARGET_COUNT,
+                        MIN_ACCEPTABLE: CONFIG.MIN_ACCEPTABLE
+                    });
+                    const reFilteredProducts = reFilterResult.products.slice(0, 12);
+                    
+                    console.log(`✓ Re-filtered after fallback: ${reFilteredProducts.length} products`);
+                    
+                    // Validate new products
+                    for (let i = filteredProducts.length; i < reFilteredProducts.length && validProducts.length < CONFIG.TARGET_COUNT; i++) {
+                        const product = reFilteredProducts[i];
+                        
+                        console.log(`\n📦 Processing fallback product ${i + 1}...`);
+                        
+                        const asin = product.asin || product.ASIN || null;
+                        if (!asin) continue;
+                        
+                        const details = await fetchProductDetails(asin);
+                        if (!details) continue;
+                        
+                        const title = details.title || details.product_title || details.name || 
+                                     product.title || product.product_title || product.name || null;
+                        if (!title) continue;
+                        
+                        let image = details.image_url || details.image || details.product_photo || 
+                                   details.main_image || details.product_main_image_url || null;
+                        if (!image && details.images && Array.isArray(details.images) && details.images.length > 0) {
+                            image = details.images[0];
+                        }
+                        if (!image) {
+                            image = product.image_url || product.image || product.product_photo || 
+                                   product.main_image || product.product_main_image_url || null;
+                            if (!image && product.images && Array.isArray(product.images) && product.images.length > 0) {
+                                image = product.images[0];
+                            }
+                        }
+                        if (image && !image.startsWith('http')) {
+                            image = null;
+                        }
+                        if (!image) continue;
+                        
+                        let price = null;
+                        if (typeof details.price === 'number') {
+                            price = `$${details.price.toFixed(2)}`;
+                        } else if (details.price) {
+                            price = String(details.price);
+                        } else if (details.product_price) {
+                            price = String(details.product_price);
+                        }
+                        if (!price) {
+                            if (typeof product.price === 'number') {
+                                price = `$${product.price.toFixed(2)}`;
+                            } else if (product.price) {
+                                price = String(product.price);
+                            } else if (product.product_price) {
+                                price = String(product.product_price);
+                            }
+                        }
+                        
+                        let description = details.description || details.product_description || 
+                                        details.short_description || null;
+                        if (!description) {
+                            description = product.description || product.product_description || 
+                                        product.short_description || null;
+                        }
+                        if (!description) {
+                            const tempFeatures = details.features || details.feature_bullets || 
+                                               details.about_product || product.features || 
+                                               product.feature_bullets || product.about_product || null;
+                            if (tempFeatures && Array.isArray(tempFeatures) && tempFeatures.length > 0) {
+                                description = tempFeatures.slice(0, 3).join('. ') + '.';
+                            }
+                        }
+                        if (!description) {
+                            description = "";
+                        }
+                        
+                        let rating = null;
+                        if (typeof details.rating === 'number') {
+                            rating = String(details.rating);
+                        } else if (details.product_star_rating) {
+                            rating = String(details.product_star_rating);
+                        } else if (details.stars) {
+                            rating = String(details.stars);
+                        }
+                        if (!rating) {
+                            if (typeof product.rating === 'number') {
+                                rating = String(product.rating);
+                            } else if (product.product_star_rating) {
+                                rating = String(product.product_star_rating);
+                            } else if (product.stars) {
+                                rating = String(product.stars);
+                            }
+                        }
+                        
+                        let reviews = null;
+                        if (details.review_count) {
+                            reviews = String(details.review_count);
+                        } else if (details.product_num_ratings) {
+                            reviews = String(details.product_num_ratings);
+                        } else if (details.reviews_count) {
+                            reviews = String(details.reviews_count);
+                        } else if (details.num_ratings) {
+                            reviews = String(details.num_ratings);
+                        }
+                        if (!reviews) {
+                            if (product.review_count) {
+                                reviews = String(product.review_count);
+                            } else if (product.product_num_ratings) {
+                                reviews = String(product.product_num_ratings);
+                            } else if (product.reviews_count) {
+                                reviews = String(product.reviews_count);
+                            } else if (product.num_ratings) {
+                                reviews = String(product.num_ratings);
+                            }
+                        }
+                        
+                        let featureBullets = details.features || details.feature_bullets || 
+                                           details.about_product || product.features || 
+                                           product.feature_bullets || product.about_product || null;
+                        if (!featureBullets || !Array.isArray(featureBullets) || featureBullets.length === 0) {
+                            const sentences = description.split(/[.!?]+/).filter(s => s.trim().length > 0);
+                            featureBullets = sentences.slice(0, 5).map(s => s.trim());
+                        }
+                        const features = featureBullets.slice(0, 5);
+                        
+                        let amazonUrl = details.detail_page_url || details.product_url || details.url || 
+                                      product.detail_page_url || product.product_url || product.url || 
+                                      `https://www.amazon.com/dp/${asin}`;
+                        if (!amazonUrl.startsWith('http')) {
+                            amazonUrl = `https://www.amazon.com/dp/${asin}`;
+                        }
+                        if (!amazonUrl.includes('tag=')) {
+                            const separator = amazonUrl.includes('?') ? '&' : '?';
+                            amazonUrl = `${amazonUrl}${separator}tag=${CONFIG.AMAZON_AFFILIATE_ID}`;
+                        }
+                        
+                        let pros = extractPros(details, niche) || extractPros(product, niche);
+                        if (!pros || pros.length === 0) {
+                            pros = features.slice(0, 3);
+                        }
+                        
+                        let cons = extractCons(details, niche) || extractCons(product, niche);
+                        if (!cons || cons.length === 0) {
+                            cons = ['May vary by individual preferences', 'Check compatibility before purchase'];
+                        }
+                        
+                        console.log(`  ✅ Fallback product validated: "${title}"`);
+                        
+                        validProducts.push({
+                            asin: asin,
+                            title: title,
+                            description: description,
+                            rating: rating,
+                            reviews: reviews,
+                            price: price,
+                            image: image,
+                            url: amazonUrl,
+                            features: features,
+                            pros: pros,
+                            cons: cons
+                        });
+                        
+                        await new Promise(resolve => setTimeout(resolve, 500));
+                    }
+                    
+                    console.log(`✅ After RapidAPI fallback: ${validProducts.length} validated products`);
+                }
+            } catch (fallbackError) {
+                console.error(`⚠️  RapidAPI fallback failed: ${fallbackError.message}`);
+            }
+        }
+        
+        // Graceful degradation: Generate site with what we have if < MIN_ACCEPTABLE
+        if (validProducts.length < CONFIG.MIN_ACCEPTABLE && validProducts.length > 0) {
+            console.warn(`\n⚠️  WARNING: Only ${validProducts.length} products (< MIN_ACCEPTABLE: ${CONFIG.MIN_ACCEPTABLE})`);
+            console.warn(`⚠️  Generating site with available products and graceful notice`);
         }
         
         if (validProducts.length === 0) {
@@ -1045,8 +1354,8 @@ function generateSEOContent(niche, products) {
  */
 function generateMiniReview(product, rank, niche) {
     const text = `${product.title} ${product.description} ${Array.isArray(product.features) ? product.features.join(' ') : ''}`.toLowerCase();
-    const price = parseFloat(product.price.replace(/[^0-9.]/g, '')) || 0;
-    const rating = parseFloat(product.rating) || 0;
+    const price = parseFloat((product.price || '').replace(/[^0-9.]/g, '')) || 0;
+    const rating = parseFloat(product.rating || 0) || 0;
     
     // Generate contextual mini-reviews based on product characteristics
     const reviews = {
@@ -1141,10 +1450,10 @@ function generateProductsHTML(products, template, niche) {
         html = html.replace(/{{IMAGE_URL}}/g, product.image);
         html = html.replace(/{{PRODUCT_TITLE}}/g, escapeHtml(shortName));
         html = html.replace(/{{MINI_REVIEW}}/g, miniReview);
-        html = html.replace(/{{RATING_STARS}}/g, generateStars(parseFloat(product.rating)));
-        html = html.replace(/{{RATING}}/g, product.rating);
-        html = html.replace(/{{REVIEW_COUNT}}/g, product.reviews);
-        html = html.replace(/{{PRICE}}/g, product.price);
+        html = html.replace(/{{RATING_STARS}}/g, generateStars(parseFloat(product.rating || 0)));
+        html = html.replace(/{{RATING}}/g, product.rating || 'N/A');
+        html = html.replace(/{{REVIEW_COUNT}}/g, product.reviews || '0');
+        html = html.replace(/{{PRICE}}/g, product.price || 'See on Amazon');
         html = html.replace(/{{HIGHLIGHTS}}/g, highlights);
         const features = Array.isArray(product.features) ? product.features : [];
         html = html.replace(/{{FEATURES_LIST}}/g, generateListItems(features.slice(0, 5)));
@@ -1164,7 +1473,7 @@ function generateProductsHTML(products, template, niche) {
 function detectProductCategories(product, niche) {
     const categories = [];
     const text = `${product.title} ${product.description} ${product.features.join(' ')}`.toLowerCase();
-    const price = parseFloat(product.price.replace(/[^0-9.]/g, '')) || 0;
+    const price = parseFloat((product.price || '').replace(/[^0-9.]/g, '')) || 0;
     
     // Premium category (high-end brands or price > $100)
     const premiumBrands = ['sony', 'bose', 'apple', 'sennheiser', 'bang & olufsen', 'beats studio'];
@@ -1216,11 +1525,11 @@ function generateProductHighlights(product, niche) {
     const text = `${product.title} ${product.description} ${features.join(' ')}`.toLowerCase();
     const specs = extractProductSpecs(product);
     
-    // Price - always show
+    // Price - always show (or "See on Amazon" if null)
     highlights.push({
         icon: '💰',
         label: 'Price',
-        value: product.price
+        value: product.price || 'See on Amazon'
     });
     
     // Best For - detect use case
@@ -1419,28 +1728,40 @@ function generateStructuredData(niche, slug, products) {
         "@type": "ItemList",
         "name": `Best ${niche} (${currentYear})`,
         "description": `The best ${niche.toLowerCase()} available in ${currentYear}, ranked and reviewed`,
-        "itemListElement": products.map((product, index) => ({
-            "@type": "ListItem",
-            "position": index + 1,
-            "item": {
-                "@type": "Product",
-                "name": product.title,
-                "image": product.image,
-                "description": product.description,
-                "aggregateRating": {
+        "itemListElement": products.map((product, index) => {
+            const item = {
+                "@type": "ListItem",
+                "position": index + 1,
+                "item": {
+                    "@type": "Product",
+                    "name": product.title,
+                    "image": product.image,
+                    "description": product.description || "",
+                    "offers": {
+                        "@type": "Offer",
+                        "priceCurrency": "USD",
+                        "availability": "https://schema.org/InStock",
+                        "url": generateAffiliateLink(product)
+                    }
+                }
+            };
+            
+            // Only add aggregateRating if we have valid rating data
+            if (product.rating && product.reviews) {
+                item.item.aggregateRating = {
                     "@type": "AggregateRating",
                     "ratingValue": product.rating,
                     "reviewCount": product.reviews
-                },
-                "offers": {
-                    "@type": "Offer",
-                    "price": product.price.replace(/[^0-9.]/g, ''),
-                    "priceCurrency": "USD",
-                    "availability": "https://schema.org/InStock",
-                    "url": generateAffiliateLink(product)
-                }
+                };
             }
-        }))
+            
+            // Only add price if available
+            if (product.price) {
+                item.item.offers.price = product.price.replace(/[^0-9.]/g, '');
+            }
+            
+            return item;
+        })
     };
 }
 
@@ -1471,20 +1792,28 @@ function generateBlogHTML(product, niche, rank, templates) {
         "@type": "Product",
         "name": product.title,
         "image": product.image,
-        "description": product.description,
-        "aggregateRating": {
-            "@type": "AggregateRating",
-            "ratingValue": product.rating,
-            "reviewCount": product.reviews
-        },
+        "description": product.description || "",
         "offers": {
             "@type": "Offer",
-            "price": product.price.replace(/[^0-9.]/g, ''),
             "priceCurrency": "USD",
             "availability": "https://schema.org/InStock",
             "url": generateAffiliateLink(product)
         }
     };
+    
+    // Only add aggregateRating if we have valid rating data
+    if (product.rating && product.reviews) {
+        productSchema.aggregateRating = {
+            "@type": "AggregateRating",
+            "ratingValue": product.rating,
+            "reviewCount": product.reviews
+        };
+    }
+    
+    // Only add price if available
+    if (product.price) {
+        productSchema.offers.price = product.price.replace(/[^0-9.]/g, '');
+    }
     
     let html = templates.blogTemplate;
     html = html.replace(/{{BLOG_TITLE}}/g, escapeHtml(blog.title));
@@ -1493,10 +1822,10 @@ function generateBlogHTML(product, niche, rank, templates) {
     html = html.replace(/{{PUBLISH_DATE}}/g, publishDate);
     html = html.replace(/{{READING_TIME}}/g, blog.readingTime);
     html = html.replace(/{{IMAGE_URL}}/g, product.image);
-    html = html.replace(/{{RATING_STARS}}/g, generateStars(parseFloat(product.rating)));
-    html = html.replace(/{{RATING}}/g, product.rating);
-    html = html.replace(/{{REVIEW_COUNT}}/g, product.reviews);
-    html = html.replace(/{{PRICE}}/g, product.price);
+    html = html.replace(/{{RATING_STARS}}/g, generateStars(parseFloat(product.rating || 0)));
+    html = html.replace(/{{RATING}}/g, product.rating || 'N/A');
+    html = html.replace(/{{REVIEW_COUNT}}/g, product.reviews || '0');
+    html = html.replace(/{{PRICE}}/g, product.price || 'See on Amazon');
     html = html.replace(/{{BLOG_CONTENT}}/g, blog.content);
     html = html.replace(/{{AFFILIATE_LINK}}/g, generateAffiliateLink(product));
     html = html.replace(/{{PRODUCT_SCHEMA}}/g, JSON.stringify(productSchema, null, 2));
@@ -1714,9 +2043,9 @@ function generateComparisonTable(products) {
                     <td class="product-name-cell">
                         <a href="#${cardId}" class="product-link">${escapeHtml(shortName)}</a>
                     </td>
-                    <td class="rating-cell">${product.rating} ⭐</td>
-                    <td class="reviews-cell">${product.reviews}</td>
-                    <td class="price-cell">${product.price}</td>`;
+                    <td class="rating-cell">${product.rating || 'N/A'} ⭐</td>
+                    <td class="reviews-cell">${product.reviews || '0'}</td>
+                    <td class="price-cell">${product.price || 'See on Amazon'}</td>`;
         
         if (hasBattery) {
             row += `\n                    <td class="battery-cell">${specs.battery || '-'}</td>`;
