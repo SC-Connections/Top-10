@@ -593,6 +593,8 @@ function applyFilters(products, options = {}) {
 
   // Multi-pass selection algorithm
   let selected = [];
+  let tierBCount = 0;
+  let tierCCount = 0;
   
   // Pass 1: Tier A - Premium brands
   const tierA = candidates.filter(p => {
@@ -609,8 +611,9 @@ function applyFilters(products, options = {}) {
       // Check reputable brands
       return REPUTABLE_BRANDS.some(brand => p.titleLower.includes(brand.toLowerCase()));
     });
+    tierBCount = tierB.length;
     selected.push(...tierB);
-    console.log(`✓ Tier B (Reputable brands): ${tierB.length} products added`);
+    console.log(`✓ Tier B (Reputable brands): ${tierBCount} products added`);
   }
 
   // Pass 3: Tier C - Generic blocklist filter (if still needed)
@@ -643,8 +646,9 @@ function applyFilters(products, options = {}) {
       
       return true;
     });
+    tierCCount = tierC.length;
     selected.push(...tierC);
-    console.log(`✓ Tier C (Generic filter): ${tierC.length} products added`);
+    console.log(`✓ Tier C (Generic filter): ${tierCCount} products added`);
   }
 
   // Sort by quality: premium first, then rating, then reviews
@@ -685,8 +689,8 @@ function applyFilters(products, options = {}) {
       gathered: products.length,
       validated: candidates.length,
       tierA: tierA.length,
-      tierB: tierA.length + (selected.length > tierA.length ? selected.length - tierA.length : 0),
-      tierC: selected.length,
+      tierB: tierBCount,
+      tierC: tierCCount,
       final: final.length,
       skipReasons: topSkipReasons
     }
