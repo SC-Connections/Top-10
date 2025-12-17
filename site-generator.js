@@ -33,10 +33,10 @@ const CONFIG = {
     MAX_FEATURE_LENGTH: 150,  // Maximum length for generated feature from description
     // Product fetching configuration
     MAX_RETRIES: 3,           // Number of retry attempts when products < MIN_PRODUCTS
-    MIN_PRODUCTS: 10,         // Minimum number of products required before retrying
+    MIN_PRODUCTS: 8,          // Minimum number of products required before retrying (lowered from 10 to 8)
     RETRY_DELAY_MS: 2000,     // Delay between retry attempts in milliseconds
     TARGET_COUNT: 10,         // Target number of products per niche
-    MIN_ACCEPTABLE: 6         // Minimum acceptable number of products (graceful degradation)
+    MIN_ACCEPTABLE: 4         // Minimum acceptable number of products (graceful degradation, lowered from 6 to 4)
 };
 
 /**
@@ -949,12 +949,14 @@ async function fetchProducts(niche) {
                 console.log(`  ℹ️  No review count found, using null`);
             }
             
-            // Skip products without a recognizable brand name (generic products)
-            if (!hasBrandName(title)) {
-                console.warn(`⚠️  Skipping product ${i + 1} "${title}": no recognizable brand name (generic product)`);
-                skippedCount++;
-                continue;
-            }
+            // REMOVED: Skip products without a recognizable brand name (generic products)
+            // This check is too strict and redundant with the multi-tier filtering above
+            // The applyFilters() already filters by premium/reputable brands, so this is unnecessary
+            // if (!hasBrandName(title)) {
+            //     console.warn(`⚠️  Skipping product ${i + 1} "${title}": no recognizable brand name (generic product)`);
+            //     skippedCount++;
+            //     continue;
+            // }
             
             // Feature bullets - try to extract, generate from description as fallback
             let featureBullets = details.features || details.feature_bullets || 
