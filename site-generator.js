@@ -33,10 +33,10 @@ const CONFIG = {
     MAX_FEATURE_LENGTH: 150,  // Maximum length for generated feature from description
     // Product fetching configuration
     MAX_RETRIES: 3,           // Number of retry attempts when products < MIN_PRODUCTS
-    MIN_PRODUCTS: 8,          // Minimum number of products required before retrying (lowered from 10)
+    MIN_PRODUCTS: 8,          // Minimum number of products required before retrying (lowered from 10 to 8)
     RETRY_DELAY_MS: 2000,     // Delay between retry attempts in milliseconds
     TARGET_COUNT: 10,         // Target number of products per niche
-    MIN_ACCEPTABLE: 4         // Minimum acceptable number of products (graceful degradation, lowered from 6)
+    MIN_ACCEPTABLE: 4         // Minimum acceptable number of products (graceful degradation, lowered from 6 to 4)
 };
 
 /**
