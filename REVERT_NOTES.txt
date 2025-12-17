@@ -1,0 +1,11 @@
+Repository Revert - December 17, 2025
+
+This repository has been reverted to the state before the December 17, 2025 update.
+
+Previous state: commit d64ce77 "Initial plan" (Dec 17, 2025 03:24:20 UTC)
+Reverted to: commit 2861db3 "Auto-generate niche sites [2025-12-16 15:49]" (Dec 16, 2025 15:49:43 UTC)
+
+Note: The "Initial plan" commit contained no actual file changes - it was just a planning commit.
+Therefore, this revert simply removes that empty commit from the history.
+
+All niche sites, configurations, and workflows remain intact at their Dec 16 state.
