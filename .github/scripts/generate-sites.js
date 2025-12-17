@@ -106,7 +106,14 @@ async function fetchProducts(keyword, nodeId, numProducts) {
         if (productList.length === 0) {
             console.error(`❌ ERROR: API returned no products for "${keyword}"`);
             throw new Error('No products found in API response');
-        }
+      if (productList.length < 8) {
+      console.error(`❌ ERROR: API returned fewer than 8 products for "${keyword}"`);
+      throw new Error('Not enough products found in API response');
+    }
+  numProducts = productList.length;
+//// numProducts = Math.max(numProducts, productList.length);
+ numProducts = Math.max(numProducts, productList.length);// numProducts = Math.max(numProducts, productList.length);// numProducts = Math.max(numProducts, productList.length);
+   }
         
         const products = productList.slice(0, numProducts);
         const validProducts = [];
