@@ -375,7 +375,7 @@ function formatNicheName(niche) {
         'ipad': 'iPad',
         'xbox': 'Xbox',
         'playstation': 'PlayStation',
-        'anc': 'ANC',
+
         'ev': 'EV',
         'gps': 'GPS',
         'rfid': 'RFID',
@@ -528,10 +528,10 @@ function applyFilters(products, options = {}) {
     "Cosori","Gourmia","Chefman","Dash","Hamilton Beach","Proctor Silex"
   ];
 
-  // Tier C: Generic blocklist (reject these patterns)
+  // Tier C: Generic blocklist (reject only truly generic/accessory items)
   const GENERIC_BLOCKLIST = [
-    "generic", "replacement", "compatible with", "compatible for",
-    " for ", " case", " cover", " skin", " adapter", " cable",
+    "generic", "brandless", "no brand",
+    " case", " cover", " skin", " adapter", " cable",
     " strap", " mount", " stand", " holder", " charger cable",
     " charging cable", " usb cable", " power cord", " wall charger",
     " car charger", " screen protector", " tempered glass"
@@ -1557,14 +1557,7 @@ function generateProductHighlights(product, niche) {
         });
     }
     
-    // ANC - check for noise cancellation
-    if (text.includes('noise cancel') || text.includes('anc') || text.includes('active noise')) {
-        highlights.push({
-            icon: '🔇',
-            label: 'ANC',
-            value: 'Yes'
-        });
-    }
+
     
     // Driver Size - if available
     if (specs.driver) {
@@ -1922,16 +1915,11 @@ function hasBrandName(title) {
         /^[0-9]+ Pcs/i,
         /^[0-9]+ Piece/i,
         /^[0-9]+ Set/i,
-        /^Generic /i,
-        /^Universal /i,
-        /^Compatible /i,
-        /^Replacement /i,
         /^[0-9]{3,}/,  // Starting with numbers like "100 Pack"
-        /^New /i,
-        /^Latest /i,
-        /^Upgraded /i,
-        /^2024 /i,
-        /^2025 /i
+        // Only block truly generic unbranded products
+        /^Generic /i,
+        /^Brandless /i,
+        /^No Brand /i
     ];
     
     // Check if title starts with generic patterns

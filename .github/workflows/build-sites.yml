@@ -89,6 +89,26 @@ jobs:
           node site-generator.js --mode=refresh
           echo "✅ Site generation complete!"
       
+      - name: Prune empty niches
+        id: prune
+        run: |
+          echo "🧹 Pruning empty niches..."
+          
+          # Run pruning script
+          if node prune-empty-niches.js; then
+            echo "PRUNED=true" >> $GITHUB_OUTPUT
+            echo "✅ Pruning completed - changes were made"
+          else
+            EXIT_CODE=$?
+            if [ $EXIT_CODE -eq 1 ]; then
+              echo "PRUNED=false" >> $GITHUB_OUTPUT
+              echo "✅ No empty niches to prune"
+            else
+              echo "❌ Pruning failed with error"
+              exit $EXIT_CODE
+            fi
+          fi
+      
       - name: Verify niche folders were generated
         run: |
           echo "🔍 Verifying generated niche folders..."
@@ -125,6 +145,7 @@ jobs:
         run: npm run generate-root-index
       
       - name: Commit and push generated sites
+        if: steps.prune.outputs.PRUNED == 'true' || success()
         run: |
           git config user.name "github-actions"
           git config user.email "github-actions@github.com"
@@ -136,7 +157,14 @@ jobs:
             exit 0
           fi
           
-          git commit -m "Auto-generate niche sites [$(date '+%Y-%m-%d %H:%M')]"
+          # Check if pruning made changes
+          if [ "${{ steps.prune.outputs.PRUNED }}" = "true" ]; then
+            COMMIT_MSG="chore: prune empty niches and auto-generate sites [$(date '+%Y-%m-%d %H:%M')]"
+          else
+            COMMIT_MSG="Auto-generate niche sites [$(date '+%Y-%m-%d %H:%M')]"
+          fi
+          
+          git commit -m "$COMMIT_MSG"
           
           # Make sure we integrate any remote changes before pushing
           # Note: If rebase fails due to conflicts, the workflow will fail

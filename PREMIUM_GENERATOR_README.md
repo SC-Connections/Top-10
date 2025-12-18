@@ -59,7 +59,7 @@ The generated page includes:
 - **Comprehensive Buyer's Guide** (800-1,500 words):
   - How We Choose & Test
   - Premium vs Mid-Range vs Budget in 2025
-  - Key Features Explained (ANC, Battery, Codecs)
+  - Key Features Explained (Performance, Battery, Connectivity)
   - Who Should Buy Premium vs Budget
 - **FAQ Section** - 10 highly searched questions with detailed answers
 - **Footer CTA** - Final call-to-action section
