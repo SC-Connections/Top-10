@@ -1541,10 +1541,11 @@ function generateProductHighlights(product, niche) {
     // Rating - always show with review count
     const rating = product.rating || 'N/A';
     const reviewCount = product.reviews || '0';
+    const ratingValue = rating === 'N/A' ? 'Not yet rated' : `${rating} / 5 (${reviewCount} reviews)`;
     highlights.push({
         icon: '⭐',
         label: 'Rating',
-        value: `${rating} / 5 (${reviewCount} reviews)`
+        value: ratingValue
     });
     
     // Battery - if available
