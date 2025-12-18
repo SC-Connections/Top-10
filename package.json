@@ -10,6 +10,7 @@
     "generate:refresh": "node site-generator.js --mode=refresh",
     "generate-root-index": "node scripts/generate-root-index.js",
     "generate:sitemap": "node scripts/generate-sitemap.mjs",
+    "prune": "node prune-empty-niches.js",
     "validate": "node validate-sites.js",
     "validate-data": "node scripts/validate-data.js",
     "test": "npm run generate && npm run validate",
