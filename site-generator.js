@@ -1538,15 +1538,14 @@ function generateProductHighlights(product, niche) {
         value: product.price || 'See on Amazon'
     });
     
-    // Best For - detect use case
-    const bestFor = detectBestFor(text);
-    if (bestFor) {
-        highlights.push({
-            icon: '✔',
-            label: 'Best For',
-            value: bestFor
-        });
-    }
+    // Rating - always show with review count
+    const rating = product.rating || 'N/A';
+    const reviewCount = product.reviews || '0';
+    highlights.push({
+        icon: '⭐',
+        label: 'Rating',
+        value: `${rating} / 5 (${reviewCount} reviews)`
+    });
     
     // Battery - if available
     if (specs.battery) {
@@ -1565,15 +1564,6 @@ function generateProductHighlights(product, niche) {
             icon: '🔊',
             label: 'Driver Size',
             value: specs.driver
-        });
-    }
-    
-    // Weight - if available
-    if (specs.weight) {
-        highlights.push({
-            icon: '⚖️',
-            label: 'Weight',
-            value: specs.weight
         });
     }
     
