@@ -1,200 +1,123 @@
-wireless-earbuds
-bluetooth-headphones
-noise-canceling-headphones
-gaming-headsets
-studio-microphones
-usb-microphones
-webcam-cameras
-ring-lights
-mechanical-keyboards
-ergonomic-keyboards
-gaming-mice
-wireless-mice
-laptop-stands
-laptop-docking-stations
-portable-monitors
-external-hard-drives
-ssd-drives
-usb-c-hubs
-power-banks
-portable-chargers
-phone-tripods
-phone-gimbals
-action-cameras
-dash-cams
-security-cameras
-smart-doorbells
-mesh-wifi-systems
-wifi-routers
-network-switches
-streaming-devices
-capture-cards
-smart-tv-accessories
-tv-wall-mounts
-soundbars
-home-theater-systems
-bluetooth-speakers
-portable-projectors
-mini-projectors
-vr-headsets
-gaming-console-accessories
-robot-vacuum-cleaners
-cordless-vacuums
-air-purifiers
-humidifiers
-dehumidifiers
-smart-thermostats
-smart-light-bulbs
-smart-light-switches
-smart-home-hubs
-smart-plugs
-home-security-kits
-video-baby-monitors
-electric-fireplaces
-led-desk-lamps
-floor-lamps
-sunrise-alarm-clocks
-white-noise-machines
-mattress-toppers
-weighted-blankets
-cooling-pillows
-bed-frame-foundations
-adjustable-bed-bases
-home-office-chairs
-ergonomic-desk-chairs
-standing-desks
-standing-desk-converters
-filing-cabinets
-storage-shelving-units
-closet-organizers
-shoe-racks
-air-quality-monitors
-carbon-monoxide-detectors
-smoke-detectors
-smart-locks
-garage-door-openers
-air-fryers
-toaster-ovens
-microwave-ovens
-coffee-makers
-espresso-machines
-coffee-grinders
-electric-kettles
-blenders
-personal-blenders
-food-processors
-slow-cookers
-pressure-cookers
-rice-cookers
-bread-makers
-stand-mixers
-hand-mixers
-sous-vide-machines
-induction-cooktops
-electric-griddles
-countertop-ice-makers
-water-filters
-water-flossers
-electric-can-openers
-knife-sets
-chef-knives
-cookware-sets
-cast-iron-skillets
-nonstick-pans
-meal-prep-containers
-vacuum-sealers
-adjustable-dumbbells
-kettlebells
-resistance-bands
-yoga-mats
-foam-rollers
-massage-guns
-ab-rollers
-pull-up-bars
-weight-benches
-squat-racks
-power-towers
-treadmills
-under-desk-treadmills
-exercise-bikes
-rowing-machines
-elliptical-machines
-smart-fitness-trackers
-smartwatches
-heart-rate-monitors
-blood-pressure-monitors
-digital-scales
-body-fat-scales
-posture-correctors
-compression-sleeves
-ankle-weights
-weighted-vests
-balance-boards
-infrared-saunas
-percussion-massagers
-electric-heating-pads
-ice-bath-tubs
-recovery-boots
-fitness-gloves
-gym-bags
-shaker-bottles
-car-dash-cams
-car-phone-mounts
-car-jump-starters
-portable-air-compressors
-tire-pressure-gauges
-obd2-scanners
-car-vacuum-cleaners
-seat-covers
-steering-wheel-covers
-roof-cargo-carriers
-bike-racks
-camping-tents
-camping-stoves
-portable-power-stations
-solar-generators
-portable-solar-panels
-outdoor-projectors
-outdoor-speakers
-electric-coolers
-portable-fridges
-hiking-backpacks
-hydration-packs
-trekking-poles
-fishing-reels
-fishing-rods
-fish-finders
-kayaks
-inflatable-paddle-boards
-electric-scooters
-electric-bikes
-automatic-pet-feeders
-pet-cameras
-dog-training-collars
-cat-water-fountains
-pet-grooming-kits
-pet-vacuums
-office-printers
-all-in-one-printers
-label-makers
-document-scanners
-paper-shredders
-laminators
-home-safes
-fireproof-safes
-gun-safes
-airsoft-guns
-electric-screwdrivers
-cordless-drills
-tool-sets
-laser-levels
-stud-finders
-3d-printers
-filament-3d-printer
-vinyl-cutters
-label-printers
-desk-organizers
-lap-desks
-blue-light-glasses
-sleep-earbuds
-smart-alarm-clocks
+1. wireless-earbuds
+2. bluetooth-headphones
+3. noise-canceling-headphones
+4. studio-microphones
+5. usb-microphones
+6. ergonomic-keyboards
+7. gaming-mice
+8. laptop-docking-stations
+9. usb-c-hubs
+10. portable-chargers
+11. action-cameras
+12. security-cameras
+13. mesh-wifi-systems
+14. wifi-routers
+15. capture-cards
+16. soundbars
+17. home-theater-systems
+18. bluetooth-speakers
+19. gaming-console-accessories
+20. humidifiers
+21. dehumidifiers
+22. smart-thermostats
+23. smart-home-hubs
+24. smart-plugs
+25. home-security-kits
+26. video-baby-monitors
+27. led-desk-lamps
+28. floor-lamps
+29. sunrise-alarm-clocks
+30. white-noise-machines
+31. mattress-toppers
+32. cooling-pillows
+33. adjustable-bed-bases
+34. home-office-chairs
+35. ergonomic-desk-chairs
+36. standing-desks
+37. standing-desk-converters
+38. filing-cabinets
+39. closet-organizers
+40. air-quality-monitors
+41. carbon-monoxide-detectors
+42. smoke-detectors
+43. smart-locks
+44. garage-door-openers
+45. coffee-makers
+46. espresso-machines
+47. coffee-grinders
+48. electric-kettles
+49. blenders
+50. food-processors
+51. slow-cookers
+52. pressure-cookers
+53. bread-makers
+54. stand-mixers
+55. hand-mixers
+56. sous-vide-machines
+57. electric-griddles
+58. countertop-ice-makers
+59. water-filters
+60. water-flossers
+61. knife-sets
+62. chef-knives
+63. cast-iron-skillets
+64. nonstick-pans
+65. meal-prep-containers
+66. vacuum-sealers
+67. kettlebells
+68. resistance-bands
+69. yoga-mats
+70. foam-rollers
+71. massage-guns
+72. pull-up-bars
+73. power-towers
+74. treadmills
+75. under-desk-treadmills
+76. exercise-bikes
+77. elliptical-machines
+78. smartwatches
+79. heart-rate-monitors
+80. compression-sleeves
+81. weighted-vests
+82. balance-boards
+83. infrared-saunas
+84. gym-bags
+85. car-jump-starters
+86. portable-air-compressors
+87. obd2-scanners
+88. car-vacuum-cleaners
+89. roof-cargo-carriers
+90. camping-stoves
+91. outdoor-speakers
+92. electric-coolers
+93. portable-fridges
+94. hiking-backpacks
+95. hydration-packs
+96. fish-finders
+97. kayaks
+98. inflatable-paddle-boards
+99. electric-scooters
+100. electric-bikes
+101. automatic-pet-feeders
+102. pet-cameras
+103. cat-water-fountains
+104. pet-grooming-kits
+105. office-printers
+106. label-makers
+107. document-scanners
+108. paper-shredders
+109. laminators
+110. home-safes
+111. fireproof-safes
+112. gun-safes
+113. airsoft-guns
+114. cordless-drills
+115. tool-sets
+116. laser-levels
+117. stud-finders
+118. filament-3d-printer
+119. label-printers
+120. desk-organizers
+121. blue-light-glasses
+122. sleep-earbuds
+123. smart-alarm-clocks
