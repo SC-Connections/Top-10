@@ -89,6 +89,14 @@ jobs:
           node site-generator.js --mode=refresh
           echo "✅ Site generation complete!"
       
+      - name: Prune empty niches (auto-cleanup)
+        env:
+          RAPIDAPI_KEY: ${{ secrets.RAPIDAPI_KEY }}
+          AMAZON_AFFILIATE_ID: ${{ secrets.AMAZON_AFFILIATE_ID }}
+        run: |
+          echo "🌿 Running auto-pruning to remove niches with zero products..."
+          node scripts/prune-empty-niches.js || echo "ℹ️  No niches were pruned (exit code $?)"
+      
       - name: Verify niche folders were generated
         run: |
           echo "🔍 Verifying generated niche folders..."
@@ -136,12 +144,20 @@ jobs:
             exit 0
           fi
           
-          git commit -m "Auto-generate niche sites [$(date '+%Y-%m-%d %H:%M')]"
+          # Check if pruning occurred (deleted niche folders)
+          if git diff --cached --name-only | grep -q "niches.csv"; then
+            echo "📝 Changes include niches.csv - auto-pruning occurred"
+            git commit -m "chore: prune empty niches and auto-generate sites [$(date '+%Y-%m-%d %H:%M')]"
+          else
+            git commit -m "Auto-generate niche sites [$(date '+%Y-%m-%d %H:%M')]"
+          fi
           
-          # Make sure we integrate any remote changes before pushing
-          # Note: If rebase fails due to conflicts, the workflow will fail
-          # and require manual intervention to resolve conflicts
-          git pull --rebase origin main
+          # Pull with rebase to integrate any remote changes
+          # Note: If rebase fails due to conflicts, workflow will fail
+          git pull --rebase origin main || {
+            echo "⚠️ Rebase conflict detected. Manual intervention required."
+            exit 1
+          }
           
           git push origin main
       

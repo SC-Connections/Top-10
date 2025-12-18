@@ -134,11 +134,7 @@ function isGenericProduct(title) {
     /^Compatible /i,
     /^Replacement /i,
     /^[0-9]{3,}/,
-    /^New /i,
-    /^Latest /i,
-    /^Upgraded /i,
-    /^2024 /i,
-    /^2025 /i
+
   ];
   
   for (const pattern of genericPatterns) {

@@ -75,7 +75,7 @@ function getBuyingFactors(niche) {
       { name: 'Sound Quality and Audio Profile', description: 'Look for balanced sound with clear highs, detailed mids, and punchy bass. Consider if you prefer neutral sound or enhanced bass for specific genres like EDM or hip-hop.' },
       { name: 'Battery Life and Charging', description: 'Aim for 20+ hours on over-ear headphones and 6-8 hours on earbuds. Fast charging (10 minutes for 2-3 hours) is a valuable convenience feature for daily commuters.' },
       { name: 'Comfort and Fit for Long Sessions', description: 'Over-ear cups should be well-padded and not clamp too tight. For earbuds, multiple tip sizes ensure a secure seal. Consider weight for all-day wear.' },
-      { name: 'Active Noise Cancellation (ANC)', description: 'Essential for travel and noisy environments. Look for adaptive ANC that adjusts to your surroundings, and transparency/ambient modes for situational awareness.' },
+
       { name: 'Bluetooth 5.3 and LE Audio', description: 'Latest Bluetooth 5.3 offers better range, stability, and power efficiency. LE Audio (available via updates on some models) provides superior quality at lower bitrates.' },
       { name: 'Multipoint Connection and App Support', description: 'Connect to multiple devices simultaneously (phone + laptop). Companion apps unlock EQ customization, firmware updates, and advanced features.' }
     ];

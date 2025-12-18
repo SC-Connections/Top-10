@@ -375,7 +375,7 @@ function formatNicheName(niche) {
         'ipad': 'iPad',
         'xbox': 'Xbox',
         'playstation': 'PlayStation',
-        'anc': 'ANC',
+
         'ev': 'EV',
         'gps': 'GPS',
         'rfid': 'RFID',
@@ -528,13 +528,9 @@ function applyFilters(products, options = {}) {
     "Cosori","Gourmia","Chefman","Dash","Hamilton Beach","Proctor Silex"
   ];
 
-  // Tier C: Generic blocklist (reject these patterns)
+  // Tier C: Generic blocklist (reject only truly generic items)
   const GENERIC_BLOCKLIST = [
-    "generic", "replacement", "compatible with", "compatible for",
-    " for ", " case", " cover", " skin", " adapter", " cable",
-    " strap", " mount", " stand", " holder", " charger cable",
-    " charging cable", " usb cable", " power cord", " wall charger",
-    " car charger", " screen protector", " tempered glass"
+    "generic", "brandless", "no brand"
   ];
 
   // Track skip reasons for logging
@@ -1557,14 +1553,6 @@ function generateProductHighlights(product, niche) {
         });
     }
     
-    // ANC - check for noise cancellation
-    if (text.includes('noise cancel') || text.includes('anc') || text.includes('active noise')) {
-        highlights.push({
-            icon: '🔇',
-            label: 'ANC',
-            value: 'Yes'
-        });
-    }
     
     // Driver Size - if available
     if (specs.driver) {
@@ -1916,22 +1904,16 @@ function hasBrandName(title) {
         }
     }
     
-    // Common generic starting patterns that indicate no brand
+    // Common generic starting patterns that indicate no brand (more lenient)
     const genericPatterns = [
         /^[0-9]+ Pack/i,
         /^[0-9]+ Pcs/i,
         /^[0-9]+ Piece/i,
         /^[0-9]+ Set/i,
         /^Generic /i,
-        /^Universal /i,
-        /^Compatible /i,
-        /^Replacement /i,
+        /^Brandless /i,
+        /^No Brand /i,
         /^[0-9]{3,}/,  // Starting with numbers like "100 Pack"
-        /^New /i,
-        /^Latest /i,
-        /^Upgraded /i,
-        /^2024 /i,
-        /^2025 /i
     ];
     
     // Check if title starts with generic patterns
@@ -1957,13 +1939,25 @@ function hasBrandName(title) {
         return false;
     }
     
-    // If no known brand found and first word is generic, reject
+    // If no known brand found, check for capitalized proper word at start
+    // Allow "New", "Upgraded", "2024", "2025" before brand names
     const firstWordLower = firstWord.toLowerCase();
-    const genericFirstWords = ['smart', 'wireless', 'bluetooth', 'fitness', 'digital', 'portable', 'mini', 'premium'];
-    if (genericFirstWords.includes(firstWordLower)) {
-        console.log(`    📛 Rejecting generic name: "${title}" (starts with generic word "${firstWord}")`);
-        return false;
+    
+    // Skip year/marketing prefix words and check next word
+    const skipPrefixes = ['new', 'upgraded', 'latest', '2024', '2025'];
+    if (skipPrefixes.includes(firstWordLower)) {
+        const words = titleOriginal.split(/[\s-]/);
+        if (words.length >= 2) {
+            const secondWord = words[1];
+            // Check if second word looks like a brand (capitalized, 2+ chars)
+            if (secondWord && secondWord.length >= 2 && secondWord[0] === secondWord[0].toUpperCase()) {
+                return true;
+            }
+        }
     }
+    
+    // Removed overly restrictive generic first word check
+    // Now we only reject if it's truly generic (already caught by patterns above)
     
     // Check minimum length and proper capitalization
     // Brand names are usually 2+ characters and start with uppercase
