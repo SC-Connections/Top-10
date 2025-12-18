@@ -133,8 +133,7 @@ function isGenericProduct(title) {
     /^Universal /i,
     /^Compatible /i,
     /^Replacement /i,
-    /^[0-9]{3,}/,
-
+    /^[0-9]{3,}/
   ];
   
   for (const pattern of genericPatterns) {

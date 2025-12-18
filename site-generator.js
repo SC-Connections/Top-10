@@ -375,7 +375,6 @@ function formatNicheName(niche) {
         'ipad': 'iPad',
         'xbox': 'Xbox',
         'playstation': 'PlayStation',
-
         'ev': 'EV',
         'gps': 'GPS',
         'rfid': 'RFID',
