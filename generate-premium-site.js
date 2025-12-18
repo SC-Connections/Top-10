@@ -118,7 +118,7 @@ function generateHTML() {
             "@type": "FAQPage",
             "mainEntity": [
                 { "@type": "Question", "name": `What are the best ${CATEGORY.toLowerCase()}?`, "acceptedAnswer": { "@type": "Answer", "text": "The Sony WH-1000XM5 is our top pick for ${YEAR}." } },
-                { "@type": "Question", "name": "Are expensive headphones worth it?", "acceptedAnswer": { "@type": "Answer", "text": "Yes, premium models offer dramatically better ANC, comfort, and longevity." } }
+                { "@type": "Question", "name": "Are expensive headphones worth it?", "acceptedAnswer": { "@type": "Answer", "text": "Yes, premium models offer dramatically better sound quality, comfort, and longevity." } }
             ]
         }
     ];
@@ -306,7 +306,7 @@ function generateBuyersGuide() {
                 <li><strong>Sound Quality Testing:</strong> Frequency response measured using calibrated equipment, plus subjective listening across multiple genres</li>
                 <li><strong>Noise Cancellation Analysis:</strong> Tested in three real-world environments—airplane cabin, subway, and office chatter</li>
                 <li><strong>Comfort Assessment:</strong> Worn for minimum 4-hour sessions to test for pressure points and heat buildup</li>
-                <li><strong>Battery Life Validation:</strong> Independently verified battery claims under realistic conditions (50% volume, ANC on)</li>
+                <li><strong>Battery Life Validation:</strong> Independently verified battery claims under realistic conditions</li>
                 <li><strong>Build Quality Inspection:</strong> Durability tests including hinge stress testing and material wear assessment</li>
             </ul>
             
@@ -314,27 +314,27 @@ function generateBuyersGuide() {
             <h4>Premium Tier ($249+): Worth It for Most Buyers</h4>
             <p>In ${YEAR}, premium ${CATEGORY.toLowerCase()} have reached maturity where the technology genuinely justifies the price. Here's what you're paying for:</p>
             <ul>
-                <li><strong>Adaptive ANC:</strong> Premium models use machine learning to adapt noise cancellation in real-time. The difference is night and day on airplanes.</li>
+                <li><strong>Advanced Features:</strong> Premium models use cutting-edge technology with superior performance in real-world conditions.</li>
                 <li><strong>Multi-Device Connectivity:</strong> Seamlessly switch between laptop, phone, and tablet without manual re-pairing. This alone is worth $50+.</li>
                 <li><strong>Premium Materials:</strong> Aluminum frames, memory foam ear cups, reinforced cables vs. plastic shells that crack within a year.</li>
-                <li><strong>Sound Tuning:</strong> Custom-tuned drivers developed over years vs. off-the-shelf components.</li>
+                <li><strong>Quality Engineering:</strong> Custom-tuned components developed over years vs. off-the-shelf parts.</li>
                 <li><strong>Longevity:</strong> A $400 pair that lasts 5+ years beats three $150 pairs that die after 18 months each.</li>
             </ul>
             
             <h4>Mid-Range ($150-$248): The Sweet Spot</h4>
-            <p>This tier offers 80% of premium performance at 40% of the price. Best for students, professionals, and casual listeners who need good ANC but can't justify $400.</p>
-            <p>Expect: Good ANC (blocks 70-80% of noise), comfortable for 2-4 hours, solid Bluetooth, 30-40h battery.</p>
+            <p>This tier offers 80% of premium performance at 40% of the price. Best for students, professionals, and casual users who need good quality but can't justify $400.</p>
+            <p>Expect: Good performance, comfortable for extended use, solid connectivity, excellent battery life.</p>
             
             <h4>Budget ($80-$149): Entry Point Only</h4>
             <p>Budget models in ${YEAR} are better than ever, but still compromised. Buy these only if absolutely budget-constrained or for occasional use.</p>
-            <p>Expect: Basic ANC (blocks 50-60% of noise), plastic build, comfort issues after 2+ hours, occasionally spotty Bluetooth.</p>
+            <p>Expect: Basic features, plastic build, comfort issues after extended use, occasionally spotty connectivity.</p>
             
             <h3>Key Features Explained</h3>
-            <h4>Active Noise Cancellation (ANC)</h4>
-            <p>Not all ANC is created equal. Premium systems (Sony, Bose, Apple) use 6-8 microphones and block 95%+ of low-frequency noise. Budget ANC uses 2-4 microphones and blocks maybe 60%. If you fly regularly or work in noisy environments, spend the extra $150—it's genuinely life-changing.</p>
+            <h4>Performance</h4>
+            <p>Premium systems offer significantly better performance across the board. If you use the product regularly or in demanding conditions, spend the extra money—it's genuinely worth it.</p>
             
             <h4>Battery Life</h4>
-            <p>Most premium models now hit 30+ hours with ANC on. Anything less is a red flag. Budget models exaggerate battery life—subtract 20% from claimed figures for real-world use.</p>
+            <p>Most premium models now hit 30+ hours of use. Anything less is a red flag. Budget models exaggerate battery life—subtract 20% from claimed figures for real-world use.</p>
             
             <h4>Codec Support</h4>
             <p>In order of quality: LDAC (best) > aptX HD > AAC > SBC (worst). Most premium models support LDAC or aptX HD. Budget models often max out at AAC. For average listeners, AAC is fine. Audiophiles should insist on LDAC.</p>
@@ -354,7 +354,7 @@ function generateBuyersGuide() {
                 <li>Use headphones occasionally</li>
                 <li>Can't justify more than $100</li>
                 <li>Buying for a teen/child</li>
-                <li>Just need basic Bluetooth + ANC</li>
+                <li>Just need basic features</li>
             </ul>
         </section>`;
 }
@@ -363,11 +363,11 @@ function generateFAQ() {
     const faqs = [
         { q: "What are the best Bluetooth headphones?", a: "The Sony WH-1000XM5 is our top pick for 2025, offering industry-leading noise cancellation, exceptional comfort, and premium build quality. For those seeking the absolute best comfort, the Bose QuietComfort Ultra is unmatched. Budget buyers should consider the Anker Soundcore Space Q45 at $150." },
         { q: "Are expensive headphones worth it?", a: "Yes, if you use them regularly. Premium models ($249+) offer dramatically better noise cancellation (95% vs 60%), superior comfort for all-day wear, longer battery life (30-60h), and durability that outlasts multiple budget pairs. Our testing shows a $400 pair that lasts 5 years is cheaper than replacing $150 pairs every 18 months." },
-        { q: "What's the difference between premium and budget headphones?", a: "Premium models use advanced multi-microphone ANC systems (8 mics vs 2-4), custom-tuned drivers, memory foam materials, aluminum frames, and multi-device connectivity. Budget models use off-the-shelf components, plastic builds, basic ANC. In real-world use, premium headphones block 35% more noise, last 3x longer, and remain comfortable for 8+ hour sessions vs 2-3 hours for budget models." },
+        { q: "What's the difference between premium and budget headphones?", a: "Premium models use advanced technology, custom-tuned drivers, memory foam materials, aluminum frames, and multi-device connectivity. Budget models use off-the-shelf components, plastic builds, and basic features. In real-world use, premium headphones last 3x longer and remain comfortable for 8+ hour sessions vs 2-3 hours for budget models." },
         { q: "How long do Bluetooth headphones last?", a: "Premium models typically last 4-6 years with daily use before battery degradation or physical wear becomes problematic. Mid-range models average 2-3 years. Budget models often fail within 12-18 months—either battery failure, broken hinges, or driver damage. Spending $350 on Sony/Bose/Sennheiser yields better long-term value." },
-        { q: "Which brand makes the best Bluetooth headphones?", a: "Sony leads in ANC technology and battery life, Bose excels in comfort and build quality, Sennheiser offers the best pure sound quality, and Apple provides the best ecosystem integration (for Apple users only). For budget buyers, Anker's Soundcore line offers the most reliable quality under $150." },
-        { q: "Do I need noise cancellation?", a: "If you fly, commute on public transit, or work in noisy environments—absolutely yes. Good ANC reduces fatigue by blocking droning background noise. Our testing showed a 40% reduction in perceived tiredness after 6-hour flights when using premium ANC vs. passive isolation. For quiet home use, ANC is less critical." },
-        { q: "What's the best battery life for Bluetooth headphones?", a: "Premium models now offer 30-40 hours with ANC enabled, with standouts like the Sennheiser Momentum 4 hitting 60 hours. Anything under 20 hours is unacceptable in 2025. Budget models often claim 40+ hours but deliver 25-30 in real-world use." },
+        { q: "Which brand makes the best Bluetooth headphones?", a: "Sony leads in advanced technology and battery life, Bose excels in comfort and build quality, Sennheiser offers the best pure sound quality, and Apple provides the best ecosystem integration (for Apple users only). For budget buyers, Anker's Soundcore line offers the most reliable quality under $150." },
+        { q: "Do I need noise cancellation?", a: "If you fly, commute on public transit, or work in noisy environments—it can be very beneficial. Good noise cancellation reduces fatigue by blocking droning background noise. For quiet home use, noise cancellation is less critical." },
+        { q: "What's the best battery life for Bluetooth headphones?", a: "Premium models now offer 30-40 hours of continuous use, with standouts like the Sennheiser Momentum 4 hitting 60 hours. Anything under 20 hours is unacceptable in 2025. Budget models often claim 40+ hours but deliver 25-30 in real-world use." },
         { q: "Can I use Bluetooth headphones for working out?", a: "Most over-ear Bluetooth headphones lack IP ratings for sweat/water resistance. They'll survive light gym use but aren't ideal for running or intense cardio. For workouts, consider earbuds instead. If you must use over-ears, look for models with removable/washable ear pads." },
         { q: "Should I wait for Black Friday deals?", a: "Premium Bluetooth headphones see real discounts during Black Friday (15-30% off), Prime Day (July), and when newer models launch. Sony XM4 dropped to $248 last Black Friday (regularly $349). However, don't wait if you need them now—the difference between $349 and $279 is negligible over a 5-year lifespan." },
         { q: "Do expensive headphones sound that much better?", a: "Yes, but with diminishing returns. The jump from $80 to $250 is massive—better drivers, sound tuning, wider frequency response. The jump from $250 to $500 is noticeable but smaller. The jump from $500 to $800+ is for audiophiles only. Our blind listening tests showed 90% of people correctly identified Sony XM5 ($399) vs. budget models, but only 40% could distinguish XM5 vs. B&W Px8 ($699)." }

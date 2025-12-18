@@ -4,7 +4,13 @@
 
 ## 🎯 Overview
 
-This system automatically generates professional, SEO-optimized review websites featuring top 10 products in various niches. All sites are hosted within this repository and served via GitHub Pages.
+This system automatically generates professional, SEO-optimized review websites featuring top 10 products across multiple categories. All sites are hosted within this repository and served via GitHub Pages.
+
+**Product Categories Include:**
+- Ab Rollers, 3D Printers, Earbuds, Headphones
+- Fitness Equipment, Kitchen Appliances, Smart Home Devices
+- Gaming Accessories, Camera Equipment, Office Supplies
+- And many more Amazon product categories
 
 **Key Features:**
 - ✅ **Intelligent multi-source data gathering** (Google Trends, Amazon Best Sellers, RapidAPI fallback)
@@ -337,13 +343,13 @@ Add a fine-grained Personal Access Token with `repo:write` permissions to the `G
 Each niche site includes:
 
 ```
-/sites/bluetooth-earbuds/
+/{product-category}/
 ├── index.html           # Main top 10 list page
 ├── global.css          # Styles
 └── blog/
     ├── ASIN1.html      # Product 1 detailed review
     ├── ASIN2.html      # Product 2 detailed review
-    └── ...             # Reviews for all 10 products
+    └── ...             # Reviews for all products
 ```
 
 ## 📈 GitHub Pages Deployment
@@ -438,27 +444,26 @@ For issues or questions, please open a GitHub issue.
 
 ---
 
-## 🎧 Premium Bluetooth Headphone Scraper
+## 🔧 Multi-Category Product Scraper
 
 ### Overview
 
-The repository now includes a specialized premium Bluetooth headphone scraper (`scraper/top10Premium.js`) that focuses exclusively on high-end audio products. This scraper implements strict filtering, deduplication, and categorical organization.
+The repository includes specialized scrapers for various product categories. The system implements intelligent filtering, deduplication, and quality checks to ensure only relevant products are included.
 
 ### Features
 
-#### 1. **Premium Brand Whitelist**
-Only products from these premium brands are included:
-- Sony, Bose, Sennheiser
-- Apple/AirPods
-- Bang & Olufsen, Bowers & Wilkins
-- Master & Dynamic, Focal
-- AKG, Shure
-- Beats (Studio and Pro lines only)
+#### 1. **Premium Brand Filtering**
+Products are filtered to include recognized brands across multiple categories:
+- Electronics: Sony, Bose, Sennheiser, Apple, Samsung, LG
+- Fitness: Peloton, NordicTrack, Bowflex, Nautilus
+- Kitchen: KitchenAid, Cuisinart, Breville, Ninja
+- And many more category-specific brands
 
 #### 2. **Quality Filters**
-- **Minimum Price**: $150 USD (MSRP or list price)
-- **Keyword Blacklist**: Rejects products containing "kids", "gaming", "cheap", "budget"
-- **TWS Exception**: "TWS" keyword is rejected unless from a premium brand (Sony, Bose, Sennheiser, Apple)
+- Minimum rating thresholds
+- Review count requirements
+- Price validation
+- Product deduplication
 
 #### 3. **Model Deduplication**
 Products are deduplicated by normalized model name:
@@ -467,108 +472,36 @@ Products are deduplicated by normalized model name:
 - Removes edition markers: limited, edition, midnight, space, rose
 - Only the highest-ranked variant of each model is retained
 
-Example:
-- "Sony WH-1000XM5 Black" → normalized to "sony wh-1000xm5"
-- "Sony WH-1000XM5 Silver" → same normalized title, deduplicated
-
-#### 4. **Car Category Mapping**
-Each of the 10 final products is mapped to a unique car category:
-1. sedan
-2. suv
-3. hatchback
-4. convertible
-5. coupe
-6. pickup
-7. minivan
-8. wagon
-9. ev
-10. luxury
-
-This ensures exactly 10 products with unique categories in the output.
-
-#### 5. **Data Sources**
+#### 4. **Data Sources**
 Products are gathered from multiple sources in priority order:
 
-1. **Google Trends RSS** - Identifies trending Bluetooth headphone queries
-2. **Amazon Best Sellers** - Puppeteer scrapes Electronics › Headphones › Over-Ear category
-   - Filters by brand whitelist during scraping
-3. **RapidAPI Fallback** - Used only if fewer than 10 premium unique models found
+1. **Google Trends** - Identifies trending products in each category
+2. **Amazon Best Sellers** - Scrapes relevant Amazon categories
+3. **RapidAPI Fallback** - Used when additional products are needed
    - Endpoint: `amazon-real-time-api`
 
-#### 6. **Output Schema**
-Products are saved to `/data/top10_premium_headphones.json` with this structure:
-
-```json
-{
-  "category": "sedan",
-  "rank": 1,
-  "brand": "Sony",
-  "model": "WH-1000XM5",
-  "normalizedTitle": "sony wh-1000xm5",
-  "asin": "B09XS7JWHH",
-  "price": 399,
-  "image": "https://...",
-  "amazonUrl": "https://www.amazon.com/dp/B09XS7JWHH",
-  "trendScore": 95
-}
-```
+#### 5. **Automated Pruning**
+The system automatically removes niches with zero valid products:
+- Checks each niche after generation
+- Removes empty niches from niches.csv
+- Deletes associated data files and folders
+- Prevents empty pages from being deployed
 
 ### Usage
 
-#### Running the Scraper
+#### Running the Generator
 
 ```bash
-# Set environment variable (optional for RapidAPI fallback)
+# Set environment variables
 export RAPIDAPI_KEY="your-key-here"
+export AMAZON_AFFILIATE_ID="scconnec0d-20"
 
-# Run the scraper
-node scraper/top10Premium.js
+# Generate sites for all niches
+node site-generator.js
+
+# Prune empty niches
+node prune-empty-niches.js
 ```
-
-Output will be saved to `/data/top10_premium_headphones.json`.
-
-#### Running Tests
-
-```bash
-# Run premium filter tests
-node test/premiumFilter.test.js
-```
-
-The test suite validates:
-- ✅ Unique `normalizedTitle` per product
-- ✅ All prices ≥ $150
-- ✅ Exactly 10 unique categories from the predefined list
-- ✅ All required fields present
-- ✅ Premium brand filtering logic
-- ✅ Keyword blacklist logic
-- ✅ Title normalization and deduplication
-
-### Example Output
-
-See `/examples/top10_premium_headphones.json` for a complete sample output showing all 10 categories with premium headphones.
-
-### Architecture
-
-```
-/scraper/
-  └── top10Premium.js       # Main premium scraper
-/test/
-  └── premiumFilter.test.js # Unit tests
-/data/
-  └── top10_premium_headphones.json  # Output (generated)
-/examples/
-  └── top10_premium_headphones.json  # Sample output
-```
-
-### Implementation Details
-
-**Trend Score Calculation**: Products receive scores from 100 down to 50 based on their ranking position. Earlier products (higher rank) receive higher trend scores.
-
-**Brand Extraction**: The scraper intelligently extracts brand names from product titles and maps them to the premium brand list.
-
-**Model Extraction**: Model names are derived by removing the brand name from the full product title.
-
-**Fallback Logic**: If Puppeteer scraping returns fewer than 10 premium products after filtering, the RapidAPI fallback is automatically triggered to supplement the results.
 
 ---
 
