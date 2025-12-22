@@ -1,185 +1,92 @@
-action-cameras
-security-cameras
-soundbars
-gaming-console-accessories
-video-baby-monitors
-home-office-chairs
-espresso-machines
-cast-iron-skillets
-vacuum-sealers
-elliptical-machines
-smartwatches
-hiking-backpacks
-home-safes
-robot-vacuum-cleaners
-air-fryers
-electric-toothbrushes
-massage-guns
-adjustable-dumbbells
-portable-power-stations
-bluetooth-headphones
-wireless-earbuds
-gaming-headsets
-mechanical-keyboards
-ergonomic-mice
-standing-desks
-office-desk-lamps
-noise-canceling-headphones
-sleep-earbuds
-dash-cams
-car-jump-starters
-portable-car-vacuums
-car-phone-mounts
-tire-inflators
-electric-scooters
-folding-electric-bikes
-smart-doorbell-cameras
-home-security-kits
-smart-light-bulbs
-smart-plugs
-smart-thermostats
-air-quality-monitors
-dehumidifiers
-humidifiers
-air-purifiers
-space-heaters
-portable-air-conditioners
-white-noise-machines
-weighted-blankets
-memory-foam-pillows
-cooling-mattress-toppers
-electric-blankets
-bedside-alarm-clocks
-sunrise-alarm-clocks
-coffee-makers
-cold-brew-coffee-makers
-coffee-grinders
-milk-frothers
-blenders
-food-processors
-stand-mixers
-slow-cookers
-pressure-cookers
-rice-cookers
-electric-griddles
-countertop-ice-makers
-water-flossers
-electric-shavers
-hair-clippers
-beard-trimmers
-hair-dryers
-hair-straighteners
-curling-irons
-makeup-mirrors
-skincare-fridges
-digital-bathroom-scales
-smart-body-fat-scales
-fitness-trackers
-yoga-mats
-resistance-bands
-ab-rollers
-pull-up-bars
-kettlebells
-foam-rollers
-treadmills
-under-desk-treadmills
-rowing-machines
-exercise-bikes
-vibration-plates
-massage-chairs
-portable-massage-tables
-foot-massagers
-heated-foot-massagers
-electric-heating-pads
-blood-pressure-monitors
-pulse-oximeters
-infrared-thermometers
-first-aid-kits
-emergency-weather-radios
-portable-solar-generators
-solar-power-banks
-outdoor-solar-lights
-led-strip-lights
-led-desk-lamps
-ring-lights
-tripods
-phone-tripods
-camera-gimbals
-streaming-microphones
-usb-microphones
-gaming-microphones
-webcams
-hdmi-capture-cards
-portable-projectors
-mini-projectors
-home-theater-projectors
-projector-screens
-blu-ray-players
-media-streaming-devices
-wifi-routers
-mesh-wifi-systems
-network-switches
-ethernet-cables
-external-hard-drives
-portable-ssds
-usb-hubs
-docking-stations
-laptop-stands
-cooling-laptop-pads
-tablet-stands
-stylus-pens
-drawing-tablets
-graphic-tablets
-3d-printers
-filament-3d-printers
-resin-3d-printers
-label-makers
-barcode-scanners
-paper-shredders
-laminating-machines
-document-scanners
-home-printers
-laser-printers
-photo-printers
-office-safes
-fireproof-document-bags
-tool-organizers
-power-tool-sets
-cordless-drills
-electric-screwdrivers
-laser-levels
-stud-finders
-digital-calipers
-multimeters
-smart-garage-door-openers
-garage-storage-systems
-wall-mounted-shelves
-closet-organization-systems
-shoe-racks
-pet-cameras
-automatic-pet-feeders
-pet-water-fountains
-dog-training-collars
-robot-litter-boxes
-cat-litter-mats
-aquarium-filters
-fish-tank-heaters
-reptile-heat-lamps
-outdoor-grills
-pellet-grills
-electric-grills
-grill-thermometers
-meat-thermometers
-smokers
-camping-tents
-sleeping-bags
-inflatable-air-mattresses
-portable-camping-stoves
-coolers
-electric-coolers
-hiking-trekking-poles
-headlamps
-tactical-flashlights
-rechargeable-flashlights
-power-tool-batteries
-portable-toolboxes
+1. action-cameras
+2. security-cameras
+3. soundbars
+4. espresso-machines
+5. vacuum-sealers
+6. smartwatches
+7. hiking-backpacks
+8. robot-vacuum-cleaners
+9. electric-toothbrushes
+10. massage-guns
+11. adjustable-dumbbells
+12. wireless-earbuds
+13. ergonomic-mice
+14. car-jump-starters
+15. portable-car-vacuums
+16. car-phone-mounts
+17. tire-inflators
+18. folding-electric-bikes
+19. smart-doorbell-cameras
+20. smart-light-bulbs
+21. smart-plugs
+22. portable-air-conditioners
+23. white-noise-machines
+24. memory-foam-pillows
+25. cooling-mattress-toppers
+26. cold-brew-coffee-makers
+27. blenders
+28. slow-cookers
+29. rice-cookers
+30. electric-griddles
+31. countertop-ice-makers
+32. beard-trimmers
+33. hair-dryers
+34. hair-straighteners
+35. curling-irons
+36. makeup-mirrors
+37. digital-bathroom-scales
+38. fitness-trackers
+39. ab-rollers
+40. foam-rollers
+41. treadmills
+42. under-desk-treadmills
+43. rowing-machines
+44. exercise-bikes
+45. foot-massagers
+46. blood-pressure-monitors
+47. pulse-oximeters
+48. portable-solar-generators
+49. solar-power-banks
+50. led-strip-lights
+51. tripods
+52. phone-tripods
+53. streaming-microphones
+54. usb-microphones
+55. gaming-microphones
+56. webcams
+57. portable-projectors
+58. blu-ray-players
+59. media-streaming-devices
+60. network-switches
+61. ethernet-cables
+62. external-hard-drives
+63. usb-hubs
+64. docking-stations
+65. cooling-laptop-pads
+66. tablet-stands
+67. drawing-tablets
+68. filament-3d-printers
+69. resin-3d-printers
+70. label-makers
+71. paper-shredders
+72. laminating-machines
+73. document-scanners
+74. photo-printers
+75. tool-organizers
+76. power-tool-sets
+77. stud-finders
+78. digital-calipers
+79. garage-storage-systems
+80. closet-organization-systems
+81. shoe-racks
+82. automatic-pet-feeders
+83. pet-water-fountains
+84. robot-litter-boxes
+85. cat-litter-mats
+86. reptile-heat-lamps
+87. pellet-grills
+88. meat-thermometers
+89. camping-tents
+90. sleeping-bags
+91. headlamps
+92. rechargeable-flashlights
