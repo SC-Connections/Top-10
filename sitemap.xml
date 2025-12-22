@@ -4,6 +4,12 @@
     <loc>https://sc-connections.github.io/Top-10/</loc>
     <lastmod>2025-12-22</lastmod>
     <changefreq>weekly</changefreq>
-    <priority>1.0</priority>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://sc-connections.github.io/Top-10/google61b789724008c56c.html</loc>
+    <lastmod>2025-12-22</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
   </url>
 </urlset>
