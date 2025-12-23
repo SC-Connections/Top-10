@@ -1,0 +1,29 @@
+# Dependencies
+node_modules/
+package-lock.json
+
+# Puppeteer cache
+.cache/
+.local-chromium/
+
+# Build outputs - ignore API response data but keep config files
+data/*.json
+!data/prices.json
+!data/reviews.json
+
+# Temporary files
+*.tmp
+.DS_Store
+
+# Environment files
+.env
+.env.local
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+
+# Auto-maintenance artifacts
+PR_BODY.md
+test-validation.js
