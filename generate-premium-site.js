@@ -49,7 +49,6 @@ function generateHTML() {
                     <div class="product-rating">
                         <span class="stars">${stars}</span>
                         <span><strong>${p.rating}</strong></span>
-                        <span class="review-count">(${p.reviews.toLocaleString()} reviews)</span>
                     </div>
                     <div class="product-price">Check price on Amazon</div>
                     <a href="https://www.amazon.com/dp/${p.asin}?tag=${AFFILIATE_ID}" class="cta-button" target="_blank" rel="nofollow noopener">Check Today's Price on Amazon →</a>
@@ -82,7 +81,7 @@ function generateHTML() {
             <td><strong>Check price on Amazon</strong></td>
             <td>${p.battery}</td>
             <td>${p.driver}</td>
-            <td>${p.rating}⭐ (${p.reviews.toLocaleString()})</td>
+            <td>${p.rating}⭐</td>
             <td><a href="https://www.amazon.com/dp/${p.asin}?tag=${AFFILIATE_ID}" class="btn-primary" target="_blank" rel="nofollow noopener">Check Today's Price</a></td>
         </tr>`).join('\\n');
     
