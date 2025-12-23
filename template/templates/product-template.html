@@ -1,0 +1,39 @@
+<div class="product-card" data-rank="{{RANK}}" data-categories="{{CATEGORIES}}" id="product-{{RANK}}">
+    <div class="product-badge">
+        <span class="rank-badge">#{{RANK}}</span>
+        {{BADGE}}
+    </div>
+    
+    <div class="product-image">
+        <img src="{{IMAGE_URL}}" alt="{{PRODUCT_TITLE}}" loading="lazy">
+    </div>
+    
+    <div class="product-info">
+        <h3 class="product-title">{{PRODUCT_TITLE}}</h3>
+        
+        <div class="product-mini-review">
+            {{MINI_REVIEW}}
+        </div>
+        
+        <!-- Product Highlight Grid -->
+        <div class="product-highlights">
+            {{HIGHLIGHTS}}
+        </div>
+        
+        <div class="product-features">
+            <h4>Key Features:</h4>
+            <ul>
+                {{FEATURES_LIST}}
+            </ul>
+        </div>
+        
+        <div class="product-actions">
+            <a href="{{AFFILIATE_LINK}}" class="btn-primary" target="_blank" rel="nofollow noopener">
+                🛒 See Price on Amazon
+            </a>
+            <a href="blog/{{ASIN}}.html" class="btn-secondary">
+                Read Full Review
+            </a>
+        </div>
+    </div>
+</div>

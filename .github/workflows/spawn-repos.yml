@@ -1,0 +1,68 @@
+name: Factory - Spawn Niche Repositories
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'niches/niches.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  spawn-repos:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout factory repository
+        uses: actions/checkout@v4
+      
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+      
+      - name: Install Python dependencies
+        run: |
+          pip install pyyaml requests
+      
+      - name: Validate environment
+        run: |
+          if [ -z "${{ secrets.REPO_FACTORY_TOKEN }}" ]; then
+            echo "❌ ERROR: REPO_FACTORY_TOKEN secret is not set"
+            echo "   Please configure a fine-grained PAT with the following permissions:"
+            echo "   - Repository administration (create repos)"
+            echo "   - Contents read/write"
+            echo "   - Pages read/write"
+            exit 1
+          fi
+          echo "✅ REPO_FACTORY_TOKEN is configured"
+      
+      - name: Make spawn script executable
+        run: chmod +x scripts/spawn_repos.py
+      
+      - name: Spawn niche repositories
+        env:
+          GH_TOKEN: ${{ secrets.REPO_FACTORY_TOKEN }}
+          ORG: SC-Connections
+          TEMPLATE_DIR: template
+          NICHES_FILE: niches/niches.yml
+        run: |
+          python scripts/spawn_repos.py
+      
+      - name: Summary
+        if: always()
+        run: |
+          echo "## Repository Factory Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Processed niches from \`niches/niches.yml\`" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Organization:** SC-Connections" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Each spawned repository includes:" >> $GITHUB_STEP_SUMMARY
+          echo "- Complete site generator template" >> $GITHUB_STEP_SUMMARY
+          echo "- Niche-specific configuration (niche.json)" >> $GITHUB_STEP_SUMMARY
+          echo "- Automated build and deploy workflow" >> $GITHUB_STEP_SUMMARY
+          echo "- GitHub Pages enabled (workflow build type)" >> $GITHUB_STEP_SUMMARY

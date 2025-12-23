@@ -1,0 +1,164 @@
+name: Build and Deploy Niche Site
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+  schedule:
+    # Weekly update every Monday at 6 AM UTC
+    - cron: '0 6 * * 1'
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+      
+      - name: Install dependencies
+        run: npm install
+      
+      - name: Install Puppeteer dependencies
+        run: |
+          echo "📦 Installing Puppeteer system dependencies..."
+          sudo apt-get update -qq
+          sudo apt-get install -y \
+            libx11-xcb1 \
+            libxtst6 \
+            libxcomposite1 \
+            libxi6 \
+            libxrender1 \
+            libxrandr2 \
+            libnss3 \
+            libatk1.0-0 \
+            libatk-bridge2.0-0 \
+            libcups2 \
+            libxss1 \
+            libxdamage1 \
+            libgbm1 || echo "⚠️  Some Puppeteer dependencies failed to install (non-fatal)"
+          
+          # Try sound package variants
+          if sudo apt-get install -y libasound2; then
+            echo "✅ Installed libasound2"
+          elif sudo apt-get install -y libasound2t64; then
+            echo "✅ Installed libasound2t64"
+          else
+            echo "⚠️  Neither libasound2 nor libasound2t64 could be installed. Puppeteer may still work."
+          fi
+      
+      - name: Load niche configuration
+        id: niche_config
+        run: |
+          if [ ! -f "niche.json" ]; then
+            echo "❌ ERROR: niche.json not found!"
+            echo "   This file should have been created by the factory during repo initialization."
+            exit 1
+          fi
+          
+          # Extract niche details
+          NICHE_SLUG=$(node -p "require('./niche.json').slug")
+          NICHE_TITLE=$(node -p "require('./niche.json').title")
+          
+          echo "slug=$NICHE_SLUG" >> $GITHUB_OUTPUT
+          echo "title=$NICHE_TITLE" >> $GITHUB_OUTPUT
+          
+          echo "✅ Niche configuration loaded:"
+          echo "   Slug: $NICHE_SLUG"
+          echo "   Title: $NICHE_TITLE"
+      
+      - name: Set timestamp
+        run: echo "UPDATE_TIMESTAMP=$(date '+%B %d, %Y')" >> $GITHUB_ENV
+      
+      - name: Generate niche site
+        env:
+          RAPIDAPI_KEY: ${{ secrets.RAPIDAPI_KEY }}
+          AMAZON_AFFILIATE_ID: scconnec0d-20
+          UPDATE_TIMESTAMP: ${{ env.UPDATE_TIMESTAMP }}
+          SKIP_PUPPETEER: 'false'
+        run: |
+          echo "🚀 Generating niche site: ${{ steps.niche_config.outputs.title }}"
+          
+          # Update niches.csv with this single niche
+          echo "${{ steps.niche_config.outputs.title }}" > niches.csv
+          
+          # Run the site generator
+          node site-generator.js --mode=refresh
+          
+          echo "✅ Site generation complete!"
+      
+      - name: Verify site was generated
+        run: |
+          SLUG="${{ steps.niche_config.outputs.slug }}"
+          
+          if [ ! -d "$SLUG" ] || [ ! -f "$SLUG/index.html" ]; then
+            echo "❌ ERROR: Site was not generated at $SLUG/"
+            echo "   Check the generator logs above for errors."
+            exit 1
+          fi
+          
+          echo "✅ Verified: $SLUG/index.html exists"
+      
+      - name: Generate root index.html
+        run: |
+          # Create a simple index that redirects to the niche site
+          SLUG="${{ steps.niche_config.outputs.slug }}"
+          TITLE="${{ steps.niche_config.outputs.title }}"
+          
+          cat > index.html << EOF
+          <!DOCTYPE html>
+          <html lang="en">
+          <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <meta http-equiv="refresh" content="0; url=./$SLUG/">
+            <title>$TITLE</title>
+          </head>
+          <body>
+            <p>Redirecting to <a href="./$SLUG/">$TITLE</a>...</p>
+          </body>
+          </html>
+          EOF
+          
+          echo "✅ Created root index.html with redirect to $SLUG/"
+      
+      - name: Setup Pages
+        uses: actions/configure-pages@v4
+      
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: '.'
+      
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
+      
+      - name: Summary
+        run: |
+          echo "## Deployment Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Niche:** ${{ steps.niche_config.outputs.title }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Slug:** ${{ steps.niche_config.outputs.slug }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Site URL:** ${{ steps.deployment.outputs.page_url }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "✅ Site successfully deployed to GitHub Pages" >> $GITHUB_STEP_SUMMARY
