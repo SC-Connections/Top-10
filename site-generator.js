@@ -1458,7 +1458,7 @@ function generateProductsHTML(products, template, niche) {
         html = html.replace(/{{MINI_REVIEW}}/g, miniReview);
         html = html.replace(/{{RATING_STARS}}/g, generateStars(parseFloat(product.rating || 0)));
         html = html.replace(/{{RATING}}/g, product.rating || 'N/A');
-        html = html.replace(/{{REVIEW_COUNT}}/g, product.reviews || '0');
+        // Note: {{REVIEW_COUNT}} placeholder removed - review count no longer displayed in UI
         html = html.replace(/{{PRICE}}/g, product.price || 'See on Amazon');
         html = html.replace(/{{HIGHLIGHTS}}/g, highlights);
         const features = Array.isArray(product.features) ? product.features : [];
@@ -1538,15 +1538,18 @@ function generateProductHighlights(product, niche) {
         value: product.price || 'See on Amazon'
     });
     
-    // Rating - always show with review count
+    // Rating - only show rating value, no review count
     const rating = product.rating || 'N/A';
-    const reviewCount = product.reviews || '0';
-    const ratingValue = rating === 'N/A' ? 'Not yet rated' : `${rating} / 5 (${reviewCount} reviews)`;
-    highlights.push({
-        icon: '⭐',
-        label: 'Rating',
-        value: ratingValue
-    });
+    const ratingValue = rating === 'N/A' ? 'Not yet rated' : `${rating} / 5`;
+    
+    // Only show rating if we have a valid rating value
+    if (rating !== 'N/A' && parseFloat(rating) > 0) {
+        highlights.push({
+            icon: '⭐',
+            label: 'Rating',
+            value: ratingValue
+        });
+    }
     
     // Battery - if available
     if (specs.battery) {
@@ -1814,7 +1817,7 @@ function generateBlogHTML(product, niche, rank, templates) {
     html = html.replace(/{{IMAGE_URL}}/g, product.image);
     html = html.replace(/{{RATING_STARS}}/g, generateStars(parseFloat(product.rating || 0)));
     html = html.replace(/{{RATING}}/g, product.rating || 'N/A');
-    html = html.replace(/{{REVIEW_COUNT}}/g, product.reviews || '0');
+    // Note: {{REVIEW_COUNT}} placeholder removed - review count no longer displayed in UI
     html = html.replace(/{{PRICE}}/g, product.price || 'See on Amazon');
     html = html.replace(/{{BLOG_CONTENT}}/g, blog.content);
     html = html.replace(/{{AFFILIATE_LINK}}/g, generateAffiliateLink(product));
@@ -2029,7 +2032,6 @@ function generateComparisonTable(products) {
                         <a href="#${cardId}" class="product-link">${escapeHtml(shortName)}</a>
                     </td>
                     <td class="rating-cell">${product.rating || 'N/A'} ⭐</td>
-                    <td class="reviews-cell">${product.reviews || '0'}</td>
                     <td class="price-cell">${product.price || 'See on Amazon'}</td>`;
         
         if (hasBattery) {
@@ -2050,12 +2052,11 @@ function generateComparisonTable(products) {
         return row;
     }).join('\n');
     
-    // Build header with dynamic columns
+    // Build header with dynamic columns (Reviews column removed)
     let headerRow = `                        <tr>
                             <th>Rank</th>
                             <th>Product</th>
                             <th>Rating</th>
-                            <th>Reviews</th>
                             <th>Price</th>`;
     
     if (hasBattery) headerRow += `\n                            <th>Battery</th>`;

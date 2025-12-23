@@ -49,7 +49,6 @@ function generateHTML() {
                     <div class="product-rating">
                         <span class="stars">${stars}</span>
                         <span><strong>${p.rating}</strong></span>
-                        <span class="review-count">(${p.reviews.toLocaleString()} reviews)</span>
                     </div>
                     <div class="product-price">Check price on Amazon</div>
                     <a href="https://www.amazon.com/dp/${p.asin}?tag=${AFFILIATE_ID}" class="cta-button" target="_blank" rel="nofollow noopener">Check Today's Price on Amazon →</a>
@@ -82,7 +81,7 @@ function generateHTML() {
             <td><strong>Check price on Amazon</strong></td>
             <td>${p.battery}</td>
             <td>${p.driver}</td>
-            <td>${p.rating}⭐ (${p.reviews.toLocaleString()})</td>
+            <td>${p.rating}⭐</td>
             <td><a href="https://www.amazon.com/dp/${p.asin}?tag=${AFFILIATE_ID}" class="btn-primary" target="_blank" rel="nofollow noopener">Check Today's Price</a></td>
         </tr>`).join('\\n');
     
@@ -265,7 +264,6 @@ function getCSS() {
         .product-title { font-size: 1.8rem; color: #1a1a2e; margin: 0.5rem 0; }
         .product-rating { display: flex; align-items: center; gap: 1rem; margin: 1rem 0; }
         .stars { color: #f39c12; font-size: 1.2rem; }
-        .review-count { color: #7f8c8d; }
         .product-price { font-size: 1.5rem; font-weight: 700; color: #e74c3c; margin: 1rem 0; }
         .product-description { font-size: 1.05rem; line-height: 1.8; color: #444; margin: 1.5rem 0; padding: 1rem; background: #f8f9fa; border-left: 4px solid #3498db; border-radius: 4px; }
         .pros-cons { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin: 2rem 0; }
