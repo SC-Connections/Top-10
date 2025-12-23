@@ -264,7 +264,6 @@ function getCSS() {
         .product-title { font-size: 1.8rem; color: #1a1a2e; margin: 0.5rem 0; }
         .product-rating { display: flex; align-items: center; gap: 1rem; margin: 1rem 0; }
         .stars { color: #f39c12; font-size: 1.2rem; }
-        .review-count { color: #7f8c8d; }
         .product-price { font-size: 1.5rem; font-weight: 700; color: #e74c3c; margin: 1rem 0; }
         .product-description { font-size: 1.05rem; line-height: 1.8; color: #444; margin: 1.5rem 0; padding: 1rem; background: #f8f9fa; border-left: 4px solid #3498db; border-radius: 4px; }
         .pros-cons { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin: 2rem 0; }
