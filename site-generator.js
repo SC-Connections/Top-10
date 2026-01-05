@@ -197,6 +197,12 @@ async function generateSiteForNiche(niche) {
     const siteDir = path.join(CONFIG.OUTPUT_DIR, slug);
     const blogDir = path.join(siteDir, 'blog');
     
+    // Print per-niche diagnostic header
+    console.log(`\n${'='.repeat(60)}`);
+    console.log(`📊 NICHE DIAGNOSTIC: ${niche}`);
+    console.log(`   Slug: ${slug}`);
+    console.log('='.repeat(60));
+    
     // Create directories
     if (fs.existsSync(siteDir)) {
         fs.rmSync(siteDir, { recursive: true, force: true });
@@ -209,7 +215,7 @@ async function generateSiteForNiche(niche) {
     // Load templates FIRST - before any processing
     const templates = loadTemplates();
     
-    // Fetch products from Amazon API
+    // Fetch products from Amazon API (this will print source diagnostics)
     console.log('🔍 Fetching products from Amazon...');
     const products = await fetchProducts(niche);
     
@@ -1005,7 +1011,21 @@ async function fetchProducts(niche) {
             filteredProducts = filterResult.products;
             
             console.log(`🔥 Filtered products ready: ${filteredProducts.length}`);
-            console.log(`📊 Stats: gathered=${filterResult.stats.gathered}, validated=${filterResult.stats.validated}, tierA=${filterResult.stats.tierA}, final=${filterResult.stats.final}`);
+            
+            // Print detailed stats (fix the stats output to match actual fields)
+            console.log(`📊 Filter Stats:`);
+            console.log(`   - Gathered: ${filterResult.stats.gathered}`);
+            console.log(`   - After validation: ${filterResult.stats.validated}`);
+            console.log(`   - Premium brands: ${filterResult.stats.premiumCount}`);
+            console.log(`   - Final selection: ${filterResult.stats.final}`);
+            
+            // Print top rejection reasons
+            if (filterResult.stats.skipReasons && filterResult.stats.skipReasons.length > 0) {
+                console.log(`\n📉 Top 3 rejection reasons:`);
+                filterResult.stats.skipReasons.slice(0, 3).forEach(([reason, count]) => {
+                    console.log(`   ${count}x - ${reason}`);
+                });
+            }
             
             // If we have enough products, break out of retry loop
             if (filteredProducts.length >= CONFIG.MIN_PRODUCTS) {

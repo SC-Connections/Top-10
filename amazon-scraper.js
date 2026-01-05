@@ -17,8 +17,11 @@ async function scrapeAmazonBestSellers(niche) {
     return [];
   }
   
+  let browser = null;
+  
   try {
-    const browser = await puppeteer.launch({ 
+    console.log('  🚀 Launching Puppeteer browser...');
+    browser = await puppeteer.launch({ 
       headless: true,
       args: ['--no-sandbox', '--disable-setuid-sandbox']
     });
@@ -27,10 +30,23 @@ async function scrapeAmazonBestSellers(niche) {
     
     try {
       const url = `https://www.amazon.com/s?k=${encodeURIComponent(niche)}&s=review-rank`;
+      console.log(`  📡 Navigating to: ${url}`);
+      
       await page.goto(url, { 
         waitUntil: 'networkidle2',
         timeout: 30000
       });
+      
+      console.log(`  ✓ Page loaded successfully`);
+
+      // Check for CAPTCHA or blocking
+      const pageContent = await page.content();
+      if (pageContent.includes('Enter the characters you see below') || 
+          pageContent.includes('Sorry, we just need to make sure you')) {
+        console.warn('  ⚠️  CAPTCHA or blocking detected on Amazon page');
+        await browser.close();
+        throw new Error('BLOCKED_CAPTCHA');
+      }
 
       const products = await page.evaluate(() =>
         Array.from(document.querySelectorAll('.s-result-item'))
@@ -43,18 +59,34 @@ async function scrapeAmazonBestSellers(niche) {
             source: 'Amazon Best Sellers'
           }))
       );
+      
+      console.log(`  ✓ Scraped ${products.length} items from Amazon Best Sellers`);
 
       await browser.close();
       return products.filter(p => p.title !== null && p.asin !== null);
     } catch (error) {
-      console.error('Amazon scraping error:', error.message);
-      await browser.close();
-      return [];
+      console.error('  ❌ Amazon scraping error:', error.message);
+      if (error.message.includes('timeout')) {
+        console.error('  ❌ Navigation timeout - page took too long to load');
+        throw new Error('TIMEOUT');
+      } else if (error.message.includes('BLOCKED_CAPTCHA')) {
+        throw new Error('BLOCKED_CAPTCHA');
+      } else {
+        console.error('  ❌ Selector or evaluation error - page structure may have changed');
+        throw new Error('SELECTOR_NOT_FOUND');
+      }
+    } finally {
+      if (browser) {
+        await browser.close();
+      }
     }
   } catch (launchError) {
-    console.error('Puppeteer launch error:', launchError.message);
-    console.log('ℹ️  Skipping Amazon scraping, will use fallback');
-    return [];
+    console.error('  ❌ Puppeteer launch error:', launchError.message);
+    console.log('  ℹ️  Skipping Amazon scraping, will use fallback');
+    if (browser) {
+      await browser.close();
+    }
+    throw new Error('PUPPETEER_LAUNCH_FAILED');
   }
 }
 

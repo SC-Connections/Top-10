@@ -16,6 +16,21 @@ async function rapidApiFallback(niche) {
   const PAGE_SIZE = 20;
   const DELAY_MS = 900; // 900ms delay between requests
   
+  // DIAGNOSTIC: Check if API key is present
+  const apiKey = process.env.RAPIDAPI_KEY;
+  console.log(`\n🔑 RAPIDAPI KEY DIAGNOSTIC:`);
+  console.log(`   - API Key present: ${apiKey ? 'YES' : 'NO'}`);
+  console.log(`   - API Key length: ${apiKey ? apiKey.length : 0}`);
+  
+  if (!apiKey || apiKey.trim() === '') {
+    console.error(`   ❌ RAPIDAPI_KEY is missing or empty!`);
+    console.error(`   ❌ This will cause all RapidAPI requests to fail`);
+    console.error(`   ❌ Set RAPIDAPI_KEY environment variable or GitHub secret\n`);
+    throw new Error('RAPIDAPI_KEY is missing or empty');
+  }
+  
+  console.log(`   ✅ API Key validated\n`);
+  
   try {
     console.log(`  🔄 RapidAPI: Fetching up to ${MAX_PAGES} pages with ${PAGE_SIZE} products each...`);
     
@@ -24,6 +39,8 @@ async function rapidApiFallback(niche) {
         const url = `https://amazon-real-time-api.p.rapidapi.com/search?q=${encodeURIComponent(niche)}&country=US&page=${page}&page_size=${PAGE_SIZE}`;
         
         console.log(`  📄 Fetching page ${page}/${MAX_PAGES}...`);
+        console.log(`     URL: ${url}`);
+        console.log(`     Host: amazon-real-time-api.p.rapidapi.com`);
         
         const response = await fetch(url, {
           method: 'GET',
@@ -34,8 +51,19 @@ async function rapidApiFallback(niche) {
           timeout: 15000
         });
         
+        console.log(`     Response Status: ${response.status} ${response.statusText}`);
+        
         if (!response.ok) {
-          console.warn(`  ⚠️  Page ${page} returned status ${response.status}, stopping pagination`);
+          console.warn(`  ⚠️  Page ${page} returned status ${response.status}, response:`);
+          // Try to get error response body
+          try {
+            const errorText = await response.text();
+            const errorSnippet = errorText.substring(0, 200);
+            console.warn(`     Error snippet: ${errorSnippet}`);
+          } catch (e) {
+            console.warn(`     Could not read error body: ${e.message}`);
+          }
+          console.warn(`  ⚠️  Stopping pagination due to error response`);
           break;
         }
         
