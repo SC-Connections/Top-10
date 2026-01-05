@@ -1,232 +1,162 @@
 [
   {
-    "niche": "1. 1. action-cameras",
-    "slug": "1-1-action-cameras",
-    "url": "https://sc-connections.github.io/Top-10/1-1-action-cameras/"
+    "niche": "1. 1. 1. action-cameras",
+    "slug": "1-1-1-action-cameras",
+    "url": "https://sc-connections.github.io/Top-10/1-1-1-action-cameras/"
   },
   {
-    "niche": "2. 2. security-cameras",
-    "slug": "2-2-security-cameras",
-    "url": "https://sc-connections.github.io/Top-10/2-2-security-cameras/"
+    "niche": "2. 2. 2. security-cameras",
+    "slug": "2-2-2-security-cameras",
+    "url": "https://sc-connections.github.io/Top-10/2-2-2-security-cameras/"
   },
   {
-    "niche": "3. 6. smartwatches",
-    "slug": "3-6-smartwatches",
-    "url": "https://sc-connections.github.io/Top-10/3-6-smartwatches/"
+    "niche": "3. 3. 6. smartwatches",
+    "slug": "3-3-6-smartwatches",
+    "url": "https://sc-connections.github.io/Top-10/3-3-6-smartwatches/"
   },
   {
-    "niche": "4. 7. hiking-backpacks",
-    "slug": "4-7-hiking-backpacks",
-    "url": "https://sc-connections.github.io/Top-10/4-7-hiking-backpacks/"
+    "niche": "4. 4. 7. hiking-backpacks",
+    "slug": "4-4-7-hiking-backpacks",
+    "url": "https://sc-connections.github.io/Top-10/4-4-7-hiking-backpacks/"
   },
   {
-    "niche": "5. 8. robot-vacuum-cleaners",
-    "slug": "5-8-robot-vacuum-cleaners",
-    "url": "https://sc-connections.github.io/Top-10/5-8-robot-vacuum-cleaners/"
+    "niche": "5. 5. 8. robot-vacuum-cleaners",
+    "slug": "5-5-8-robot-vacuum-cleaners",
+    "url": "https://sc-connections.github.io/Top-10/5-5-8-robot-vacuum-cleaners/"
   },
   {
-    "niche": "6. 10. massage-guns",
-    "slug": "6-10-massage-guns",
-    "url": "https://sc-connections.github.io/Top-10/6-10-massage-guns/"
+    "niche": "6. 8. 14. car-jump-starters",
+    "slug": "6-8-14-car-jump-starters",
+    "url": "https://sc-connections.github.io/Top-10/6-8-14-car-jump-starters/"
   },
   {
-    "niche": "7. 12. wireless-earbuds",
-    "slug": "7-12-wireless-earbuds",
-    "url": "https://sc-connections.github.io/Top-10/7-12-wireless-earbuds/"
+    "niche": "7. 9. 15. portable-car-vacuums",
+    "slug": "7-9-15-portable-car-vacuums",
+    "url": "https://sc-connections.github.io/Top-10/7-9-15-portable-car-vacuums/"
   },
   {
-    "niche": "8. 14. car-jump-starters",
-    "slug": "8-14-car-jump-starters",
-    "url": "https://sc-connections.github.io/Top-10/8-14-car-jump-starters/"
+    "niche": "8. 10. 17. tire-inflators",
+    "slug": "8-10-17-tire-inflators",
+    "url": "https://sc-connections.github.io/Top-10/8-10-17-tire-inflators/"
   },
   {
-    "niche": "9. 15. portable-car-vacuums",
-    "slug": "9-15-portable-car-vacuums",
-    "url": "https://sc-connections.github.io/Top-10/9-15-portable-car-vacuums/"
+    "niche": "9. 11. 20. smart-light-bulbs",
+    "slug": "9-11-20-smart-light-bulbs",
+    "url": "https://sc-connections.github.io/Top-10/9-11-20-smart-light-bulbs/"
   },
   {
-    "niche": "10. 17. tire-inflators",
-    "slug": "10-17-tire-inflators",
-    "url": "https://sc-connections.github.io/Top-10/10-17-tire-inflators/"
+    "niche": "10. 12. 23. white-noise-machines",
+    "slug": "10-12-23-white-noise-machines",
+    "url": "https://sc-connections.github.io/Top-10/10-12-23-white-noise-machines/"
   },
   {
-    "niche": "11. 20. smart-light-bulbs",
-    "slug": "11-20-smart-light-bulbs",
-    "url": "https://sc-connections.github.io/Top-10/11-20-smart-light-bulbs/"
+    "niche": "11. 13. 24. memory-foam-pillows",
+    "slug": "11-13-24-memory-foam-pillows",
+    "url": "https://sc-connections.github.io/Top-10/11-13-24-memory-foam-pillows/"
   },
   {
-    "niche": "12. 23. white-noise-machines",
-    "slug": "12-23-white-noise-machines",
-    "url": "https://sc-connections.github.io/Top-10/12-23-white-noise-machines/"
+    "niche": "12. 14. 25. cooling-mattress-toppers",
+    "slug": "12-14-25-cooling-mattress-toppers",
+    "url": "https://sc-connections.github.io/Top-10/12-14-25-cooling-mattress-toppers/"
   },
   {
-    "niche": "13. 24. memory-foam-pillows",
-    "slug": "13-24-memory-foam-pillows",
-    "url": "https://sc-connections.github.io/Top-10/13-24-memory-foam-pillows/"
+    "niche": "13. 15. 26. cold-brew-coffee-makers",
+    "slug": "13-15-26-cold-brew-coffee-makers",
+    "url": "https://sc-connections.github.io/Top-10/13-15-26-cold-brew-coffee-makers/"
   },
   {
-    "niche": "14. 25. cooling-mattress-toppers",
-    "slug": "14-25-cooling-mattress-toppers",
-    "url": "https://sc-connections.github.io/Top-10/14-25-cooling-mattress-toppers/"
+    "niche": "14. 18. 29. rice-cookers",
+    "slug": "14-18-29-rice-cookers",
+    "url": "https://sc-connections.github.io/Top-10/14-18-29-rice-cookers/"
   },
   {
-    "niche": "15. 26. cold-brew-coffee-makers",
-    "slug": "15-26-cold-brew-coffee-makers",
-    "url": "https://sc-connections.github.io/Top-10/15-26-cold-brew-coffee-makers/"
+    "niche": "15. 21. 35. curling-irons",
+    "slug": "15-21-35-curling-irons",
+    "url": "https://sc-connections.github.io/Top-10/15-21-35-curling-irons/"
   },
   {
-    "niche": "16. 27. blenders",
-    "slug": "16-27-blenders",
-    "url": "https://sc-connections.github.io/Top-10/16-27-blenders/"
+    "niche": "16. 22. 38. fitness-trackers",
+    "slug": "16-22-38-fitness-trackers",
+    "url": "https://sc-connections.github.io/Top-10/16-22-38-fitness-trackers/"
   },
   {
-    "niche": "17. 28. slow-cookers",
-    "slug": "17-28-slow-cookers",
-    "url": "https://sc-connections.github.io/Top-10/17-28-slow-cookers/"
+    "niche": "17. 23. 40. foam-rollers",
+    "slug": "17-23-40-foam-rollers",
+    "url": "https://sc-connections.github.io/Top-10/17-23-40-foam-rollers/"
   },
   {
-    "niche": "18. 29. rice-cookers",
-    "slug": "18-29-rice-cookers",
-    "url": "https://sc-connections.github.io/Top-10/18-29-rice-cookers/"
+    "niche": "18. 24. 41. treadmills",
+    "slug": "18-24-41-treadmills",
+    "url": "https://sc-connections.github.io/Top-10/18-24-41-treadmills/"
   },
   {
-    "niche": "19. 32. beard-trimmers",
-    "slug": "19-32-beard-trimmers",
-    "url": "https://sc-connections.github.io/Top-10/19-32-beard-trimmers/"
+    "niche": "19. 25. 42. under-desk-treadmills",
+    "slug": "19-25-42-under-desk-treadmills",
+    "url": "https://sc-connections.github.io/Top-10/19-25-42-under-desk-treadmills/"
   },
   {
-    "niche": "20. 33. hair-dryers",
-    "slug": "20-33-hair-dryers",
-    "url": "https://sc-connections.github.io/Top-10/20-33-hair-dryers/"
+    "niche": "20. 26. 45. foot-massagers",
+    "slug": "20-26-45-foot-massagers",
+    "url": "https://sc-connections.github.io/Top-10/20-26-45-foot-massagers/"
   },
   {
-    "niche": "21. 35. curling-irons",
-    "slug": "21-35-curling-irons",
-    "url": "https://sc-connections.github.io/Top-10/21-35-curling-irons/"
+    "niche": "21. 28. 51. tripods",
+    "slug": "21-28-51-tripods",
+    "url": "https://sc-connections.github.io/Top-10/21-28-51-tripods/"
   },
   {
-    "niche": "22. 38. fitness-trackers",
-    "slug": "22-38-fitness-trackers",
-    "url": "https://sc-connections.github.io/Top-10/22-38-fitness-trackers/"
+    "niche": "22. 30. 55. gaming-microphones",
+    "slug": "22-30-55-gaming-microphones",
+    "url": "https://sc-connections.github.io/Top-10/22-30-55-gaming-microphones/"
   },
   {
-    "niche": "23. 40. foam-rollers",
-    "slug": "23-40-foam-rollers",
-    "url": "https://sc-connections.github.io/Top-10/23-40-foam-rollers/"
+    "niche": "23. 31. 56. webcams",
+    "slug": "23-31-56-webcams",
+    "url": "https://sc-connections.github.io/Top-10/23-31-56-webcams/"
   },
   {
-    "niche": "24. 41. treadmills",
-    "slug": "24-41-treadmills",
-    "url": "https://sc-connections.github.io/Top-10/24-41-treadmills/"
+    "niche": "24. 32. 57. portable-projectors",
+    "slug": "24-32-57-portable-projectors",
+    "url": "https://sc-connections.github.io/Top-10/24-32-57-portable-projectors/"
   },
   {
-    "niche": "25. 42. under-desk-treadmills",
-    "slug": "25-42-under-desk-treadmills",
-    "url": "https://sc-connections.github.io/Top-10/25-42-under-desk-treadmills/"
+    "niche": "25. 33. 66. tablet-stands",
+    "slug": "25-33-66-tablet-stands",
+    "url": "https://sc-connections.github.io/Top-10/25-33-66-tablet-stands/"
   },
   {
-    "niche": "26. 45. foot-massagers",
-    "slug": "26-45-foot-massagers",
-    "url": "https://sc-connections.github.io/Top-10/26-45-foot-massagers/"
+    "niche": "26. 35. 69. resin-3d-printers",
+    "slug": "26-35-69-resin-3d-printers",
+    "url": "https://sc-connections.github.io/Top-10/26-35-69-resin-3d-printers/"
   },
   {
-    "niche": "27. 49. solar-power-banks",
-    "slug": "27-49-solar-power-banks",
-    "url": "https://sc-connections.github.io/Top-10/27-49-solar-power-banks/"
+    "niche": "27. 36. 70. label-makers",
+    "slug": "27-36-70-label-makers",
+    "url": "https://sc-connections.github.io/Top-10/27-36-70-label-makers/"
   },
   {
-    "niche": "28. 51. tripods",
-    "slug": "28-51-tripods",
-    "url": "https://sc-connections.github.io/Top-10/28-51-tripods/"
+    "niche": "28. 39. 77. stud-finders",
+    "slug": "28-39-77-stud-finders",
+    "url": "https://sc-connections.github.io/Top-10/28-39-77-stud-finders/"
   },
   {
-    "niche": "29. 53. streaming-microphones",
-    "slug": "29-53-streaming-microphones",
-    "url": "https://sc-connections.github.io/Top-10/29-53-streaming-microphones/"
+    "niche": "29. 43. 84. robot-litter-boxes",
+    "slug": "29-43-84-robot-litter-boxes",
+    "url": "https://sc-connections.github.io/Top-10/29-43-84-robot-litter-boxes/"
   },
   {
-    "niche": "30. 55. gaming-microphones",
-    "slug": "30-55-gaming-microphones",
-    "url": "https://sc-connections.github.io/Top-10/30-55-gaming-microphones/"
+    "niche": "30. 44. 85. cat-litter-mats",
+    "slug": "30-44-85-cat-litter-mats",
+    "url": "https://sc-connections.github.io/Top-10/30-44-85-cat-litter-mats/"
   },
   {
-    "niche": "31. 56. webcams",
-    "slug": "31-56-webcams",
-    "url": "https://sc-connections.github.io/Top-10/31-56-webcams/"
+    "niche": "31. 45. 88. meat-thermometers",
+    "slug": "31-45-88-meat-thermometers",
+    "url": "https://sc-connections.github.io/Top-10/31-45-88-meat-thermometers/"
   },
   {
-    "niche": "32. 57. portable-projectors",
-    "slug": "32-57-portable-projectors",
-    "url": "https://sc-connections.github.io/Top-10/32-57-portable-projectors/"
-  },
-  {
-    "niche": "33. 66. tablet-stands",
-    "slug": "33-66-tablet-stands",
-    "url": "https://sc-connections.github.io/Top-10/33-66-tablet-stands/"
-  },
-  {
-    "niche": "34. 67. drawing-tablets",
-    "slug": "34-67-drawing-tablets",
-    "url": "https://sc-connections.github.io/Top-10/34-67-drawing-tablets/"
-  },
-  {
-    "niche": "35. 69. resin-3d-printers",
-    "slug": "35-69-resin-3d-printers",
-    "url": "https://sc-connections.github.io/Top-10/35-69-resin-3d-printers/"
-  },
-  {
-    "niche": "36. 70. label-makers",
-    "slug": "36-70-label-makers",
-    "url": "https://sc-connections.github.io/Top-10/36-70-label-makers/"
-  },
-  {
-    "niche": "37. 73. document-scanners",
-    "slug": "37-73-document-scanners",
-    "url": "https://sc-connections.github.io/Top-10/37-73-document-scanners/"
-  },
-  {
-    "niche": "38. 74. photo-printers",
-    "slug": "38-74-photo-printers",
-    "url": "https://sc-connections.github.io/Top-10/38-74-photo-printers/"
-  },
-  {
-    "niche": "39. 77. stud-finders",
-    "slug": "39-77-stud-finders",
-    "url": "https://sc-connections.github.io/Top-10/39-77-stud-finders/"
-  },
-  {
-    "niche": "40. 78. digital-calipers",
-    "slug": "40-78-digital-calipers",
-    "url": "https://sc-connections.github.io/Top-10/40-78-digital-calipers/"
-  },
-  {
-    "niche": "41. 80. closet-organization-systems",
-    "slug": "41-80-closet-organization-systems",
-    "url": "https://sc-connections.github.io/Top-10/41-80-closet-organization-systems/"
-  },
-  {
-    "niche": "42. 82. automatic-pet-feeders",
-    "slug": "42-82-automatic-pet-feeders",
-    "url": "https://sc-connections.github.io/Top-10/42-82-automatic-pet-feeders/"
-  },
-  {
-    "niche": "43. 84. robot-litter-boxes",
-    "slug": "43-84-robot-litter-boxes",
-    "url": "https://sc-connections.github.io/Top-10/43-84-robot-litter-boxes/"
-  },
-  {
-    "niche": "44. 85. cat-litter-mats",
-    "slug": "44-85-cat-litter-mats",
-    "url": "https://sc-connections.github.io/Top-10/44-85-cat-litter-mats/"
-  },
-  {
-    "niche": "45. 88. meat-thermometers",
-    "slug": "45-88-meat-thermometers",
-    "url": "https://sc-connections.github.io/Top-10/45-88-meat-thermometers/"
-  },
-  {
-    "niche": "46. 91. headlamps",
-    "slug": "46-91-headlamps",
-    "url": "https://sc-connections.github.io/Top-10/46-91-headlamps/"
+    "niche": "32. 46. 91. headlamps",
+    "slug": "32-46-91-headlamps",
+    "url": "https://sc-connections.github.io/Top-10/32-46-91-headlamps/"
   }
 ]
