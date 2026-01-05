@@ -223,6 +223,25 @@ async function generateSiteForNiche(niche) {
     
     console.log(`✓ Found ${products.length} valid products`);
     
+    // Quality gate validation
+    console.log('🔍 Running quality gate validation...');
+    const qualityCheck = validateProductQuality(products);
+    
+    if (!qualityCheck.passed) {
+        console.warn(`⚠️  Quality gate failed for "${niche}":`);
+        qualityCheck.issues.forEach(issue => console.warn(`   - ${issue}`));
+        
+        // If quality is too poor, generate empty results page instead
+        if (qualityCheck.severity === 'critical') {
+            console.error(`❌ Critical quality issues detected - generating empty results page`);
+            generateEmptyResultsPage(siteDir, niche, slug, templates);
+            console.log(`✓ Empty-results page generated at: /${slug}/`);
+            return;
+        }
+    } else {
+        console.log(`✅ Quality gate passed: ${qualityCheck.summary}`);
+    }
+    
     // Generate SEO content
     console.log('📝 Generating SEO content...');
     const seoContent = generateSEOContent(niche, products);
@@ -334,6 +353,90 @@ function generateEmptyResultsPage(siteDir, niche, slug, templates) {
     // Generate README.md for empty results page
     const readme = generateReadme(niche, slug, 0);
     fs.writeFileSync(path.join(siteDir, 'README.md'), readme);
+}
+
+/**
+ * Validate product quality after filtering
+ * @param {Array} products - Products array
+ * @returns {object} Validation result with passed, issues, and severity
+ */
+function validateProductQuality(products) {
+    const issues = [];
+    let severity = 'none'; // none, warning, critical
+    
+    if (products.length === 0) {
+        return {
+            passed: false,
+            issues: ['No products available'],
+            severity: 'critical',
+            summary: 'No products'
+        };
+    }
+    
+    // Check for generic titles
+    let genericCount = 0;
+    const seenTitles = new Set();
+    let duplicateCount = 0;
+    let noBrandCount = 0;
+    
+    for (const product of products) {
+        const cleanedTitle = cleanProductTitle(product.title);
+        
+        // Check for generic patterns
+        if (!isAcceptableTitle(product.title)) {
+            genericCount++;
+        }
+        
+        // Check for duplicates
+        if (seenTitles.has(cleanedTitle.toLowerCase())) {
+            duplicateCount++;
+        }
+        seenTitles.add(cleanedTitle.toLowerCase());
+        
+        // Check for brand
+        const brand = extractBrandFromTitle(product.title);
+        if (!brand) {
+            noBrandCount++;
+        }
+    }
+    
+    const genericPercent = (genericCount / products.length) * 100;
+    const duplicatePercent = (duplicateCount / products.length) * 100;
+    const noBrandPercent = (noBrandCount / products.length) * 100;
+    
+    // Critical issues (should not publish)
+    if (noBrandPercent > 50) {
+        issues.push(`${noBrandPercent.toFixed(0)}% of products lack recognizable brand names`);
+        severity = 'critical';
+    }
+    
+    if (genericPercent > 30) {
+        issues.push(`${genericPercent.toFixed(0)}% of products have generic titles`);
+        if (severity !== 'critical') severity = 'warning';
+    }
+    
+    if (duplicatePercent > 20) {
+        issues.push(`${duplicatePercent.toFixed(0)}% of products have duplicate titles`);
+        if (severity !== 'critical') severity = 'warning';
+    }
+    
+    // Success case
+    if (issues.length === 0) {
+        const brandedPercent = 100 - noBrandPercent;
+        return {
+            passed: true,
+            issues: [],
+            severity: 'none',
+            summary: `${products.length} products, ${brandedPercent.toFixed(0)}% branded`
+        };
+    }
+    
+    return {
+        passed: severity !== 'critical',
+        issues,
+        severity,
+        summary: `${products.length} products with ${issues.length} quality issue(s)`
+    };
 }
 
 /**
@@ -539,16 +642,16 @@ const GENERIC_BLOCKLIST_PATTERNS = [
 
 const SPAM_PATTERNS = [
   /bluetooth\s+5\.[0-9]/gi,
-  /202[0-9]\s+(new|newest|latest|upgrade)/gi,
-  /for\s+iphone\s+android/gi,
-  /with\s+microphone/gi,
-  /deep\s+bass/gi,
-  /sports?/gi,
-  /gym/gi,
-  /led\s+display/gi,
-  /ipx[0-9]/gi,
-  /playtime/gi,
-  /\d+h\s+playtime/gi
+  /\b202[0-9]\s+(new|newest|latest|upgrade)\b/gi,
+  /\bfor\s+iphone\s+android\b/gi,
+  /\bwith\s+microphone\b/gi,
+  /\bdeep\s+bass\b/gi,
+  /\bsports?\b/gi,
+  /\bgym\b/gi,
+  /\bled\s+display\b/gi,
+  /\bipx[0-9]\b/gi,
+  /\bplaytime\b/gi,
+  /\d+h\s+playtime\b/gi
 ];
 
 /**
