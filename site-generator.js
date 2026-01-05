@@ -283,10 +283,42 @@ async function main() {
  */
 function readNiches() {
     const content = fs.readFileSync(CONFIG.NICHES_FILE, 'utf-8');
-    return content
+    const lines = content
         .split('\n')
         .map(line => line.trim())
         .filter(line => line.length > 0);
+    
+    if (lines.length === 0) {
+        return [];
+    }
+    
+    // Check if first line is a CSV header (contains "keyword" or has comma-separated fields)
+    const firstLine = lines[0];
+    const hasHeader = firstLine.toLowerCase().includes('keyword') || 
+                     (firstLine.includes(',') && firstLine.split(',').length > 1);
+    
+    if (hasHeader) {
+        // Parse as CSV with header
+        const headerFields = firstLine.split(',').map(f => f.trim());
+        const keywordIndex = headerFields.findIndex(f => f.toLowerCase() === 'keyword');
+        
+        if (keywordIndex === -1) {
+            // No keyword column, assume first column is the niche name
+            return lines.slice(1).map(line => {
+                const fields = line.split(',');
+                return fields[0] ? fields[0].trim() : '';
+            }).filter(name => name.length > 0);
+        }
+        
+        // Extract keyword column from each data row
+        return lines.slice(1).map(line => {
+            const fields = line.split(',').map(f => f.trim());
+            return fields[keywordIndex] || '';
+        }).filter(name => name.length > 0);
+    }
+    
+    // No header, treat each line as a niche name
+    return lines;
 }
 
 /**
