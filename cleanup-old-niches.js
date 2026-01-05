@@ -38,7 +38,8 @@ function readValidNiches() {
     const niches = content
         .split('\n')
         .map(line => line.trim())
-        .map(line => line.replace(/^\d+\.\s*/, '')) // Remove numbering
+        .map(line => line.replace(/^\d+\.\s*/, '')) // Remove first numbering
+        .map(line => line.replace(/^\d+\.\s*/, '')) // Remove second numbering (if exists)
         .filter(line => line.length > 0);
     
     return new Set(niches);

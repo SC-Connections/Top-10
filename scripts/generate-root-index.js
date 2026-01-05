@@ -4,15 +4,26 @@ const path = require('path');
 const root = path.resolve(__dirname, '..');
 const entries = fs.readdirSync(root, { withFileTypes: true });
 
+const EXCLUDE_DIRS = new Set([
+  'templates',
+  'template',
+  '.github',
+  'scripts',
+  'node_modules',
+  'data',
+  'assets',
+  'examples',
+  'generated-pages',
+  'scraper',
+  'test',
+  'writers'
+]);
+
 const nicheFolders = entries
   .filter(e =>
     e.isDirectory() &&
     !e.name.startsWith('.') &&
-    e.name !== 'templates' &&
-    e.name !== '.github' &&
-    e.name !== 'scripts' &&
-    e.name !== 'node_modules' &&
-    e.name !== 'data'  // Exclude data directory
+    !EXCLUDE_DIRS.has(e.name)
   )
   .map(e => e.name);
 
