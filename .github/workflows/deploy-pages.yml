@@ -143,17 +143,7 @@ jobs:
           fi
           echo "✅ Check 1: pages/index.html exists"
           
-          # Check 2: Verify niche folders exist in pages/
-          niche_folder_count=$(find pages -mindepth 1 -maxdepth 1 -type d -name "*-*" | wc -l)
-          if [ $niche_folder_count -eq 0 ]; then
-            echo "❌ FATAL: No niche folders found in pages/ directory!"
-            echo "❌ Cannot deploy empty site."
-            echo "❌ Expected at least one niche folder (e.g., pages/bluetooth-headphones/)"
-            exit 1
-          fi
-          echo "✅ Check 2: Found $niche_folder_count niche folder(s) in pages/"
-          
-          # Check 3: Verify _niches_data.json contains niches
+          # Check 2: Verify _niches_data.json contains niches
           if [ -f "pages/_niches_data.json" ]; then
             niches_in_json=$(node -e "const data = require('./pages/_niches_data.json'); console.log(Array.isArray(data) ? data.length : 0);")
             if [ "$niches_in_json" -eq 0 ]; then
@@ -161,10 +151,30 @@ jobs:
               echo "❌ Site data is invalid."
               exit 1
             fi
-            echo "✅ Check 3: _niches_data.json contains $niches_in_json niche(s)"
+            echo "✅ Check 2: _niches_data.json contains $niches_in_json niche(s)"
           else
-            echo "⚠️  Warning: _niches_data.json not found in pages/"
+            echo "❌ FATAL: _niches_data.json not found in pages/"
+            exit 1
           fi
+          
+          # Check 3: Verify all expected niche folders exist in pages/
+          # This validates against the actual data source rather than assuming naming patterns
+          missing_niche_folders=0
+          while IFS= read -r slug; do
+            if [ -n "$slug" ]; then
+              if [ ! -d "pages/$slug" ] || [ ! -f "pages/$slug/index.html" ]; then
+                echo "  ❌ Missing or incomplete: pages/$slug/"
+                missing_niche_folders=$((missing_niche_folders + 1))
+              fi
+            fi
+          done < <(node -e "const data = require('./pages/_niches_data.json'); if (Array.isArray(data)) data.forEach(n => console.log(n.slug));")
+          
+          if [ $missing_niche_folders -gt 0 ]; then
+            echo "❌ FATAL: $missing_niche_folders niche folder(s) missing in pages/"
+            echo "❌ Cannot deploy incomplete site structure."
+            exit 1
+          fi
+          echo "✅ Check 3: All $niches_in_json niche folders validated in pages/"
           
           # Check 4: Verify node_modules is NOT in pages/
           if [ -d "pages/node_modules" ]; then
