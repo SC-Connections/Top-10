@@ -319,24 +319,15 @@ The `generate-blog.js` module creates detailed product reviews. Modify the conte
 - Fails the entire build if ALL niches fail
 - Never generates mock or dummy data
 
-## 🚀 Auto-Publishing Feature
+## 🚀 Publishing Architecture
 
-When configured with a GitHub Personal Access Token (`GH_PAT`), the generator automatically:
+This repository uses a **"one repo, all niches"** architecture where all niche sites are hosted within this repository at `/{slug}/` paths and automatically deployed via GitHub Pages.
 
-1. **Creates a separate GitHub repository** for each niche site at `https://github.com/SC-Connections/<niche-slug>`
-2. **Pushes all site content** to the new repository
-3. **Enables GitHub Pages** automatically on the `main` branch
-4. **Outputs the public URL** at `https://sc-connections.github.io/<niche-slug>/`
+**Site URLs:**
+- Main index: `https://sc-connections.github.io/Top-10/`
+- Niche sites: `https://sc-connections.github.io/Top-10/{niche-slug}/`
 
-### Benefits:
-- ✅ Each niche site has its own dedicated repository
-- ✅ Independent version control for each site
-- ✅ Separate GitHub Pages URLs for better SEO
-- ✅ Easier to manage individual sites
-- ✅ Falls back gracefully if token is not configured
-
-### Setup:
-Add a fine-grained Personal Access Token with `repo:write` permissions to the `GH_PAT` secret in GitHub Actions settings.
+> **Optional Feature**: Per-niche repository publishing (where each niche gets its own repo) is available but currently not in use. See [docs/optional-features/per-niche-repositories.md](docs/optional-features/per-niche-repositories.md) for details.
 
 ## 🌐 Generated Site Structure
 
