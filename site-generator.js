@@ -86,7 +86,19 @@ async function main() {
     
     // Read niches from CSV
     const allNiches = readNiches();
-    console.log(`📋 Found ${allNiches.length} niches in CSV\n`);
+    console.log('\n' + '='.repeat(60));
+    console.log('📋 CSV PARSING SUMMARY');
+    console.log('='.repeat(60));
+    console.log(`✅ Read ${allNiches.length} niches from niches.csv`);
+    
+    if (allNiches.length > 0) {
+        console.log('\n📊 First 5 niche names:');
+        allNiches.slice(0, 5).forEach((niche, idx) => {
+            const slug = createSlug(niche);
+            console.log(`   ${idx + 1}. ${niche} → ${slug}`);
+        });
+    }
+    console.log('='.repeat(60) + '\n');
     
     // Load state and determine which niches to build
     const state = loadNicheState();
@@ -181,11 +193,6 @@ async function main() {
     // Save updated failure tracking state
     saveFailureState(failureState);
     
-    // Save generated niches data for index page (always write file, may be empty)
-    const dataFile = path.join(CONFIG.OUTPUT_DIR, '_niches_data.json');
-    fs.writeFileSync(dataFile, JSON.stringify(generatedNiches, null, 2));
-    console.log(`\n📝 Saved niche data to: ${dataFile}`);
-    
     // Report summary
     console.log('\n' + '='.repeat(60));
     console.log('📊 GENERATION SUMMARY');
@@ -210,6 +217,61 @@ async function main() {
     
     console.log('\n' + '='.repeat(60));
     
+    // CRITICAL SANITY CHECK: If niches.csv has rows but we generated 0 new sites, 
+    // only write _niches_data.json if there are EXISTING successful sites to preserve
+    const dataFile = path.join(CONFIG.OUTPUT_DIR, '_niches_data.json');
+    
+    // Load existing _niches_data.json if it exists
+    let existingNiches = [];
+    if (fs.existsSync(dataFile)) {
+        try {
+            const existingData = fs.readFileSync(dataFile, 'utf-8');
+            existingNiches = JSON.parse(existingData);
+            if (!Array.isArray(existingNiches)) {
+                existingNiches = [];
+            }
+            console.log(`\n📂 Found existing _niches_data.json with ${existingNiches.length} niches`);
+        } catch (error) {
+            console.warn(`⚠️  Could not parse existing _niches_data.json: ${error.message}`);
+            existingNiches = [];
+        }
+    }
+    
+    // Merge: keep existing niches that weren't rebuilt + add newly generated ones
+    // Create a map of existing niches by slug for easy lookup
+    const existingMap = new Map(existingNiches.map(n => [n.slug, n]));
+    
+    // Remove niches that were rebuilt (they'll be added back if successful)
+    const rebuiltSlugs = new Set(nichesToBuild.map(n => n.slug));
+    const preservedNiches = existingNiches.filter(n => !rebuiltSlugs.has(n.slug));
+    
+    // Combine preserved + newly generated
+    const finalNiches = [...preservedNiches, ...generatedNiches];
+    
+    console.log(`\n📊 _niches_data.json merge:`);
+    console.log(`   - Preserved (not rebuilt): ${preservedNiches.length}`);
+    console.log(`   - Newly generated: ${generatedNiches.length}`);
+    console.log(`   - Final total: ${finalNiches.length}`);
+    
+    // Safety check: Don't write empty file if CSV has niches and this is first run
+    if (allNiches.length > 0 && finalNiches.length === 0 && existingNiches.length === 0) {
+        console.error('\n' + '='.repeat(60));
+        console.error('❌ FATAL ERROR: CSV has niches but 0 sites generated');
+        console.error('='.repeat(60));
+        console.error(`CSV rows: ${allNiches.length}`);
+        console.error(`Generated sites: ${generatedNiches.length}`);
+        console.error(`Existing sites: ${existingNiches.length}`);
+        console.error('All niches failed - check API errors above');
+        console.error('DO NOT write empty _niches_data.json - would break deployment');
+        console.error('='.repeat(60) + '\n');
+        process.exit(1);
+    }
+    
+    // Write the merged data
+    fs.writeFileSync(dataFile, JSON.stringify(finalNiches, null, 2));
+    console.log(`\n📝 Saved niche data to: ${dataFile}`);
+    console.log(`   Total niches in file: ${finalNiches.length}`);
+    
     // Only fail if there's a fatal GitHub error, not if all niches failed
     // Individual niche failures are acceptable - they get empty results pages
     console.log('\n🎉 Site generation complete!');
@@ -221,10 +283,42 @@ async function main() {
  */
 function readNiches() {
     const content = fs.readFileSync(CONFIG.NICHES_FILE, 'utf-8');
-    return content
+    const lines = content
         .split('\n')
         .map(line => line.trim())
         .filter(line => line.length > 0);
+    
+    if (lines.length === 0) {
+        return [];
+    }
+    
+    // Check if first line is a CSV header (contains "keyword" or has comma-separated fields)
+    const firstLine = lines[0];
+    const hasHeader = firstLine.toLowerCase().includes('keyword') || 
+                     (firstLine.includes(',') && firstLine.split(',').length > 1);
+    
+    if (hasHeader) {
+        // Parse as CSV with header
+        const headerFields = firstLine.split(',').map(f => f.trim());
+        const keywordIndex = headerFields.findIndex(f => f.toLowerCase() === 'keyword');
+        
+        if (keywordIndex === -1) {
+            // No keyword column, assume first column is the niche name
+            return lines.slice(1).map(line => {
+                const fields = line.split(',');
+                return fields[0] ? fields[0].trim() : '';
+            }).filter(name => name.length > 0);
+        }
+        
+        // Extract keyword column from each data row
+        return lines.slice(1).map(line => {
+            const fields = line.split(',').map(f => f.trim());
+            return fields[keywordIndex] || '';
+        }).filter(name => name.length > 0);
+    }
+    
+    // No header, treat each line as a niche name
+    return lines;
 }
 
 /**
