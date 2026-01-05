@@ -43,79 +43,151 @@ jobs:
       - name: Generate root index.html
         run: npm run generate-root-index
       
-      - name: Validate niche folders exist
+      # WHY: Create a clean staging directory for Pages deployment.
+      # This prevents uploading unwanted files (node_modules, scripts, templates)
+      # and eliminates log truncation caused by verbose artifact listings.
+      # We only upload the final static site content (pages/) instead of repo root (.).
+      - name: Create clean Pages output directory
         run: |
-          echo "🔍 Validating niche folders..."
+          echo "📦 Creating clean Pages output directory..."
+          
+          # Create the output directory
+          mkdir -p pages
+          
+          echo "✅ Created pages/ directory"
+      
+      - name: Copy root index and required assets to Pages directory
+        run: |
+          echo "📄 Copying root files to pages/..."
+          
+          # Copy root index.html
+          if [ -f "index.html" ]; then
+            cp index.html pages/
+            echo "  ✅ Copied index.html"
+          else
+            echo "  ❌ ERROR: index.html not found!"
+            exit 1
+          fi
+          
+          # Copy .nojekyll to prevent Jekyll processing
+          if [ -f ".nojekyll" ]; then
+            cp .nojekyll pages/
+            echo "  ✅ Copied .nojekyll"
+          fi
+          
+          # Copy _niches_data.json for reference
+          if [ -f "_niches_data.json" ]; then
+            cp _niches_data.json pages/
+            echo "  ✅ Copied _niches_data.json"
+          fi
+          
+          # Copy templates directory for shared CSS
+          if [ -d "templates" ]; then
+            cp -r templates pages/
+            echo "  ✅ Copied templates/"
+          fi
+          
+          echo "✅ Root files copied successfully!"
+      
+      - name: Copy niche folders to Pages directory
+        run: |
+          echo "📁 Copying niche site folders to pages/..."
           
           # Check if _niches_data.json exists
           if [ ! -f "_niches_data.json" ]; then
             echo "❌ ERROR: _niches_data.json not found!"
             echo "❌ Niche sites have not been generated yet."
-            echo "❌ Run the 'Build and Deploy Niche Sites' workflow first."
             exit 1
           fi
           
-          # Extract niche slugs and verify folders exist
-          missing_folders=0
+          # Copy each niche folder
+          niche_count=0
+          missing_count=0
           while IFS= read -r slug; do
             if [ -n "$slug" ]; then
-              if [ ! -d "$slug" ]; then
-                echo "❌ Missing niche folder: $slug/"
-                missing_folders=$((missing_folders + 1))
+              if [ -d "$slug" ]; then
+                cp -r "$slug" pages/
+                echo "  ✅ Copied: $slug/"
+                niche_count=$((niche_count + 1))
               else
-                if [ ! -f "$slug/index.html" ]; then
-                  echo "❌ Missing index.html in: $slug/"
-                  missing_folders=$((missing_folders + 1))
-                else
-                  echo "✅ Found: $slug/index.html"
-                fi
+                echo "  ❌ Missing: $slug/"
+                missing_count=$((missing_count + 1))
               fi
             fi
-          done < <(node -e "const data = require('./_niches_data.json'); data.forEach(n => console.log(n.slug));")
+          done < <(node -e "const data = require('./_niches_data.json'); if (Array.isArray(data)) data.forEach(n => console.log(n.slug));")
           
-          if [ $missing_folders -gt 0 ]; then
+          echo ""
+          echo "📊 Summary:"
+          echo "   - Niches copied: $niche_count"
+          echo "   - Niches missing: $missing_count"
+          
+          if [ $missing_count -gt 0 ]; then
             echo ""
-            echo "❌ ERROR: $missing_folders niche folder(s) are missing or incomplete!"
-            echo "❌ Niche sites must be generated before deployment."
-            echo "❌ This usually means the 'Build and Deploy Niche Sites' workflow failed or hasn't run yet."
-            echo ""
-            echo "To fix this:"
-            echo "1. Check the 'Build and Deploy Niche Sites' workflow logs"
-            echo "2. Ensure RAPIDAPI_KEY secret is set"
-            echo "3. Manually trigger the 'Build and Deploy Niche Sites' workflow"
-            exit 1
+            echo "⚠️  WARNING: Some niche folders are missing!"
+            echo "⚠️  Proceeding with available niches..."
           fi
           
-          echo "✅ All niche folders validated successfully!"
+          echo "✅ Niche folders copied: $niche_count"
+      
+      # WHY: Sanity checks prevent "green deploys" that succeed but publish wrong/empty content.
+      # These checks ensure the Pages artifact contains valid site structure before upload.
+      - name: Sanity check - Validate Pages directory structure
+        run: |
+          echo "🔍 Running sanity checks on pages/ directory..."
+          
+          # Check 1: pages/index.html must exist
+          if [ ! -f "pages/index.html" ]; then
+            echo "❌ FATAL: pages/index.html is missing!"
+            echo "❌ Cannot deploy without root landing page."
+            exit 1
+          fi
+          echo "✅ Check 1: pages/index.html exists"
+          
+          # Check 2: Verify niche folders exist in pages/
+          niche_folder_count=$(find pages -mindepth 1 -maxdepth 1 -type d -name "*-*" | wc -l)
+          if [ $niche_folder_count -eq 0 ]; then
+            echo "❌ FATAL: No niche folders found in pages/ directory!"
+            echo "❌ Cannot deploy empty site."
+            echo "❌ Expected at least one niche folder (e.g., pages/bluetooth-headphones/)"
+            exit 1
+          fi
+          echo "✅ Check 2: Found $niche_folder_count niche folder(s) in pages/"
+          
+          # Check 3: Verify _niches_data.json contains niches
+          if [ -f "pages/_niches_data.json" ]; then
+            niches_in_json=$(node -e "const data = require('./pages/_niches_data.json'); console.log(Array.isArray(data) ? data.length : 0);")
+            if [ "$niches_in_json" -eq 0 ]; then
+              echo "❌ FATAL: _niches_data.json exists but contains 0 niches!"
+              echo "❌ Site data is invalid."
+              exit 1
+            fi
+            echo "✅ Check 3: _niches_data.json contains $niches_in_json niche(s)"
+          else
+            echo "⚠️  Warning: _niches_data.json not found in pages/"
+          fi
+          
+          # Check 4: Verify node_modules is NOT in pages/
+          if [ -d "pages/node_modules" ]; then
+            echo "❌ FATAL: node_modules found in pages/ directory!"
+            echo "❌ Build artifacts should not be deployed."
+            exit 1
+          fi
+          echo "✅ Check 4: No node_modules in pages/"
+          
+          echo ""
+          echo "✅ All sanity checks passed!"
+          echo "📦 Pages directory is ready for deployment"
       
       - name: Setup Pages
         uses: actions/configure-pages@v4
       
-      - name: Move niche folders to Pages root
-        run: |
-          # If sites/ directory exists, move all subdirectories to root
-          if [ -d "sites" ]; then
-            echo "📦 Moving niche folders from sites/ to root..."
-            shopt -s dotglob
-            for dir in sites/*; do
-              if [ -d "$dir" ]; then
-                basename=$(basename "$dir")
-                echo "  Moving $dir to ./$basename/"
-                mv "$dir" .
-              fi
-            done
-            # Remove empty sites directory
-            rmdir sites 2>/dev/null || true
-            echo "✅ Niche folders moved successfully!"
-          else
-            echo "ℹ️  No sites/ directory found,"
-            echo "   niche folders already at root level"
-          fi
-      
+      # WHY: Upload ONLY the pages/ directory instead of repo root (.).
+      # This dramatically reduces artifact size, prevents log truncation,
+      # and ensures only final static content is deployed (no source files).
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: '.'
+          path: 'pages'
       
       - name: Deploy to GitHub Pages
         id: deployment

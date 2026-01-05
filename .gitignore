@@ -27,3 +27,6 @@ npm-debug.log*
 # Auto-maintenance artifacts
 PR_BODY.md
 test-validation.js
+
+# GitHub Pages deployment staging directory
+pages/
