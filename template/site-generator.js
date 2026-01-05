@@ -1360,7 +1360,7 @@ function generateSEOContent(niche, products) {
  */
 function generateMiniReview(product, rank, niche) {
     const text = `${product.title} ${product.description} ${Array.isArray(product.features) ? product.features.join(' ') : ''}`.toLowerCase();
-    const price = parseFloat((product.price || '').replace(/[^0-9.]/g, '')) || 0;
+    const price = parseFloat(String(product.price || '').replace(/[^0-9.]/g, '')) || 0;
     const rating = parseFloat(product.rating || 0) || 0;
     
     // Generate contextual mini-reviews based on product characteristics
@@ -1479,7 +1479,7 @@ function generateProductsHTML(products, template, niche) {
 function detectProductCategories(product, niche) {
     const categories = [];
     const text = `${product.title} ${product.description} ${product.features.join(' ')}`.toLowerCase();
-    const price = parseFloat((product.price || '').replace(/[^0-9.]/g, '')) || 0;
+    const price = parseFloat(String(product.price || '').replace(/[^0-9.]/g, '')) || 0;
     
     // Premium category (high-end brands or price > $100)
     const premiumBrands = ['sony', 'bose', 'apple', 'sennheiser', 'bang & olufsen', 'beats studio'];
@@ -1750,7 +1750,7 @@ function generateStructuredData(niche, slug, products) {
             
             // Only add price if available
             if (product.price) {
-                item.item.offers.price = product.price.replace(/[^0-9.]/g, '');
+                item.item.offers.price = String(product.price).replace(/[^0-9.]/g, '');
             }
             
             return item;
@@ -1805,7 +1805,7 @@ function generateBlogHTML(product, niche, rank, templates) {
     
     // Only add price if available
     if (product.price) {
-        productSchema.offers.price = product.price.replace(/[^0-9.]/g, '');
+        productSchema.offers.price = String(product.price).replace(/[^0-9.]/g, '');
     }
     
     let html = templates.blogTemplate;
