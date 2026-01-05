@@ -40,6 +40,34 @@ jobs:
       - name: Install dependencies
         run: npm install
       
+      # Pre-deployment validation: Ensure sites were generated successfully
+      - name: Pre-deployment validation
+        run: |
+          echo "🔍 Validating that sites were generated before deployment..."
+          
+          # Check 1: _niches_data.json must exist
+          if [ ! -f "_niches_data.json" ]; then
+            echo "❌ FATAL: _niches_data.json not found!"
+            echo "❌ This indicates the build workflow did not generate any sites."
+            echo "❌ Cannot deploy without generated sites."
+            exit 1
+          fi
+          
+          # Check 2: _niches_data.json must not be empty
+          niches_count=$(node -e "const data = require('./_niches_data.json'); console.log(Array.isArray(data) ? data.length : 0);")
+          
+          if [ "$niches_count" -eq 0 ]; then
+            echo "❌ FATAL: _niches_data.json exists but contains 0 niches!"
+            echo "❌ This indicates all site generation failed in the build workflow."
+            echo "❌ Cannot deploy an empty site."
+            echo "❌ Please check the 'Build and Deploy Niche Sites' workflow logs for errors."
+            exit 1
+          fi
+          
+          echo "✅ Validation passed: Found $niches_count niche(s) ready to deploy"
+          echo "📋 Niches to deploy:"
+          node -e "const data = require('./_niches_data.json'); data.forEach(n => console.log('   - ' + n.niche + ' (' + n.slug + ')'));"
+      
       - name: Generate root index.html
         run: npm run generate-root-index
       
