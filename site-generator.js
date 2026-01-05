@@ -405,17 +405,17 @@ function validateProductQuality(products) {
     const noBrandPercent = (noBrandCount / products.length) * 100;
     
     // Critical issues (should not publish)
-    if (noBrandPercent > 50) {
+    if (noBrandPercent > QUALITY_GATE_THRESHOLDS.CRITICAL_NO_BRAND_PERCENT) {
         issues.push(`${noBrandPercent.toFixed(0)}% of products lack recognizable brand names`);
         severity = 'critical';
     }
     
-    if (genericPercent > 30) {
+    if (genericPercent > QUALITY_GATE_THRESHOLDS.WARNING_GENERIC_TITLE_PERCENT) {
         issues.push(`${genericPercent.toFixed(0)}% of products have generic titles`);
         if (severity !== 'critical') severity = 'warning';
     }
     
-    if (duplicatePercent > 20) {
+    if (duplicatePercent > QUALITY_GATE_THRESHOLDS.WARNING_DUPLICATE_PERCENT) {
         issues.push(`${duplicatePercent.toFixed(0)}% of products have duplicate titles`);
         if (severity !== 'critical') severity = 'warning';
     }
@@ -640,16 +640,23 @@ const GENERIC_BLOCKLIST_PATTERNS = [
   /^bluetooth headphones$/i
 ];
 
+// Quality gate thresholds
+const QUALITY_GATE_THRESHOLDS = {
+  CRITICAL_NO_BRAND_PERCENT: 50,  // >50% products without brands = critical failure
+  WARNING_GENERIC_TITLE_PERCENT: 30,  // >30% generic titles = warning
+  WARNING_DUPLICATE_PERCENT: 20   // >20% duplicate titles = warning
+};
+
 const SPAM_PATTERNS = [
   /bluetooth\s+5\.[0-9]/gi,
-  /\b202[0-9]\s+(new|newest|latest|upgrade)\b/gi,
+  /\b20[2-9][0-9]\s+(new|newest|latest|upgrade)\b/gi,  // Matches 2020-2099
   /\bfor\s+iphone\s+android\b/gi,
   /\bwith\s+microphone\b/gi,
   /\bdeep\s+bass\b/gi,
   /\bsports?\b/gi,
   /\bgym\b/gi,
   /\bled\s+display\b/gi,
-  /\bipx[0-9]\b/gi,
+  /\bipx[0-8]\b/gi,  // IPX ratings only go to IPX8
   /\bplaytime\b/gi,
   /\d+h\s+playtime\b/gi
 ];

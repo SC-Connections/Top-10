@@ -117,14 +117,14 @@ const GENERIC_BLOCKLIST_PATTERNS = [
 
 const SPAM_PATTERNS = [
   /bluetooth\s+5\.[0-9]/gi,
-  /\b202[0-9]\s+(new|newest|latest|upgrade)\b/gi,
+  /\b20[2-9][0-9]\s+(new|newest|latest|upgrade)\b/gi,  // Matches 2020-2099
   /\bfor\s+iphone\s+android\b/gi,
   /\bwith\s+microphone\b/gi,
   /\bdeep\s+bass\b/gi,
   /\bsports?\b/gi,
   /\bgym\b/gi,
   /\bled\s+display\b/gi,
-  /\bipx[0-9]\b/gi,
+  /\bipx[0-8]\b/gi,  // IPX ratings only go to IPX8
   /\bplaytime\b/gi,
   /\d+h\s+playtime\b/gi
 ];
