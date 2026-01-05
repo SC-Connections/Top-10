@@ -7,6 +7,15 @@ on:
     paths:
       - 'niches.csv'
   workflow_dispatch:
+    inputs:
+      debug_logs:
+        description: 'Enable debug logging (true/false)'
+        required: false
+        default: 'false'
+        type: choice
+        options:
+          - 'true'
+          - 'false'
   schedule:
     # Run weekly on Monday at 6 AM UTC to update product data
     - cron: '0 6 * * 1'
@@ -71,8 +80,13 @@ jobs:
           AMAZON_AFFILIATE_ID: ${{ secrets.AMAZON_AFFILIATE_ID }}
           UPDATE_TIMESTAMP: ${{ env.UPDATE_TIMESTAMP }}
           SKIP_PUPPETEER: 'false'  # Try to use Puppeteer, but will fallback if it fails
+          DEBUG_LOGS: ${{ github.event.inputs.debug_logs || 'false' }}
         run: |
           echo "🚀 Generating niche sites (incremental mode)..."
+          echo "📊 Configuration:"
+          echo "   - RAPIDAPI_KEY present: ${{ secrets.RAPIDAPI_KEY != '' }}"
+          echo "   - AMAZON_AFFILIATE_ID present: ${{ secrets.AMAZON_AFFILIATE_ID != '' }}"
+          echo "   - DEBUG_LOGS: ${DEBUG_LOGS}"
           node site-generator.js --mode=incremental
           echo "✅ Site generation complete!"
       
@@ -84,17 +98,22 @@ jobs:
           AMAZON_AFFILIATE_ID: ${{ secrets.AMAZON_AFFILIATE_ID }}
           UPDATE_TIMESTAMP: ${{ env.UPDATE_TIMESTAMP }}
           SKIP_PUPPETEER: 'false'  # Try to use Puppeteer, but will fallback if it fails
+          DEBUG_LOGS: 'false'
         run: |
           echo "🚀 Generating niche sites (refresh mode)..."
+          echo "📊 Configuration:"
+          echo "   - RAPIDAPI_KEY present: ${{ secrets.RAPIDAPI_KEY != '' }}"
+          echo "   - AMAZON_AFFILIATE_ID present: ${{ secrets.AMAZON_AFFILIATE_ID != '' }}"
           node site-generator.js --mode=refresh
           echo "✅ Site generation complete!"
       
-      - name: Prune empty niches
+      - name: Prune empty niches (safe mode)
         id: prune
         run: |
-          echo "🧹 Pruning empty niches..."
+          echo "🧹 Safe pruning: Only removes niches after 3 consecutive failures..."
+          echo "📊 Protects against transient errors (blocked, missing_key, api_error, timeout)"
           
-          # Run pruning script
+          # Run safe pruning script
           if node prune-empty-niches.js; then
             echo "PRUNED=true" >> $GITHUB_OUTPUT
             echo "✅ Pruning completed - changes were made"

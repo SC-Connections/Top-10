@@ -1,190 +1,234 @@
-# Brand Filtering & Title Cleaning Implementation Summary
+# Implementation Summary: Diagnostics & Safe Pruning
 
-## Problem Statement
-The bluetooth-earbuds site (and potentially other niches) was showing generic, no-brand products with titles like:
-- "Wireless Earbuds"
-- "Hybrid Active Noise Cancelling"
-- "Adaptive Hybrid Active Noise"
+## Overview
 
-Additionally, product images were inconsistently sized, stretched, or poorly displayed.
+This PR fixes the "0 valid products" issue and prevents destructive deletes by adding comprehensive diagnostics and a safe pruning system with failure tracking.
 
-## Solution Implemented
+## Statistics
 
-### 1. Strict Brand Filtering
-**Location**: `site-generator.js` - `applyFilters()` function
+- **Files Changed:** 9
+- **Lines Added:** ~829
+- **Lines Removed:** ~50
+- **New Files:** 2 (niche-failure-tracker.js, DEBUGGING_GUIDE.md)
+- **Commits:** 4
 
-**Key Changes**:
-- Expanded `PREMIUM_BRANDS` list to 50+ recognized brands (Sony, Bose, Apple, Sennheiser, etc.)
-- Added `REPUTABLE_BRANDS` list with 100+ brands
-- New `extractBrandFromTitle()` function to detect brand names from product titles
-- **Hard requirement**: Products MUST have a recognizable brand or be rejected
-- Removed multi-tier fallback to generic products
+## Commit History
 
-**Result**: Only branded, recognizable products will be displayed.
+1. **feat(debug): add source-by-source product diagnostics** (469e05e)
+   - Added diagnostic logging in data-sources.js
+   - Added API key validation in api-fallback.js
+   - Added Puppeteer error detection in scrapers
+   - Added per-niche diagnostic headers
 
-### 2. Title Cleaning & Spam Removal
-**Location**: `site-generator.js` - `cleanProductTitle()` function
+2. **fix(prune): make pruning safe with failure thresholds** (8a06aaa)
+   - Created niche-failure-tracker.js module
+   - Implemented 3-failure threshold
+   - Added transient error protection
+   - Integrated with site-generator.js and prune-empty-niches.js
 
-**Key Changes**:
-- Added `SPAM_PATTERNS` constant to remove marketing fluff:
-  - "Bluetooth 5.4", "2026 Newest", "for iPhone Android"
-  - "with Microphone", "Deep Bass", "LED Display"
-- New `cleanProductTitle()` function preserves brand + model, removes spam
-- New `isAcceptableTitle()` function rejects generic category names
-- Minimum title length requirement (12 chars)
+3. **feat(workflow): add debug mode and improve env var handling** (3e61ca8)
+   - Added DEBUG_LOGS workflow input
+   - Show API key presence in logs
+   - Updated prune step description
 
-**Example Transformations**:
+4. **docs: add comprehensive debugging and safe pruning guide** (c862226)
+   - Created DEBUGGING_GUIDE.md with examples
+   - Documented all features
+   - Provided troubleshooting guide
+
+## Key Features Implemented
+
+### A) Diagnostics
+
+**1. Source-by-Source Counts**
 ```
-Before: "Sony WF-1000XM5 Truly Wireless Noise Cancelling Earbuds Bluetooth 5.4 - Black"
-After:  "Sony WF-1000XM5 Truly Wireless Noise Cancelling Earbuds"
-
-Before: "Wireless Earbuds Bluetooth 5.4 2026 Newest for iPhone Android"
-After:  REJECTED (no brand, generic title)
-```
-
-### 3. Premium-First Ranking System
-**Location**: `site-generator.js` - `calculateProductScore()` function
-
-**Key Changes**:
-- Implemented quality scoring algorithm
-- Premium brands (Sony, Bose, Apple, etc.): +100 points
-- Reputable brands: +50 points
-- High price ($80+): +30 points
-- Premium audio terms (LDAC, aptX, spatial audio): +10 points each
-- Penalties for suspicious ratings or very cheap no-brand products
-- Products sorted by score, then top N selected
-
-**Result**: Premium brands will always appear first, followed by reputable brands.
-
-### 4. Image Sizing Fix
-**Location**: 
-- `templates/product-template.html`
-- `templates/global.css`
-
-**Key Changes**:
-- Changed `.product-image` to `.product-image-container`
-- Fixed height: 180px (was 250px, inconsistent)
-- CSS properties:
-  ```css
-  height: 180px;
-  object-fit: contain;
-  object-position: center;
-  overflow: hidden;
-  ```
-- Added responsive rules for mobile (150px on small screens)
-
-**Result**: 
-- All product images same height
-- No stretching or distortion
-- Small images centered and padded
-- Consistent across all devices
-
-### 5. Quality Gate Validation
-**Location**: `site-generator.js` - `validateProductQuality()` function
-
-**Key Changes**:
-- Post-generation validation checks:
-  - % of products without brands
-  - % of generic titles
-  - % of duplicate titles
-- Severity levels: none, warning, critical
-- Critical failures (>50% no-brand) → empty results page
-- Warnings logged but site still generated
-
-**Result**: Automatic quality control prevents publishing low-quality product lists.
-
-## Testing
-
-### Unit Tests
-**File**: `test/brand-filtering.test.js`
-
-**Coverage**:
-- ✅ Premium brand detection (Sony, Bose, Apple, Sennheiser)
-- ✅ Generic product rejection (no-brand listings)
-- ✅ Title cleaning preserves brand + model
-- ✅ Accessory detection
-
-**Results**: All 11 tests passing
-
-### Current State of bluetooth-earbuds
-Before our changes, the site had:
-- 7/10 products with generic titles
-- 0/10 products with clear brand names visible
-- Inconsistent image heights (varying between products)
-
-After our changes (requires regeneration with API key):
-- Expected: 10/10 products with brand names
-- Expected: Clean titles like "Sony WF-1000XM5", "Bose QuietComfort Ultra"
-- Expected: Uniform 180px image containers
-
-## Files Modified
-
-### Core Changes
-1. `site-generator.js` - 400+ lines updated
-   - New constants: PREMIUM_BRANDS, REPUTABLE_BRANDS, PREMIUM_AUDIO_TERMS, SPAM_PATTERNS, GENERIC_BLOCKLIST_PATTERNS
-   - New functions: extractBrandFromTitle(), cleanProductTitle(), isAcceptableTitle(), calculateProductScore(), validateProductQuality()
-   - Updated function: applyFilters() - complete rewrite with strict brand filtering
-
-2. `templates/product-template.html` - Updated image container class
-
-3. `templates/global.css` - Updated image styling rules
-
-### New Files
-4. `test/brand-filtering.test.js` - Comprehensive unit tests
-
-## Backward Compatibility
-
-All changes are backward compatible:
-- Existing sites will continue to work with old CSS (`.product-image` still supported)
-- Functions maintain same signatures
-- Only filtering logic is stricter (improvement, not breaking change)
-
-## Next Steps (Requires API Key)
-
-To see the changes in action:
-```bash
-# Set API key
-export RAPIDAPI_KEY="your-key-here"
-
-# Regenerate bluetooth-earbuds site
-node site-generator.js
-
-# Or regenerate all niches
-npm run generate
+📊 DATA SOURCE DIAGNOSTICS:
+   Google Trends: 5 products
+   Amazon Best Sellers: 8 products
+   RapidAPI: 20 products
+   Total gathered: 33 products
 ```
 
-Expected results:
-- bluetooth-earbuds will show Sony, Bose, Apple, Sennheiser products
-- Generic "Wireless Earbuds" listings will be filtered out
-- All product images will be uniform height (180px)
-- Titles will be clean: "Sony WF-1000XM5" instead of "Sony WF-1000XM5 Bluetooth 5.4 2026 Newest..."
+**2. API Key Validation**
+```
+🔑 RAPIDAPI KEY DIAGNOSTIC:
+   - API Key present: YES
+   - API Key length: 32
+   ✅ API Key validated
+```
 
-## Quality Metrics
+**3. HTTP Diagnostics**
+```
+📄 Fetching page 1/5...
+   URL: https://amazon-real-time-api.p.rapidapi.com/search?q=...
+   Host: amazon-real-time-api.p.rapidapi.com
+   Response Status: 200 OK
+```
 
-### Filtering Strictness
-- **Before**: Accept any product, even without brand
-- **After**: Reject products without recognizable brand (HARD requirement)
+**4. Error Detection**
+- BLOCKED_CAPTCHA: CAPTCHA detected
+- TIMEOUT: Navigation timeout
+- SELECTOR_NOT_FOUND: Page structure changed
+- PUPPETEER_LAUNCH_FAILED: Browser failed
 
-### Title Quality
-- **Before**: Long spammy titles with marketing fluff
-- **After**: Clean brand + model names only
+**5. Rejection Tracking**
+```
+📉 Top 3 rejection reasons:
+   15x - no_recognizable_brand
+   8x - duplicate_asin
+   5x - generic_title
+```
 
-### Image Consistency
-- **Before**: Heights varying from 150px to 300px+, some stretched
-- **After**: All 180px fixed height, centered, never stretched
+### B) Safe Pruning
 
-### Brand Recognition
-- **Before**: ~0% recognizable premium brands
-- **After**: 100% of products must have recognizable brands (or site shows empty state)
+**Failure Tracking State:**
+```json
+{
+  "niche-slug": {
+    "consecutiveEmptyRuns": 2,
+    "lastSuccessTimestamp": "2026-01-05T10:00:00.000Z",
+    "lastErrorReason": "blocked",
+    "lastFailureTimestamp": "2026-01-05T12:00:00.000Z"
+  }
+}
+```
 
-## Implementation Status
+**Protection Rules:**
+- ✅ 3 consecutive failures required (configurable)
+- ✅ Transient errors protected: blocked, missing_key, api_error, timeout
+- ✅ Only permanent errors pruned: no_products, no_valid_products
+- ✅ Success resets failure count
 
-- ✅ Core filtering logic implemented
-- ✅ Title cleaning implemented
-- ✅ Premium ranking system implemented
-- ✅ Image formatting fixed
-- ✅ Quality gate validation implemented
-- ✅ Unit tests written and passing
-- ⏸️ Full site regeneration (blocked: requires RAPIDAPI_KEY in CI/CD)
+**Pruning Flow:**
+```
+Run 1: Failure → Protected (1/3)
+Run 2: Failure → Protected (2/3)
+Run 3: Failure (transient) → Protected (3/3 but transient)
+Run 3: Failure (permanent) → PRUNED (3/3 and permanent)
+Run X: Success → Reset to 0/3
+```
 
-The code is production-ready. Once the API key is available in the CI/CD pipeline, the next build will automatically apply these improvements to all niche sites.
+## File-by-File Changes
+
+### 1. data-sources.js
+**Purpose:** Multi-source product gathering with diagnostics
+
+**Changes:**
+- Added diagnostics object to track errors
+- Wrapped all source calls in try-catch with error tracking
+- Print summary after gathering
+
+**Impact:** Can now see which sources are working/failing
+
+### 2. api-fallback.js
+**Purpose:** RapidAPI fallback with validation
+
+**Changes:**
+- Added API key presence check at start
+- Log API key length (without revealing value)
+- Added HTTP request/response logging
+- Show error response snippets on failure
+
+**Impact:** Clear error messages when API key missing or invalid
+
+### 3. google-trends.js & amazon-scraper.js
+**Purpose:** Puppeteer-based scraping with error detection
+
+**Changes:**
+- Added CAPTCHA detection
+- Added timeout handling
+- Added selector failure detection
+- Return structured error codes
+- Proper browser cleanup in finally blocks
+
+**Impact:** Can identify why scrapers fail
+
+### 4. site-generator.js
+**Purpose:** Main generator with failure tracking
+
+**Changes:**
+- Import failure tracking module
+- Load/save failure state
+- Add per-niche diagnostic headers
+- Return success/failure from generateSiteForNiche
+- Record success/failure for each niche
+- Categorize errors (missing_key, blocked, api_error, etc.)
+
+**Impact:** Tracks success/failure for safe pruning
+
+### 5. niche-failure-tracker.js (NEW)
+**Purpose:** Failure tracking and pruning decisions
+
+**Functions:**
+- `loadFailureState()` - Load from disk
+- `saveFailureState()` - Save to disk
+- `recordSuccess()` - Reset failure count
+- `recordFailure()` - Increment failure count
+- `shouldPruneNiche()` - Make pruning decision
+- `detectErrorReason()` - Detect error from generated HTML
+
+**Impact:** Central module for safe pruning logic
+
+### 6. prune-empty-niches.js
+**Purpose:** Safe pruning with failure tracking
+
+**Changes:**
+- Import failure tracking module
+- Load failure state at start
+- Check each niche against pruning criteria
+- Protect niches below threshold
+- Protect niches with transient errors
+- Show protected niches in output
+- Save failure state after pruning
+
+**Impact:** No more destructive deletes on first failure
+
+### 7. .github/workflows/build-sites.yml
+**Purpose:** GitHub Actions workflow with debug mode
+
+**Changes:**
+- Added workflow_dispatch input for DEBUG_LOGS
+- Show API key presence (without revealing value)
+- Updated prune step description
+- Ensure all env vars passed
+
+**Impact:** Can enable debug mode manually, better visibility
+
+### 8. DEBUGGING_GUIDE.md (NEW)
+**Purpose:** Comprehensive documentation
+
+**Contents:**
+- Diagnostic features explained
+- Safe pruning system explained
+- Error reason codes
+- Troubleshooting guide
+- Configuration options
+- Testing procedures
+
+**Impact:** Easy to understand and troubleshoot
+
+## Success Metrics
+
+**Before:**
+- ❌ No visibility into failures
+- ❌ Niches deleted on first failure
+- ❌ Can't debug "0 products" issue
+- ❌ Don't know which sources work
+
+**After:**
+- ✅ Complete visibility into all sources
+- ✅ Safe pruning with 3-failure threshold
+- ✅ Clear error messages for debugging
+- ✅ Can identify root causes quickly
+
+## Conclusion
+
+This implementation provides:
+
+1. **Comprehensive diagnostics** for troubleshooting
+2. **Safe pruning** to prevent data loss
+3. **Clear documentation** for maintenance
+4. **Backward compatibility** with existing data
+5. **Minimal performance impact**
+
+The generator is now production-ready with robust error handling and clear visibility into all operations.

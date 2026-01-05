@@ -18,6 +18,13 @@ const {
     getNichesToBuildIncremental, 
     getNichesToBuildRefresh 
 } = require('./niche-state-manager');
+// Failure tracking for safe pruning
+const { 
+    loadFailureState, 
+    saveFailureState, 
+    recordSuccess, 
+    recordFailure 
+} = require('./niche-failure-tracker');
 
 // Configuration
 const CONFIG = {
@@ -84,6 +91,9 @@ async function main() {
     // Load state and determine which niches to build
     const state = loadNicheState();
     
+    // Load failure tracking state
+    const failureState = loadFailureState();
+    
     let nichesToBuild;
     if (mode === 'refresh') {
         nichesToBuild = getNichesToBuildRefresh(allNiches, state, 7);
@@ -112,19 +122,31 @@ async function main() {
             console.log(`📦 Processing (${i + 1}/${nichesToBuild.length}): ${niche}`);
             console.log('='.repeat(60));
             
-            await generateSiteForNiche(niche);
+            const result = await generateSiteForNiche(niche);
             
             // All sites are kept in this repository at /{slug}/
             const publicUrl = `${CONFIG.BASE_URL}/${slug}/`;
             
-            generatedNiches.push({ niche, slug, url: publicUrl });
-            console.log(`✅ Successfully generated site for: ${niche}\n`);
-            
-            // Update state after successful build
-            state[slug] = {
-                hash,
-                lastBuild: new Date().toISOString()
-            };
+            // Check if generation was successful (has products)
+            if (result && result.hasProducts) {
+                generatedNiches.push({ niche, slug, url: publicUrl });
+                console.log(`✅ Successfully generated site for: ${niche}\n`);
+                
+                // Record success in failure tracking
+                recordSuccess(slug, failureState);
+                
+                // Update state after successful build
+                state[slug] = {
+                    hash,
+                    lastBuild: new Date().toISOString()
+                };
+            } else {
+                // Site generated but no products - record failure
+                const errorReason = result?.errorReason || 'no_products';
+                console.warn(`⚠️  Generated empty site for: ${niche} (reason: ${errorReason})\n`);
+                recordFailure(slug, errorReason, failureState);
+                failedNiches.push({ niche, error: errorReason });
+            }
             
             // Rate limiting: Add delay between niches to avoid hitting API rate limits
             if (i < nichesToBuild.length - 1) {
@@ -134,6 +156,20 @@ async function main() {
             }
         } catch (error) {
             console.error(`❌ Error generating site for ${niche}:`, error.message);
+            
+            // Determine error reason from exception
+            let errorReason = 'generation_failed';
+            if (error.message.includes('RAPIDAPI_KEY')) {
+                errorReason = 'missing_key';
+            } else if (error.message.includes('BLOCKED_CAPTCHA')) {
+                errorReason = 'blocked';
+            } else if (error.message.includes('timeout') || error.message.includes('TIMEOUT')) {
+                errorReason = 'timeout';
+            } else if (error.message.includes('API') || error.message.includes('api')) {
+                errorReason = 'api_error';
+            }
+            
+            recordFailure(slug, errorReason, failureState);
             failedNiches.push({ niche, error: error.message });
             // Continue with other niches instead of stopping completely
         }
@@ -141,6 +177,9 @@ async function main() {
     
     // Save updated state
     saveNicheState(state);
+    
+    // Save updated failure tracking state
+    saveFailureState(failureState);
     
     // Save generated niches data for index page (always write file, may be empty)
     const dataFile = path.join(CONFIG.OUTPUT_DIR, '_niches_data.json');
@@ -191,11 +230,18 @@ function readNiches() {
 /**
  * Generate a complete site for a niche
  * @param {string} niche - Niche name
+ * @returns {Object} Result object with hasProducts and errorReason
  */
 async function generateSiteForNiche(niche) {
     const slug = createSlug(niche);
     const siteDir = path.join(CONFIG.OUTPUT_DIR, slug);
     const blogDir = path.join(siteDir, 'blog');
+    
+    // Print per-niche diagnostic header
+    console.log(`\n${'='.repeat(60)}`);
+    console.log(`📊 NICHE DIAGNOSTIC: ${niche}`);
+    console.log(`   Slug: ${slug}`);
+    console.log('='.repeat(60));
     
     // Create directories
     if (fs.existsSync(siteDir)) {
@@ -209,7 +255,7 @@ async function generateSiteForNiche(niche) {
     // Load templates FIRST - before any processing
     const templates = loadTemplates();
     
-    // Fetch products from Amazon API
+    // Fetch products from Amazon API (this will print source diagnostics)
     console.log('🔍 Fetching products from Amazon...');
     const products = await fetchProducts(niche);
     
@@ -218,7 +264,7 @@ async function generateSiteForNiche(niche) {
         console.error(`❌ ERROR: No products found for "${niche}" - Skipping.`);
         generateEmptyResultsPage(siteDir, niche, slug, templates);
         console.log(`✓ Empty-results page generated at: /${slug}/`);
-        return;
+        return { hasProducts: false, errorReason: 'no_products' };
     }
     
     console.log(`✓ Found ${products.length} valid products`);
@@ -236,7 +282,7 @@ async function generateSiteForNiche(niche) {
             console.error(`❌ Critical quality issues detected - generating empty results page`);
             generateEmptyResultsPage(siteDir, niche, slug, templates);
             console.log(`✓ Empty-results page generated at: /${slug}/`);
-            return;
+            return { hasProducts: false, errorReason: 'no_valid_products' };
         }
     } else {
         console.log(`✅ Quality gate passed: ${qualityCheck.summary}`);
@@ -280,6 +326,9 @@ async function generateSiteForNiche(niche) {
     fs.writeFileSync(path.join(siteDir, 'README.md'), readme);
     
     console.log(`✓ Site generated at: /${slug}/`);
+    
+    // Return success with products
+    return { hasProducts: true, productCount: products.length };
 }
 
 /**
@@ -1005,7 +1054,21 @@ async function fetchProducts(niche) {
             filteredProducts = filterResult.products;
             
             console.log(`🔥 Filtered products ready: ${filteredProducts.length}`);
-            console.log(`📊 Stats: gathered=${filterResult.stats.gathered}, validated=${filterResult.stats.validated}, tierA=${filterResult.stats.tierA}, final=${filterResult.stats.final}`);
+            
+            // Print detailed stats (fix the stats output to match actual fields)
+            console.log(`📊 Filter Stats:`);
+            console.log(`   - Gathered: ${filterResult.stats.gathered}`);
+            console.log(`   - After validation: ${filterResult.stats.validated}`);
+            console.log(`   - Premium brands: ${filterResult.stats.premiumCount}`);
+            console.log(`   - Final selection: ${filterResult.stats.final}`);
+            
+            // Print top rejection reasons
+            if (filterResult.stats.skipReasons && filterResult.stats.skipReasons.length > 0) {
+                console.log(`\n📉 Top 3 rejection reasons:`);
+                filterResult.stats.skipReasons.slice(0, 3).forEach(([reason, count]) => {
+                    console.log(`   ${count}x - ${reason}`);
+                });
+            }
             
             // If we have enough products, break out of retry loop
             if (filteredProducts.length >= CONFIG.MIN_PRODUCTS) {

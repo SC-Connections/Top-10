@@ -17,8 +17,11 @@ async function scrapeGoogleTrends(niche) {
     return [];
   }
   
+  let browser = null;
+  
   try {
-    const browser = await puppeteer.launch({ 
+    console.log('  🚀 Launching Puppeteer browser...');
+    browser = await puppeteer.launch({ 
       headless: true,
       args: ['--no-sandbox', '--disable-setuid-sandbox']
     });
@@ -26,10 +29,23 @@ async function scrapeGoogleTrends(niche) {
     const page = await browser.newPage();
     
     try {
-      await page.goto(`https://trends.google.com/trends/explore?q=${encodeURIComponent(niche)}`, { 
+      const targetUrl = `https://trends.google.com/trends/explore?q=${encodeURIComponent(niche)}`;
+      console.log(`  📡 Navigating to: ${targetUrl}`);
+      
+      await page.goto(targetUrl, { 
         waitUntil: 'networkidle2',
         timeout: 30000
       });
+      
+      console.log(`  ✓ Page loaded successfully`);
+
+      // Check for CAPTCHA or blocking
+      const pageContent = await page.content();
+      if (pageContent.includes('captcha') || pageContent.includes('unusual traffic')) {
+        console.warn('  ⚠️  CAPTCHA or blocking detected on Google Trends page');
+        await browser.close();
+        throw new Error('BLOCKED_CAPTCHA');
+      }
 
       const data = await page.evaluate(() =>
         Array.from(document.querySelectorAll('div.feed-item'))
@@ -39,18 +55,34 @@ async function scrapeGoogleTrends(niche) {
             source: 'Google Trends'
           }))
       );
+      
+      console.log(`  ✓ Scraped ${data.length} items from Google Trends`);
 
       await browser.close();
       return data.filter(item => item.title !== null);
     } catch (error) {
-      console.error('Google Trends scraping error:', error.message);
-      await browser.close();
-      return [];
+      console.error('  ❌ Google Trends scraping error:', error.message);
+      if (error.message.includes('timeout')) {
+        console.error('  ❌ Navigation timeout - page took too long to load');
+        throw new Error('TIMEOUT');
+      } else if (error.message.includes('BLOCKED_CAPTCHA')) {
+        throw new Error('BLOCKED_CAPTCHA');
+      } else {
+        console.error('  ❌ Selector or evaluation error - page structure may have changed');
+        throw new Error('SELECTOR_NOT_FOUND');
+      }
+    } finally {
+      if (browser) {
+        await browser.close();
+      }
     }
   } catch (launchError) {
-    console.error('Puppeteer launch error:', launchError.message);
-    console.log('ℹ️  Skipping Google Trends scraping, will use fallback');
-    return [];
+    console.error('  ❌ Puppeteer launch error:', launchError.message);
+    console.log('  ℹ️  Skipping Google Trends scraping, will use fallback');
+    if (browser) {
+      await browser.close();
+    }
+    throw new Error('PUPPETEER_LAUNCH_FAILED');
   }
 }
 
