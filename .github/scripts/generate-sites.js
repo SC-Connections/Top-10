@@ -430,6 +430,20 @@ async function generateAllSites() {
   const sitesDir = path.join(__dirname, '../..');
   
   const niches = readNiches();
+  console.log(`\n${'='.repeat(60)}`);
+  console.log('📋 CSV PARSING SUMMARY');
+  console.log('='.repeat(60));
+  console.log(`✅ Read ${niches.length} niches from niches.csv`);
+  
+  if (niches.length > 0) {
+    console.log('\n📊 First 5 niche slugs:');
+    niches.slice(0, 5).forEach((niche, idx) => {
+      const slug = slugify(niche.keyword);
+      console.log(`   ${idx + 1}. ${niche.keyword} → ${slug}`);
+    });
+  }
+  console.log('='.repeat(60) + '\n');
+  
   console.log(`Processing ${niches.length} niches...`);
   
   const siteLinks = [];
@@ -452,6 +466,8 @@ async function generateAllSites() {
       // Fetch products - this will throw on API errors
       const products = await fetchProducts(niche.keyword, niche.nodeId, parseInt(niche.numProducts));
       console.log(`✓ Fetched ${products.length} products`);
+      
+      console.log(`\n📦 Products returned for "${niche.keyword}": ${products.length}`);
       
       // Pre-render pros/cons as HTML to avoid nested template issues
       const productsWithRenderedLists = products.map(product => ({
@@ -555,12 +571,30 @@ This site contains Amazon affiliate links. We may earn a commission from qualify
   
   console.log('='.repeat(60) + '\n');
   
-  // Exit with error if all niches failed
-  if (siteLinks.length === 0) {
-    console.error('❌ FATAL: All niches failed to generate');
-    console.error('❌ No sites were built due to API errors');
+  // CRITICAL SANITY CHECK: If niches.csv has rows but we generated 0 sites, EXIT 1
+  if (niches.length > 0 && siteLinks.length === 0) {
+    console.error('\n' + '='.repeat(60));
+    console.error('❌ FATAL ERROR: CSV has niches but 0 sites generated');
+    console.error('='.repeat(60));
+    console.error(`CSV rows: ${niches.length}`);
+    console.error(`Generated sites: ${siteLinks.length}`);
+    console.error('All niches failed - check API errors above');
+    console.error('DO NOT write empty _niches_data.json');
+    console.error('='.repeat(60) + '\n');
     process.exit(1);
   }
+  
+  // Generate _niches_data.json with site metadata
+  const nichesDataPath = path.join(__dirname, '../../_niches_data.json');
+  const nichesData = siteLinks.map(site => ({
+    niche: site.keyword,
+    slug: site.slug,
+    url: `https://sc-connections.github.io/Top-10/${site.slug}/`
+  }));
+  
+  fs.writeFileSync(nichesDataPath, JSON.stringify(nichesData, null, 2));
+  console.log(`\n✅ Generated _niches_data.json with ${nichesData.length} niches`);
+  console.log(`   Path: ${nichesDataPath}\n`);
   
   // Create main index.html only if we have successful sites
   const indexHtml = `<!DOCTYPE html>

@@ -133,10 +133,23 @@ jobs:
           echo "🔍 Verifying generated niche folders..."
 
           if [ ! -f "_niches_data.json" ]; then
-            echo "❌ ERROR: _niches_data.json was not generated!"
-            echo "[]" > _niches_data.json
-            echo "ℹ️  Created empty _niches_data.json to avoid hard failure."
+            echo "❌ FATAL ERROR: _niches_data.json was not generated!"
+            echo "❌ This indicates the site generator failed completely."
+            echo "❌ Check the 'Generate niche sites' step logs above for errors."
+            exit 1
           fi
+
+          # Check that _niches_data.json is not empty
+          niches_count=$(node -e "const data = require('./_niches_data.json'); console.log(Array.isArray(data) ? data.length : 0);")
+          
+          if [ "$niches_count" -eq 0 ]; then
+            echo "❌ FATAL ERROR: _niches_data.json exists but contains 0 niches!"
+            echo "❌ This indicates all niche generation failed."
+            echo "❌ Cannot deploy an empty site. Check API errors in logs above."
+            exit 1
+          fi
+          
+          echo "✅ _niches_data.json contains $niches_count niche(s)"
 
           # Check each niche folder
           missing_count=0
