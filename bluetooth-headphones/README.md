@@ -1,12 +1,12 @@
-# Best Bluetooth Speakers (2026)
+# Best Bluetooth Headphones (2026)
 
 ## Overview
 
-This site provides comprehensive reviews and rankings of the best bluetooth speakers available in 2026.
+This site provides comprehensive reviews and rankings of the best bluetooth headphones available in 2026.
 
 ## Features
 
-- ✅ 4 carefully selected products
+- ✅ 10 carefully selected products
 - ✅ Detailed product reviews and comparisons
 - ✅ Real-time pricing and availability from Amazon
 - ✅ Expert buyer's guide
@@ -15,7 +15,7 @@ This site provides comprehensive reviews and rankings of the best bluetooth spea
 
 ## Live Site
 
-View the live site at: https://sc-connections.github.io/Top-10/bluetooth-speakers/
+View the live site at: https://sc-connections.github.io/Top-10/bluetooth-headphones/
 
 ## Structure
 
