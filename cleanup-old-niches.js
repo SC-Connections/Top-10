@@ -25,6 +25,7 @@ const EXCLUDE_FOLDERS = [
     'test',
     'tablets',
     'assets',
+    'docs',
     '.git',
     '.github',
 ];

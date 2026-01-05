@@ -225,6 +225,6 @@ After 1 week in production:
 
 For issues or questions:
 - Review logs in GitHub Actions workflow
-- Check MULTI_TIER_VALIDATION_SUMMARY.md for implementation details
+- Check [docs/archive/MULTI_TIER_VALIDATION_SUMMARY.md](docs/archive/MULTI_TIER_VALIDATION_SUMMARY.md) for implementation details
 - Examine skip reasons in logs for debugging
 - Verify RapidAPI key is set correctly
