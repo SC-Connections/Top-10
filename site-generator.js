@@ -223,6 +223,25 @@ async function generateSiteForNiche(niche) {
     
     console.log(`✓ Found ${products.length} valid products`);
     
+    // Quality gate validation
+    console.log('🔍 Running quality gate validation...');
+    const qualityCheck = validateProductQuality(products);
+    
+    if (!qualityCheck.passed) {
+        console.warn(`⚠️  Quality gate failed for "${niche}":`);
+        qualityCheck.issues.forEach(issue => console.warn(`   - ${issue}`));
+        
+        // If quality is too poor, generate empty results page instead
+        if (qualityCheck.severity === 'critical') {
+            console.error(`❌ Critical quality issues detected - generating empty results page`);
+            generateEmptyResultsPage(siteDir, niche, slug, templates);
+            console.log(`✓ Empty-results page generated at: /${slug}/`);
+            return;
+        }
+    } else {
+        console.log(`✅ Quality gate passed: ${qualityCheck.summary}`);
+    }
+    
     // Generate SEO content
     console.log('📝 Generating SEO content...');
     const seoContent = generateSEOContent(niche, products);
@@ -334,6 +353,90 @@ function generateEmptyResultsPage(siteDir, niche, slug, templates) {
     // Generate README.md for empty results page
     const readme = generateReadme(niche, slug, 0);
     fs.writeFileSync(path.join(siteDir, 'README.md'), readme);
+}
+
+/**
+ * Validate product quality after filtering
+ * @param {Array} products - Products array
+ * @returns {object} Validation result with passed, issues, and severity
+ */
+function validateProductQuality(products) {
+    const issues = [];
+    let severity = 'none'; // none, warning, critical
+    
+    if (products.length === 0) {
+        return {
+            passed: false,
+            issues: ['No products available'],
+            severity: 'critical',
+            summary: 'No products'
+        };
+    }
+    
+    // Check for generic titles
+    let genericCount = 0;
+    const seenTitles = new Set();
+    let duplicateCount = 0;
+    let noBrandCount = 0;
+    
+    for (const product of products) {
+        const cleanedTitle = cleanProductTitle(product.title);
+        
+        // Check for generic patterns
+        if (!isAcceptableTitle(product.title)) {
+            genericCount++;
+        }
+        
+        // Check for duplicates
+        if (seenTitles.has(cleanedTitle.toLowerCase())) {
+            duplicateCount++;
+        }
+        seenTitles.add(cleanedTitle.toLowerCase());
+        
+        // Check for brand
+        const brand = extractBrandFromTitle(product.title);
+        if (!brand) {
+            noBrandCount++;
+        }
+    }
+    
+    const genericPercent = (genericCount / products.length) * 100;
+    const duplicatePercent = (duplicateCount / products.length) * 100;
+    const noBrandPercent = (noBrandCount / products.length) * 100;
+    
+    // Critical issues (should not publish)
+    if (noBrandPercent > QUALITY_GATE_THRESHOLDS.CRITICAL_NO_BRAND_PERCENT) {
+        issues.push(`${noBrandPercent.toFixed(0)}% of products lack recognizable brand names`);
+        severity = 'critical';
+    }
+    
+    if (genericPercent > QUALITY_GATE_THRESHOLDS.WARNING_GENERIC_TITLE_PERCENT) {
+        issues.push(`${genericPercent.toFixed(0)}% of products have generic titles`);
+        if (severity !== 'critical') severity = 'warning';
+    }
+    
+    if (duplicatePercent > QUALITY_GATE_THRESHOLDS.WARNING_DUPLICATE_PERCENT) {
+        issues.push(`${duplicatePercent.toFixed(0)}% of products have duplicate titles`);
+        if (severity !== 'critical') severity = 'warning';
+    }
+    
+    // Success case
+    if (issues.length === 0) {
+        const brandedPercent = 100 - noBrandPercent;
+        return {
+            passed: true,
+            issues: [],
+            severity: 'none',
+            summary: `${products.length} products, ${brandedPercent.toFixed(0)}% branded`
+        };
+    }
+    
+    return {
+        passed: severity !== 'critical',
+        issues,
+        severity,
+        summary: `${products.length} products with ${issues.length} quality issue(s)`
+    };
 }
 
 /**
@@ -491,6 +594,209 @@ function normalizeModelName(title) {
 }
 
 /**
+ * Constants for brand filtering and quality assessment
+ */
+const PREMIUM_BRANDS = [
+  "Sony", "Bose", "Sennheiser", "Apple", "Beats", "Jabra", "Anker", 
+  "Soundcore", "Samsung", "Google", "JBL", "Shure", "Bowers & Wilkins", 
+  "Bang & Olufsen", "Technics", "Master & Dynamic", "Nothing", "OnePlus", 
+  "1More", "Skullcandy", "Audio-Technica", "Plantronics", "Razer", 
+  "Logitech", "Microsoft", "HP", "Dell", "Lenovo", "Garmin", "Fitbit", 
+  "Fossil", "LG", "Asus", "Acer", "MSI", "Alienware", "Corsair", 
+  "SteelSeries", "HyperX", "Philips", "Panasonic", "TCL", "Hisense", 
+  "Vizio", "Nintendo", "PlayStation", "Xbox", "Oculus", "Meta", "Amazon", 
+  "Kindle", "Marshall", "Denon", "Harman Kardon", "KEF", "Klipsch", 
+  "AKG", "Beyerdynamic", "Focal"
+];
+
+const REPUTABLE_BRANDS = [
+  ...PREMIUM_BRANDS,
+  "Mpow", "Tozo", "Tribit", "EarFun", "Jaybird", "Xiaomi", "Huawei", 
+  "Oppo", "Realme", "Motorola", "Amazfit", "Withings", "Polar", "Suunto", 
+  "Coros", "Mobvoi", "TicWatch", "ROG", "Republic of Gamers", 
+  "Turtle Beach", "Astro", "EPOS", "Dyson", "Roomba", "iRobot", "Ecovacs", 
+  "Roborock", "Shark", "Eufy", "Canon", "Nikon", "Fujifilm", "GoPro", 
+  "DJI", "Insta360", "Olympus", "TP-Link", "Netgear", "Linksys", "Arlo", 
+  "Ring", "Wyze", "Nest", "Kasa", "Tapo", "Meross", "Wemo", "Lutron", 
+  "Leviton", "GE", "Black+Decker", "Stanley", "DeWalt", "Craftsman", 
+  "Kobalt", "Milwaukee", "Instant Pot", "Ninja", "Cuisinart", "KitchenAid", 
+  "Breville", "Oster", "Cosori", "Gourmia", "Chefman", "Dash", 
+  "Hamilton Beach", "Proctor Silex"
+];
+
+const PREMIUM_AUDIO_TERMS = [
+  "ldac", "aptx", "multipoint", "spatial audio", "hi-res", "dolby", 
+  "adaptive", "le audio", "lossless", "studio quality", "planar", "aptx hd"
+];
+
+const GENERIC_BLOCKLIST_PATTERNS = [
+  /^wireless earbuds$/i,
+  /^bluetooth earbuds$/i,
+  /^noise cancell?ing earbuds$/i,
+  /^sports? earbuds$/i,
+  /^true wireless$/i,
+  /^earbuds$/i,
+  /^headphones$/i,
+  /^bluetooth headphones$/i
+];
+
+// Quality gate thresholds
+const QUALITY_GATE_THRESHOLDS = {
+  CRITICAL_NO_BRAND_PERCENT: 50,  // >50% products without brands = critical failure
+  WARNING_GENERIC_TITLE_PERCENT: 30,  // >30% generic titles = warning
+  WARNING_DUPLICATE_PERCENT: 20   // >20% duplicate titles = warning
+};
+
+const SPAM_PATTERNS = [
+  /bluetooth\s+5\.[0-9]/gi,
+  /\b20[2-9][0-9]\s+(new|newest|latest|upgrade)\b/gi,  // Matches 2020-2099
+  /\bfor\s+iphone\s+android\b/gi,
+  /\bwith\s+microphone\b/gi,
+  /\bdeep\s+bass\b/gi,
+  /\bsports?\b/gi,
+  /\bgym\b/gi,
+  /\bled\s+display\b/gi,
+  /\bipx[0-8]\b/gi,  // IPX ratings only go to IPX8
+  /\bplaytime\b/gi,
+  /\d+h\s+playtime\b/gi
+];
+
+/**
+ * Extract brand name from product title
+ * @param {string} title - Product title
+ * @returns {string|null} Brand name or null
+ */
+function extractBrandFromTitle(title) {
+  if (!title) return null;
+  
+  const titleLower = title.toLowerCase();
+  
+  // Check all known brands (case-insensitive, word boundary matching)
+  for (const brand of REPUTABLE_BRANDS) {
+    const brandLower = brand.toLowerCase();
+    const regex = new RegExp(`\\b${brandLower.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i');
+    if (regex.test(titleLower)) {
+      return brand;
+    }
+  }
+  
+  return null;
+}
+
+/**
+ * Clean product title - remove spam, preserve brand + model
+ * @param {string} title - Raw product title
+ * @returns {string} Cleaned title
+ */
+function cleanProductTitle(title) {
+  if (!title) return '';
+  
+  let cleaned = title;
+  
+  // Remove spam patterns
+  for (const pattern of SPAM_PATTERNS) {
+    cleaned = cleaned.replace(pattern, ' ');
+  }
+  
+  // Remove content in parentheses (usually color or variant info)
+  cleaned = cleaned.replace(/\([^)]*\)/g, ' ');
+  
+  // Split on common delimiters to get core product name
+  const delimiters = [' - ', ' – ', ' | ', ', '];
+  for (const delim of delimiters) {
+    if (cleaned.includes(delim)) {
+      cleaned = cleaned.split(delim)[0];
+      break;
+    }
+  }
+  
+  // Clean up multiple spaces
+  cleaned = cleaned.replace(/\s+/g, ' ').trim();
+  
+  // If too long (>60 chars), take first 8 words
+  if (cleaned.length > 60) {
+    const words = cleaned.split(' ');
+    cleaned = words.slice(0, 8).join(' ');
+  }
+  
+  return cleaned;
+}
+
+/**
+ * Validate if title is acceptable (not generic)
+ * @param {string} title - Product title
+ * @returns {boolean} True if acceptable
+ */
+function isAcceptableTitle(title) {
+  if (!title || title.length < 12) return false;
+  
+  const cleanedTitle = cleanProductTitle(title);
+  if (cleanedTitle.length < 12) return false;
+  
+  // Check against generic blocklist patterns
+  for (const pattern of GENERIC_BLOCKLIST_PATTERNS) {
+    if (pattern.test(cleanedTitle)) {
+      return false;
+    }
+  }
+  
+  return true;
+}
+
+/**
+ * Calculate product quality score for ranking
+ * @param {object} product - Product object
+ * @param {string} brand - Extracted brand name
+ * @returns {number} Quality score
+ */
+function calculateProductScore(product, brand) {
+  let score = 0;
+  
+  const titleLower = (product.title || '').toLowerCase();
+  const price = parseFloat((product.price || '').replace(/[^0-9.]/g, '')) || 0;
+  const rating = parseFloat(product.rating) || 0;
+  const reviews = parseInt(product.reviews) || 0;
+  
+  // Brand boost (heavy)
+  if (brand && PREMIUM_BRANDS.includes(brand)) {
+    score += 100;
+  } else if (brand) {
+    score += 50;
+  }
+  
+  // Price boost (soft preference for quality)
+  if (price >= 80) {
+    score += 30;
+  } else if (price >= 50) {
+    score += 15;
+  }
+  
+  // Rating and reviews boost
+  if (rating >= 4.5 && reviews > 100) {
+    score += 25;
+  } else if (rating >= 4.0 && reviews > 50) {
+    score += 15;
+  }
+  
+  // Premium audio terms boost
+  for (const term of PREMIUM_AUDIO_TERMS) {
+    if (titleLower.includes(term)) {
+      score += 10;
+    }
+  }
+  
+  // Penalties
+  if (rating === 5.0 && reviews < 10) {
+    score -= 20; // Suspicious perfect rating
+  }
+  if (price < 20 && !brand) {
+    score -= 30; // Very cheap without brand
+  }
+  
+  return score;
+}
+
+/**
  * Apply multi-tier quality filters and deduplication
  * @param {Array} products - Products array
  * @param {object} options - Options including TARGET_COUNT and MIN_ACCEPTABLE
@@ -499,38 +805,9 @@ function normalizeModelName(title) {
 function applyFilters(products, options = {}) {
   const TARGET_COUNT = options.TARGET_COUNT || 10;
   const MIN_ACCEPTABLE = options.MIN_ACCEPTABLE || 6;
-  
-  // Tier A: Premium brands (highest quality)
-  const PREMIUM_BRANDS = [
-    "Apple","Sony","Bose","Sennheiser","Bang & Olufsen",
-    "Shure","Razer","Logitech","Samsung","JBL","Beats","HP","Dell","Lenovo",
-    "Garmin","Fitbit","Fossil","Skullcandy","Audio-Technica","Anker","Microsoft",
-    "LG","Asus","Acer","MSI","Alienware","Corsair","SteelSeries","HyperX",
-    "Jabra","Plantronics","Philips","Panasonic","TCL","Hisense","Vizio",
-    "Nintendo","PlayStation","Xbox","Oculus","Meta","Google","Amazon","Kindle"
-  ];
 
-  // Tier B: Reputable brands (expanded list)
-  const REPUTABLE_BRANDS = [
-    ...PREMIUM_BRANDS,
-    "Mpow","Tozo","Tribit","EarFun","Soundcore","1MORE","Jaybird",
-    "Xiaomi","OnePlus","Huawei","Oppo","Realme","Nothing","Motorola",
-    "Amazfit","Withings","Polar","Suunto","Coros","Mobvoi","TicWatch",
-    "ROG","Republic of Gamers","Turtle Beach","Astro","EPOS",
-    "Dyson","Roomba","iRobot","Ecovacs","Roborock","Shark","Eufy",
-    "Canon","Nikon","Fujifilm","GoPro","DJI","Insta360","Olympus",
-    "Bowers & Wilkins","Master & Dynamic","Focal","AKG","Beyerdynamic",
-    "Marshall","Denon","Harman Kardon","KEF","Klipsch",
-    "TP-Link","Netgear","Linksys","Arlo","Ring","Wyze","Nest",
-    "Kasa","Tapo","Meross","Wemo","Lutron","Leviton","GE",
-    "Black+Decker","Stanley","DeWalt","Craftsman","Kobalt","Milwaukee",
-    "Instant Pot","Ninja","Cuisinart","KitchenAid","Breville","Oster",
-    "Cosori","Gourmia","Chefman","Dash","Hamilton Beach","Proctor Silex"
-  ];
-
-  // Tier C: Generic blocklist (reject only truly generic/accessory items)
-  const GENERIC_BLOCKLIST = [
-    "generic", "brandless", "no brand",
+  // Accessory blocklist (reject accessories, not main products)
+  const ACCESSORY_BLOCKLIST = [
     " case", " cover", " skin", " adapter", " cable",
     " strap", " mount", " stand", " holder", " charger cable",
     " charging cable", " usb cable", " power cord", " wall charger",
@@ -546,9 +823,10 @@ function applyFilters(products, options = {}) {
   // Normalize and deduplicate candidates
   const seenAsins = new Set();
   const seenModels = new Set();
+  const seenCleanedTitles = new Set();
   const candidates = [];
 
-  console.log(`\n🔍 Starting multi-tier filtering with ${products.length} products...`);
+  console.log(`\n🔍 Starting strict brand filtering with ${products.length} products...`);
 
   for (const p of products) {
     const title = (p.title || "").trim();
@@ -568,6 +846,22 @@ function applyFilters(products, options = {}) {
       continue;
     }
 
+    // Extract brand (REQUIRED)
+    const brand = extractBrandFromTitle(title);
+    if (!brand) {
+      recordSkip('no_recognizable_brand');
+      continue;
+    }
+
+    // Validate title is not generic
+    if (!isAcceptableTitle(title)) {
+      recordSkip('generic_title');
+      continue;
+    }
+
+    // Clean title
+    const cleanedTitle = cleanProductTitle(title);
+    
     // Deduplicate by ASIN (primary)
     if (seenAsins.has(asin)) {
       recordSkip('duplicate_asin');
@@ -576,99 +870,77 @@ function applyFilters(products, options = {}) {
     
     // Deduplicate by normalized model name (removes color variants)
     const normalizedModel = normalizeModelName(title);
-    
     if (seenModels.has(normalizedModel)) {
       recordSkip('duplicate_model');
       continue;
     }
     
+    // Deduplicate by cleaned title
+    if (seenCleanedTitles.has(cleanedTitle.toLowerCase())) {
+      recordSkip('duplicate_cleaned_title');
+      continue;
+    }
+    
+    // Check for accessories
+    let isAccessory = false;
+    for (const term of ACCESSORY_BLOCKLIST) {
+      if (titleLower.includes(term)) {
+        recordSkip('accessory_item');
+        isAccessory = true;
+        break;
+      }
+    }
+    if (isAccessory) continue;
+    
+    // Check for accessory-only patterns
+    const accessoryPatterns = [
+      /^\d+\s*(pack|pcs|piece|set)/i,
+      /^(universal|generic|replacement|compatible)/i,
+      /case for|cover for|skin for|mount for|holder for/i
+    ];
+    
+    let matchesAccessoryPattern = false;
+    for (const pattern of accessoryPatterns) {
+      if (pattern.test(title)) {
+        recordSkip('accessory_pattern');
+        matchesAccessoryPattern = true;
+        break;
+      }
+    }
+    if (matchesAccessoryPattern) continue;
+    
     seenAsins.add(asin);
     seenModels.add(normalizedModel);
+    seenCleanedTitles.add(cleanedTitle.toLowerCase());
 
-    // Store as candidate
-    candidates.push({ ...p, title, titleLower, rating });
-  }
+    // Calculate quality score
+    const qualityScore = calculateProductScore(p, brand);
 
-  console.log(`✓ After deduplication: ${candidates.length} unique products`);
-
-  // Multi-pass selection algorithm
-  let selected = [];
-  let tierBCount = 0;
-  let tierCCount = 0;
-  
-  // Pass 1: Tier A - Premium brands
-  const tierA = candidates.filter(p => {
-    return PREMIUM_BRANDS.some(brand => p.titleLower.includes(brand.toLowerCase()));
-  });
-  selected.push(...tierA);
-  console.log(`✓ Tier A (Premium brands): ${tierA.length} products`);
-
-  // Pass 2: Tier B - Reputable brands (if needed)
-  if (selected.length < TARGET_COUNT) {
-    const tierB = candidates.filter(p => {
-      // Exclude already selected
-      if (selected.some(s => s.asin === p.asin)) return false;
-      // Check reputable brands
-      return REPUTABLE_BRANDS.some(brand => p.titleLower.includes(brand.toLowerCase()));
+    // Store as candidate with brand and score
+    candidates.push({ 
+      ...p, 
+      title, 
+      titleLower, 
+      rating,
+      brand,
+      cleanedTitle,
+      qualityScore
     });
-    tierBCount = tierB.length;
-    selected.push(...tierB);
-    console.log(`✓ Tier B (Reputable brands): ${tierBCount} products added`);
   }
 
-  // Pass 3: Tier C - Generic blocklist filter (if still needed)
-  if (selected.length < TARGET_COUNT) {
-    const tierC = candidates.filter(p => {
-      // Exclude already selected
-      if (selected.some(s => s.asin === p.asin)) return false;
-      
-      // Apply generic blocklist
-      for (const term of GENERIC_BLOCKLIST) {
-        if (p.titleLower.includes(term)) {
-          recordSkip('generic_term');
-          return false;
-        }
-      }
-      
-      // Check for accessory-only patterns
-      const accessoryPatterns = [
-        /^\d+\s*(pack|pcs|piece|set)/i,
-        /^(universal|generic|replacement|compatible)/i,
-        /case for|cover for|skin for|mount for|holder for/i
-      ];
-      
-      for (const pattern of accessoryPatterns) {
-        if (pattern.test(p.title)) {
-          recordSkip('accessory_pattern');
-          return false;
-        }
-      }
-      
-      return true;
-    });
-    tierCCount = tierC.length;
-    selected.push(...tierC);
-    console.log(`✓ Tier C (Generic filter): ${tierCCount} products added`);
-  }
+  console.log(`✓ After strict filtering: ${candidates.length} branded products`);
 
-  // Sort by quality: premium first, then rating, then reviews
-  selected.sort((a, b) => {
-    // Premium brands first
-    const aIsPremium = PREMIUM_BRANDS.some(brand => a.titleLower.includes(brand.toLowerCase()));
-    const bIsPremium = PREMIUM_BRANDS.some(brand => b.titleLower.includes(brand.toLowerCase()));
-    if (aIsPremium !== bIsPremium) return bIsPremium ? 1 : -1;
-    
-    // Then by rating
-    if (Math.abs(a.rating - b.rating) > 0.1) return b.rating - a.rating;
-    
-    // Then by review count
-    return (parseInt(b.reviews) || 0) - (parseInt(a.reviews) || 0);
-  });
+  // Sort by quality score (premium-first ranking)
+  candidates.sort((a, b) => b.qualityScore - a.qualityScore);
 
-  // Limit to TARGET_COUNT
-  const final = selected.slice(0, TARGET_COUNT);
+  // Select top products up to TARGET_COUNT
+  const selected = candidates.slice(0, TARGET_COUNT);
+
+  console.log(`✓ Final selection: ${selected.length} products (sorted by quality score)`);
   
-  console.log(`✓ Final selection: ${final.length} products`);
+  // Count premium brands in final selection
+  const premiumCount = selected.filter(p => PREMIUM_BRANDS.includes(p.brand)).length;
+  console.log(`✓ Premium brands in selection: ${premiumCount}/${selected.length}`);
   
   // Log top skip reasons
   const topSkipReasons = Object.entries(skipReasons)
@@ -684,14 +956,12 @@ function applyFilters(products, options = {}) {
 
   // Return results with stats
   return {
-    products: final,
+    products: selected,
     stats: {
       gathered: products.length,
       validated: candidates.length,
-      tierA: tierA.length,
-      tierB: tierBCount,
-      tierC: tierCCount,
-      final: final.length,
+      premiumCount: premiumCount,
+      final: selected.length,
       skipReasons: topSkipReasons
     }
   };
@@ -1962,45 +2232,14 @@ function hasBrandName(title) {
  * @param {string} fullTitle - Full Amazon product title
  * @returns {string} Short product name
  */
+/**
+ * Extract short product name for display (uses cleaned title)
+ * @param {string} fullTitle - Full product title
+ * @returns {string} Short product name
+ */
 function extractShortProductName(fullTitle) {
-    // Common patterns to split on
-    const splitPatterns = [
-        ' - ',
-        ' – ',  // em dash
-        ' | ',
-        ' with ',
-        ' featuring ',
-        ', ',
-        ' (',
-        ' for '
-    ];
-    
-    // Try to find the first natural break point
-    let shortName = fullTitle;
-    let splitIndex = -1;
-    
-    for (const pattern of splitPatterns) {
-        const index = fullTitle.indexOf(pattern);
-        if (index !== -1 && (splitIndex === -1 || index < splitIndex)) {
-            splitIndex = index;
-        }
-    }
-    
-    if (splitIndex !== -1) {
-        shortName = fullTitle.substring(0, splitIndex);
-    }
-    
-    // Clean up and limit length
-    shortName = shortName.trim();
-    
-    // If still too long (more than 50 chars), try to get just brand and model
-    if (shortName.length > 50) {
-        const words = shortName.split(' ');
-        // Take first 3-4 words as they usually contain brand + model
-        shortName = words.slice(0, Math.min(4, words.length)).join(' ');
-    }
-    
-    return shortName;
+    // Use the new cleanProductTitle function for consistency
+    return cleanProductTitle(fullTitle);
 }
 
 /**
