@@ -1,8 +1,23 @@
 [
   {
+    "niche": "Noise Canceling Headphones",
+    "slug": "noise-canceling-headphones",
+    "url": "https://sc-connections.github.io/Top-10/noise-canceling-headphones/"
+  },
+  {
+    "niche": "True Wireless Earbuds",
+    "slug": "true-wireless-earbuds",
+    "url": "https://sc-connections.github.io/Top-10/true-wireless-earbuds/"
+  },
+  {
     "niche": "Gaming Headsets",
     "slug": "gaming-headsets",
     "url": "https://sc-connections.github.io/Top-10/gaming-headsets/"
+  },
+  {
+    "niche": "Bluetooth Speakers",
+    "slug": "bluetooth-speakers",
+    "url": "https://sc-connections.github.io/Top-10/bluetooth-speakers/"
   },
   {
     "niche": "Mechanical Keyboards",
@@ -20,24 +35,39 @@
     "url": "https://sc-connections.github.io/Top-10/gaming-mice/"
   },
   {
-    "niche": "Foam Rollers",
-    "slug": "foam-rollers",
-    "url": "https://sc-connections.github.io/Top-10/foam-rollers/"
+    "niche": "Ergonomic Mice",
+    "slug": "ergonomic-mice",
+    "url": "https://sc-connections.github.io/Top-10/ergonomic-mice/"
   },
   {
-    "niche": "Air Fryers",
-    "slug": "air-fryers",
-    "url": "https://sc-connections.github.io/Top-10/air-fryers/"
+    "niche": "Ultrawide Monitors",
+    "slug": "ultrawide-monitors",
+    "url": "https://sc-connections.github.io/Top-10/ultrawide-monitors/"
   },
   {
-    "niche": "Coffee Grinders",
-    "slug": "coffee-grinders",
-    "url": "https://sc-connections.github.io/Top-10/coffee-grinders/"
+    "niche": "Podcast Microphones",
+    "slug": "podcast-microphones",
+    "url": "https://sc-connections.github.io/Top-10/podcast-microphones/"
   },
   {
-    "niche": "Dog GPS Trackers",
-    "slug": "dog-gps-trackers",
-    "url": "https://sc-connections.github.io/Top-10/dog-gps-trackers/"
+    "niche": "Mesh WiFi Systems",
+    "slug": "mesh-wifi-systems",
+    "url": "https://sc-connections.github.io/Top-10/mesh-wifi-systems/"
+  },
+  {
+    "niche": "Protein Shakers",
+    "slug": "protein-shakers",
+    "url": "https://sc-connections.github.io/Top-10/protein-shakers/"
+  },
+  {
+    "niche": "Robot Vacuums",
+    "slug": "robot-vacuums",
+    "url": "https://sc-connections.github.io/Top-10/robot-vacuums/"
+  },
+  {
+    "niche": "Ergonomic Office Chairs",
+    "slug": "ergonomic-office-chairs",
+    "url": "https://sc-connections.github.io/Top-10/ergonomic-office-chairs/"
   },
   {
     "niche": "Dog Training Collars",
@@ -45,24 +75,9 @@
     "url": "https://sc-connections.github.io/Top-10/dog-training-collars/"
   },
   {
-    "niche": "Pet Cameras",
-    "slug": "pet-cameras",
-    "url": "https://sc-connections.github.io/Top-10/pet-cameras/"
-  },
-  {
-    "niche": "Gaming Chairs",
-    "slug": "gaming-chairs",
-    "url": "https://sc-connections.github.io/Top-10/gaming-chairs/"
-  },
-  {
     "niche": "Capture Cards",
     "slug": "capture-cards",
     "url": "https://sc-connections.github.io/Top-10/capture-cards/"
-  },
-  {
-    "niche": "Stream Deck Controllers",
-    "slug": "stream-deck-controllers",
-    "url": "https://sc-connections.github.io/Top-10/stream-deck-controllers/"
   },
   {
     "niche": "VR Headsets",
@@ -70,19 +85,9 @@
     "url": "https://sc-connections.github.io/Top-10/vr-headsets/"
   },
   {
-    "niche": "Racing Wheel Controllers",
-    "slug": "racing-wheel-controllers",
-    "url": "https://sc-connections.github.io/Top-10/racing-wheel-controllers/"
-  },
-  {
     "niche": "Flight Simulator Gear",
     "slug": "flight-simulator-gear",
     "url": "https://sc-connections.github.io/Top-10/flight-simulator-gear/"
-  },
-  {
-    "niche": "Mechanical Keycaps",
-    "slug": "mechanical-keycaps",
-    "url": "https://sc-connections.github.io/Top-10/mechanical-keycaps/"
   },
   {
     "niche": "Dash Cams",
@@ -90,19 +95,14 @@
     "url": "https://sc-connections.github.io/Top-10/dash-cams/"
   },
   {
-    "niche": "Car Vacuum Cleaners",
-    "slug": "car-vacuum-cleaners",
-    "url": "https://sc-connections.github.io/Top-10/car-vacuum-cleaners/"
+    "niche": "Portable Jump Starters",
+    "slug": "portable-jump-starters",
+    "url": "https://sc-connections.github.io/Top-10/portable-jump-starters/"
   },
   {
-    "niche": "Backup Cameras",
-    "slug": "backup-cameras",
-    "url": "https://sc-connections.github.io/Top-10/backup-cameras/"
-  },
-  {
-    "niche": "Portable Car Heaters",
-    "slug": "portable-car-heaters",
-    "url": "https://sc-connections.github.io/Top-10/portable-car-heaters/"
+    "niche": "Tire Inflators",
+    "slug": "tire-inflators",
+    "url": "https://sc-connections.github.io/Top-10/tire-inflators/"
   },
   {
     "niche": "Power Tool Sets",
@@ -115,19 +115,14 @@
     "url": "https://sc-connections.github.io/Top-10/cordless-drills/"
   },
   {
-    "niche": "Pressure Washers",
-    "slug": "pressure-washers",
-    "url": "https://sc-connections.github.io/Top-10/pressure-washers/"
-  },
-  {
-    "niche": "Laser Levels",
-    "slug": "laser-levels",
-    "url": "https://sc-connections.github.io/Top-10/laser-levels/"
-  },
-  {
     "niche": "Stud Finders",
     "slug": "stud-finders",
     "url": "https://sc-connections.github.io/Top-10/stud-finders/"
+  },
+  {
+    "niche": "Tool Organizers",
+    "slug": "tool-organizers",
+    "url": "https://sc-connections.github.io/Top-10/tool-organizers/"
   },
   {
     "niche": "Electric Chainsaws",
@@ -140,19 +135,14 @@
     "url": "https://sc-connections.github.io/Top-10/smart-door-locks/"
   },
   {
-    "niche": "Video Doorbells",
-    "slug": "video-doorbells",
-    "url": "https://sc-connections.github.io/Top-10/video-doorbells/"
-  },
-  {
-    "niche": "Security Camera Systems",
-    "slug": "security-camera-systems",
-    "url": "https://sc-connections.github.io/Top-10/security-camera-systems/"
-  },
-  {
     "niche": "Smart Thermostats",
     "slug": "smart-thermostats",
     "url": "https://sc-connections.github.io/Top-10/smart-thermostats/"
+  },
+  {
+    "niche": "Smart Light Bulbs",
+    "slug": "smart-light-bulbs",
+    "url": "https://sc-connections.github.io/Top-10/smart-light-bulbs/"
   },
   {
     "niche": "Smart Plugs",
@@ -168,11 +158,6 @@
     "niche": "Baby Monitors",
     "slug": "baby-monitors",
     "url": "https://sc-connections.github.io/Top-10/baby-monitors/"
-  },
-  {
-    "niche": "Motion Sensors",
-    "slug": "motion-sensors",
-    "url": "https://sc-connections.github.io/Top-10/motion-sensors/"
   },
   {
     "niche": "Smart Smoke Detectors",
