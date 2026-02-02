@@ -6,7 +6,7 @@ This site provides comprehensive reviews and rankings of the best pressure washe
 
 ## Features
 
-- ✅ 2 carefully selected products
+- ✅ 5 carefully selected products
 - ✅ Detailed product reviews and comparisons
 - ✅ Real-time pricing and availability from Amazon
 - ✅ Expert buyer's guide
@@ -39,4 +39,4 @@ This site contains affiliate links. We may earn a commission from qualifying pur
 
 ---
 
-*Last updated: January 26, 2026*
+*Last updated: February 2, 2026*
