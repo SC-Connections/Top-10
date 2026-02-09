@@ -105,6 +105,11 @@
     "url": "https://sc-connections.github.io/Top-10/adjustable-dumbbells/"
   },
   {
+    "niche": "Resistance Bands",
+    "slug": "resistance-bands",
+    "url": "https://sc-connections.github.io/Top-10/resistance-bands/"
+  },
+  {
     "niche": "Walking Pads Under Desk",
     "slug": "walking-pads-under-desk",
     "url": "https://sc-connections.github.io/Top-10/walking-pads-under-desk/"
@@ -180,6 +185,11 @@
     "url": "https://sc-connections.github.io/Top-10/dog-gps-trackers/"
   },
   {
+    "niche": "Dog Training Collars",
+    "slug": "dog-training-collars",
+    "url": "https://sc-connections.github.io/Top-10/dog-training-collars/"
+  },
+  {
     "niche": "Cat Water Fountains",
     "slug": "cat-water-fountains",
     "url": "https://sc-connections.github.io/Top-10/cat-water-fountains/"
@@ -188,6 +198,16 @@
     "niche": "Pet Cameras",
     "slug": "pet-cameras",
     "url": "https://sc-connections.github.io/Top-10/pet-cameras/"
+  },
+  {
+    "niche": "Pet Grooming Kits",
+    "slug": "pet-grooming-kits",
+    "url": "https://sc-connections.github.io/Top-10/pet-grooming-kits/"
+  },
+  {
+    "niche": "Indestructible Dog Toys",
+    "slug": "indestructible-dog-toys",
+    "url": "https://sc-connections.github.io/Top-10/indestructible-dog-toys/"
   },
   {
     "niche": "Gaming Chairs",
@@ -250,6 +270,11 @@
     "url": "https://sc-connections.github.io/Top-10/backup-cameras/"
   },
   {
+    "niche": "Roof Cargo Boxes",
+    "slug": "roof-cargo-boxes",
+    "url": "https://sc-connections.github.io/Top-10/roof-cargo-boxes/"
+  },
+  {
     "niche": "Power Tool Sets",
     "slug": "power-tool-sets",
     "url": "https://sc-connections.github.io/Top-10/power-tool-sets/"
@@ -273,11 +298,6 @@
     "niche": "Stud Finders",
     "slug": "stud-finders",
     "url": "https://sc-connections.github.io/Top-10/stud-finders/"
-  },
-  {
-    "niche": "Multimeters",
-    "slug": "multimeters",
-    "url": "https://sc-connections.github.io/Top-10/multimeters/"
   },
   {
     "niche": "Tool Organizers",
