@@ -124,8 +124,11 @@ jobs:
             fi
           done < <(jq -c '.[]' _niches_data.json)
 
+          success_count=$((total_niches - missing_count))
+
           echo "TOTAL_NICHES=$total_niches" >> $GITHUB_ENV
           echo "MISSING_COUNT=$missing_count" >> $GITHUB_ENV
+          echo "SUCCESS_COUNT=$success_count" >> $GITHUB_ENV
           echo -e "UPDATED_NICHES=$updated_niches" >> $GITHUB_ENV
       
       - name: Generate root index.html
@@ -169,7 +172,7 @@ jobs:
             
             ### Summary
             - **Total niches processed:** ${{ env.TOTAL_NICHES }}
-            - **Successfully updated:** ${{ env.TOTAL_NICHES - env.MISSING_COUNT }}
+            - **Successfully updated:** ${{ env.SUCCESS_COUNT }}
             - **Failed:** ${{ env.MISSING_COUNT }}
             
             ### Updated Sites
