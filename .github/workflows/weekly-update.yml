@@ -1,9 +1,7 @@
 name: Weekly Niche Site Update
 
 on:
-  schedule:
-    # Run weekly on Monday at 6 AM UTC
-    - cron: '0 6 * * 1'
+  # Manual-only safety workflow. The main build workflow owns the weekly schedule.
   workflow_dispatch:
     inputs:
       niche:
